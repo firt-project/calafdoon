@@ -37,15 +37,17 @@ npm run dev:client
 
 | Doc | Purpose |
 |-----|---------|
+| [IOS_DEVELOPER_HANDOFF.md](./IOS_DEVELOPER_HANDOFF.md) | **Give this to the Apple/iOS developer** |
+| [store/ios/HANDOFF_CHECKLIST.md](./store/ios/HANDOFF_CHECKLIST.md) | Tick-list before TestFlight |
 | [MOBILE_SETUP.md](./MOBILE_SETUP.md) | Cap sync, one-command builds, emulator networking |
 | [GOOGLE_PLAY_RELEASE.md](./GOOGLE_PLAY_RELEASE.md) | Play Console / AAB |
 | [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) | Android signing + build |
 | [APP_STORE_RELEASE.md](./APP_STORE_RELEASE.md) | TestFlight / App Store (macOS) |
 | [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) | Pre-flight checkboxes |
-| [STORE_POLICY_DECISIONS.md](./STORE_POLICY_DECISIONS.md) | IAP vs Stripe decision |
+| [STORE_POLICY_DECISIONS.md](./STORE_POLICY_DECISIONS.md) | IAP vs Waafi / Stripe decision |
 | [PRIVACY_DATA_MAP.md](./PRIVACY_DATA_MAP.md) | Data processing map |
 | [LEGAL_REVIEW_CHECKLIST.md](./LEGAL_REVIEW_CHECKLIST.md) | Counsel checklist |
-| [ACCOUNT_DELETION.md](./ACCOUNT_DELETION.md) | Play account-deletion requirement |
+| [ACCOUNT_DELETION.md](./ACCOUNT_DELETION.md) | Play / App Store account-deletion requirement |
 | [VERSIONING.md](./VERSIONING.md) | Version codes |
 | [store/](./store/) | Icons, screenshots, listing copy |
 

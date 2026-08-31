@@ -43,6 +43,8 @@ npm run dev:api      # terminal 1
 npm run dev:client   # terminal 2
 ```
 
+**iOS / App Store:** give the Apple developer [`mobile/IOS_DEVELOPER_HANDOFF.md`](mobile/IOS_DEVELOPER_HANDOFF.md) (macOS + Xcode required).
+
 ## Why this layout?
 
 - **One GitHub repo** for the whole product
