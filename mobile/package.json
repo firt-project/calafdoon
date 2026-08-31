@@ -1,0 +1,56 @@
+{
+  "name": "hel-calafkaaga",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hel Calafkaaga monorepo — NestJS API + client apps",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev -w @hel/api",
+    "dev:client": "npm run dev -w @hel/client",
+    "build": "npm run build -w @hel/api",
+    "build:api": "npm run build -w @hel/api",
+    "build:client": "npm run build -w @hel/client",
+    "lint": "npm run lint -w @hel/api && npm run lint -w @hel/client",
+    "lint:api": "npm run lint -w @hel/api",
+    "typecheck": "npm run lint -w @hel/api && npm run typecheck -w @hel/client",
+    "typecheck:api": "npm run lint -w @hel/api",
+    "test": "npm run test -w @hel/api",
+    "test:api": "npm run test -w @hel/api",
+    "test:api:unit": "npm run test:unit -w @hel/api",
+    "test:client": "npm run test -w @hel/client",
+    "prisma:generate": "npm run prisma:generate -w @hel/api",
+    "prisma:validate": "npm run prisma:validate -w @hel/api",
+    "prisma:migrate:dev": "npm run prisma:migrate:dev -w @hel/api",
+    "prisma:migrate:deploy": "npm run prisma:migrate:deploy -w @hel/api",
+    "auth:test": "npm run test -w @hel/api",
+    "auth:smoke": "npm run auth:smoke -w @hel/api --",
+    "stack:local": "bash scripts/staging/start-local-api-stack.sh",
+    "infra:up": "docker compose -f infra/docker-compose.yml --env-file infra/.env up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml --env-file infra/.env down",
+    "ops:health-smoke": "bash scripts/ops/health-smoke.sh",
+    "ops:backup-pg": "bash scripts/ops/backup-postgres.sh",
+    "ops:load-smoke": "node scripts/ops/load-smoke.mjs",
+    "mobile:sync": "bash scripts/mobile/build.sh sync",
+    "mobile:android:debug": "bash scripts/mobile/build.sh android-debug",
+    "mobile:android:release": "bash scripts/mobile/build.sh android-release",
+    "mobile:android:open": "bash scripts/mobile/build.sh android-open",
+    "mobile:ios:sync": "bash scripts/mobile/build.sh ios-sync",
+    "mobile:ios:open": "bash scripts/mobile/build.sh ios-open"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "expo": "^57.0.9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-native": "0.86.0"
+  },
+  "overrides": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}

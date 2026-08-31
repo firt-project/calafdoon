@@ -1,0 +1,55 @@
+# Dependencies & builds
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+dist/
+**/dist/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+!.env*.example
+!**/.env.example
+!**/.env*.example
+*.pem
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+google-services.json
+GoogleService-Info.plist
+**/key.properties
+**/local.properties
+
+# Local tooling / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.vercel
+.jdks/
+*.log
+npm-debug.log*
+
+# Local data / backups (keep out of git)
+backups/
+convex-exports/
+migration-reports/
+**/prisma/*.db
+**/prisma/*.db-journal
+
+# Android / iOS build outputs
+**/android/.gradle/
+**/android/app/build/
+**/android/app/release/
+**/ios/App/Pods/
+**/ios/DerivedData/

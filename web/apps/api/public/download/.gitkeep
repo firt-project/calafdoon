@@ -1,0 +1,2 @@
+# Keep this folder in git; APK binaries are gitignored.
+# Run: bash scripts/publish-android-apk.sh

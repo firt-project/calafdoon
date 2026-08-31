@@ -1,0 +1,7 @@
+# Example — copy to key.properties (gitignored) and fill locally.
+# Never commit real passwords or keystore files.
+
+storePassword=REPLACE_ME
+keyPassword=REPLACE_ME
+keyAlias=helcalaf
+storeFile=/absolute/path/to/tel-calafkaaga-upload.jks

@@ -1,0 +1,39 @@
+{
+  "name": "@hel/migration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hel Calafkaaga Convex→Postgres migration tooling (Phase 1)",
+  "type": "module",
+  "bin": {
+    "hel-migration": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "inspect": "tsx src/cli.ts inspect",
+    "inspect-auth": "tsx src/cli.ts inspect-auth",
+    "dry-run": "tsx src/cli.ts dry-run",
+    "import-core": "tsx src/cli.ts import-core",
+    "import-domain": "tsx src/cli.ts import-domain",
+    "inspect-storage": "tsx src/cli.ts inspect-storage",
+    "import-files": "tsx src/cli.ts import-files",
+    "validate": "tsx src/cli.ts validate",
+    "validate-domain": "tsx src/cli.ts validate-domain",
+    "validate-files": "tsx src/cli.ts validate-files",
+    "test": "tsx --test tests/**/*.test.ts",
+    "test:unit": "tsx --test tests/**/*.test.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "prisma": {
+    "schema": "../../apps/api/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.787.0",
+    "@prisma/client": "^6.10.1",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.32",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

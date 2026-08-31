@@ -1,0 +1,20 @@
+# M11: keep build context small; never send secrets or tooling into the image.
+node_modules
+dist
+coverage
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.md
+README.md
+test
+scripts
+src/**/*.test.ts
+**/*.test.ts
+**/*.spec.ts
+.DS_Store
+npm-debug.log*
+.vscode
+.idea

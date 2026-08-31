@@ -1,0 +1,175 @@
+# Private cloud staging stack — DOCUMENTATION + deploy template.
+# Do NOT point at production DB/Redis/R2/Stripe/Resend.
+#
+# STOP if cloud credentials / DNS / TLS are unavailable: fill placeholders,
+# hand off to an operator, do not invent results.
+#
+# Usage (on staging host):
+#   cp .env.staging.example .env.staging   # fill secrets locally, never commit
+#   docker compose -f infra/staging/docker-compose.cloud.yml --env-file .env.staging up -d
+#
+# Frontend must use:
+#   NEXT_PUBLIC_BACKEND_PROVIDER=api
+#   NEXT_PUBLIC_SHADOW_READS_ENABLED=false
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set}
+      POSTGRES_DB: ${POSTGRES_DB:-hel_staging}
+    volumes:
+      - hel_staging_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [staging]
+    # Not published publicly — reverse proxy / private network only
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - hel_staging_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [staging]
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set}
+    volumes:
+      - hel_staging_minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [staging]
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        for bucket in hel-profile hel-profile-private hel-chat hel-support hel-evc; do
+          mc mb --ignore-existing "local/$$bucket"
+          mc anonymous set none "local/$$bucket" || true
+        done
+    networks: [staging]
+    restart: "no"
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: staging
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_FORCE_PATH_STYLE: "true"
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET:?set}
+      COOKIE_SECURE: "true"
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.staging.example.com}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://staging.example.com}
+      APP_URL: ${APP_URL:-https://staging.example.com}
+      STRIPE_GATEWAY: ${STRIPE_GATEWAY:-fake}
+      STRIPE_ALLOW_LIVE: "false"
+      MAIL_DRIVER: ${MAIL_DRIVER:-console}
+      LOG_LEVEL: info
+      TRUST_PROXY: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    networks: [staging]
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    command: ["sh", "-c", "npm run start"]
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_BACKEND_PROVIDER: api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.staging.example.com}
+      NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-https://api.staging.example.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://staging.example.com}
+      NEXT_PUBLIC_SHADOW_READS_ENABLED: "false"
+    # Mount a pre-built Next standalone output in real deploys.
+    # volumes:
+    #   - ../../:/app
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    networks: [staging]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - hel_staging_caddy:/data
+      - hel_staging_caddy_config:/config
+    depends_on:
+      - api
+      - web
+    networks: [staging]
+
+networks:
+  staging:
+    driver: bridge
+
+volumes:
+  hel_staging_pg:
+  hel_staging_redis:
+  hel_staging_minio:
+  hel_staging_caddy:
+  hel_staging_caddy_config:

@@ -1,0 +1,27 @@
+# HelCalaf Google AdMob IDs — for later (Android only)
+# Do NOT implement until product decisions are confirmed.
+# These IDs also appear in the shipped APK/AAB once wired — treat as public config, not secrets.
+
+App ID:
+ca-app-pub-5992352034592737~6113558720
+
+Ad unit IDs:
+ca-app-pub-5992352034592737/5667550171
+ca-app-pub-5992352034592737/8557703322
+
+Notes:
+- Platform: Android app only (not iOS, not website) unless decided otherwise.
+- Preferred format (from earlier discussion): Rewarded — confirm which unit ID is Rewarded vs other formats.
+- Keep Stripe as-is for now (no Play Billing in this request).
+- Before coding: confirm reward unlock behavior and whether backend verification is needed.
+- Play Console: set "Contains ads" = Yes when ads ship; update Data safety for AdMob / advertising ID.
+
+Created/updated: 2026-08-05
+
+ca-app-pub-5992352034592737~6113558720
+ca-app-pub-5992352034592737/5667550171
+
+
+
+ca-app-pub-5992352034592737~6113558720
+ca-app-pub-5992352034592737/8557703322

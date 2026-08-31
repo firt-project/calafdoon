@@ -1,0 +1,137 @@
+name: deploy
+
+on:
+  push:
+    branches: [main, master, "release/**", "ops/**"]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Deploy target"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run lint -w @hel/api
+      - run: npm run test:unit -w @hel/api
+      - run: npm run build -w @hel/api
+      - run: npm run typecheck -w @hel/client
+      - run: npm run lint -w @hel/client
+      - run: npm run test -w @hel/client
+      - name: Production Vite build
+        run: |
+          VITE_API_URL=https://api.example.com \
+          VITE_SOCKET_URL=https://api.example.com \
+          VITE_USE_LOCAL_DEMO=false \
+          npm run build -w @hel/client
+
+  deploy-staging:
+    needs: quality
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy staging (SSH compose)
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_COMPOSE_PATH: ${{ secrets.STAGING_COMPOSE_PATH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_SSH_HOST:-}" ] || [ -z "${STAGING_SSH_KEY:-}" ]; then
+            echo "::warning::Staging SSH secrets not configured — skipping remote deploy."
+            echo "Configure GitHub Environment 'staging' secrets per .github/workflows/README-DEPLOY.md"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$STAGING_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key \
+            "${STAGING_SSH_USER}@${STAGING_SSH_HOST}" \
+            "cd '${STAGING_COMPOSE_PATH}' && docker compose pull && docker compose up -d --build"
+
+  staging-health:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke staging health
+        env:
+          STAGING_API_BASE: ${{ secrets.STAGING_API_BASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_API_BASE:-}" ]; then
+            echo "::warning::STAGING_API_BASE not set — health smoke skipped (not a fake pass)."
+            exit 0
+          fi
+          chmod +x scripts/ops/health-smoke.sh
+          API_BASE="$STAGING_API_BASE" ./scripts/ops/health-smoke.sh
+
+  deploy-production:
+    needs: [quality, staging-health]
+    if: >
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'production') ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    runs-on: ubuntu-latest
+    # GitHub Environment "production" must enable required reviewers.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy production (SSH compose)
+        env:
+          PRODUCTION_SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PRODUCTION_SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PRODUCTION_COMPOSE_PATH: ${{ secrets.PRODUCTION_COMPOSE_PATH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_SSH_HOST:-}" ] || [ -z "${PRODUCTION_SSH_KEY:-}" ]; then
+            echo "::error::Production SSH secrets not configured. Refusing to claim deploy success."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PRODUCTION_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pre-migrate backup is an operator responsibility on the host (BACKUP_POLICY.md).
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key \
+            "${PRODUCTION_SSH_USER}@${PRODUCTION_SSH_HOST}" \
+            "cd '${PRODUCTION_COMPOSE_PATH}' && docker compose pull && docker compose up -d --build"
+
+  production-health:
+    needs: deploy-production
+    if: needs.deploy-production.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke production health
+        env:
+          PRODUCTION_API_BASE: ${{ secrets.PRODUCTION_API_BASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_API_BASE:-}" ]; then
+            echo "::error::PRODUCTION_API_BASE required after production deploy"
+            exit 1
+          fi
+          chmod +x scripts/ops/health-smoke.sh
+          API_BASE="$PRODUCTION_API_BASE" ./scripts/ops/health-smoke.sh

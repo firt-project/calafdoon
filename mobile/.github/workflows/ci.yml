@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master, "release/**", "refactor/**", "ops/**"]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run lint -w @hel/api
+      - run: npm run test:unit -w @hel/api
+      - run: npm run build -w @hel/api
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck -w @hel/client
+      - run: npm run lint -w @hel/client
+      - run: npm run test -w @hel/client
+      - name: Production Vite build
+        run: |
+          VITE_API_URL=https://api.example.com \
+          VITE_SOCKET_URL=https://api.example.com \
+          VITE_USE_LOCAL_DEMO=false \
+          npm run build -w @hel/client
+      - name: Bundle size budget
+        run: node scripts/check-bundle-budget.mjs apps/client/dist
+      - name: Release security audit
+        run: node scripts/release-security-audit.mjs .
+      - name: Reject localhost production build
+        run: |
+          if VITE_API_URL=http://127.0.0.1:4000 VITE_USE_LOCAL_DEMO=false npm run build -w @hel/client; then
+            echo "Expected production build to fail for localhost" >&2
+            exit 1
+          fi
+
+  android-verify:
+    runs-on: ubuntu-latest
+    needs: client
+    # Requires Android SDK on the runner. Fails the job only when SDK tools are present
+    # and the Gradle build fails; otherwise documents skip.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: npm ci
+      - name: Build web assets for Capacitor
+        run: |
+          VITE_API_URL=https://api.example.com \
+          VITE_SOCKET_URL=https://api.example.com \
+          VITE_USE_LOCAL_DEMO=false \
+          npm run build -w @hel/client
+      - name: Capacitor sync android
+        working-directory: apps/client
+        run: npx cap sync android
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Gradle lint + assembleDebug
+        working-directory: apps/client/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon lintDebug assembleDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: apps/client/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn

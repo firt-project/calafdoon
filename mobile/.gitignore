@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Builds
+dist/
+**/dist/
+apps/client/dist/
+apps/api/dist/
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+!.env.staging.example
+!.env.production.example
+!**/.env.example
+!**/.env.production.example
+apps/api/.env
+infra/.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs & coverage
+*.log
+npm-debug.log*
+coverage/
+test-results/
+playwright-report/
+
+# TypeScript
+*.tsbuildinfo
+
+# Local JDK for Android Gradle (Temurin 17) — do not commit
+.jdks/
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Signing / store credentials — never commit
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+google-services.json
+GoogleService-Info.plist
+apps/client/android/key.properties
+apps/client/android/app/release/
+**/local.properties
+
+# Capacitor generated (keep source projects; ignore build outputs)
+apps/client/android/app/build/
+apps/client/android/.gradle/
+apps/client/ios/App/Pods/
+apps/client/ios/App/build/
+apps/client/ios/DerivedData/
+
+# Android APK binaries (keep the public download APK so Render can serve it)
+*.apk
+!apps/api/public/download/hel-calafkaaga.apk
+!apps/api/public/download/.gitkeep
+
+# Local Play upload signing (never commit)
+apps/client/android/.signing/

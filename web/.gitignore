@@ -1,0 +1,125 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+!.env*.example
+TEL-CALAFKAAGA-1.env
+.convex-auth-keys.json
+
+# Phase 1 migration / backend local artifacts
+/migration-reports/
+/convex-exports/
+/apps/api/dist/
+/packages/migration/dist/
+/apps/api/.env
+/infra/.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+backups/
+migration-reports/
+
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+.vercel/
+
+# Builds
+dist/
+**/dist/
+apps/client/dist/
+apps/api/dist/
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+!.env.staging.example
+!.env.production.example
+!**/.env.example
+!**/.env.production.example
+apps/api/.env
+infra/.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs & coverage
+*.log
+npm-debug.log*
+coverage/
+test-results/
+playwright-report/
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Signing / store credentials — never commit
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+google-services.json
+GoogleService-Info.plist
+apps/client/android/key.properties
+apps/client/android/app/release/
+**/local.properties
+
+# Capacitor generated (keep source projects; ignore build outputs)
+apps/client/android/app/build/
+apps/client/android/.gradle/
+apps/client/ios/App/Pods/
+apps/client/ios/App/build/
+apps/client/ios/DerivedData/
+
+# Android APK binaries (keep public download APKs so Render/Vercel can serve them)
+*.apk
+!apps/api/public/download/hel-calafkaaga.apk
+!apps/api/public/download/.gitkeep
+!public/download/hel-calafkaaga.apk
+!public/download/.gitkeep

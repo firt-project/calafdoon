@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="so">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Hel Calafkaaga — Coming Soon</title>
+    <meta
+      name="description"
+      content="Hel Calafkaaga is preparing something better. We will be back soon."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #120d0e;
+        --fg: #faf5f5;
+        --muted: rgba(250, 245, 245, 0.72);
+        --primary: #a61b2b;
+        --gold: #c9a227;
+        --line: rgba(201, 162, 39, 0.75);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+        color: var(--fg);
+        background:
+          radial-gradient(ellipse 80% 60% at 15% 20%, rgba(166, 27, 43, 0.35), transparent 55%),
+          radial-gradient(ellipse 70% 50% at 90% 80%, rgba(201, 162, 39, 0.14), transparent 50%),
+          linear-gradient(165deg, #1a1012 0%, var(--bg) 45%, #0c090a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.25rem;
+      }
+
+      main {
+        width: 100%;
+        max-width: 34rem;
+        text-align: center;
+      }
+
+      .brand {
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(2.6rem, 8vw, 3.75rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+      }
+
+      .rule {
+        width: 3.5rem;
+        height: 1px;
+        margin: 1.25rem auto 0;
+        background: var(--line);
+      }
+
+      .eyebrow {
+        margin-top: 1.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+
+      h1 {
+        margin-top: 0.85rem;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(1.75rem, 5vw, 2.35rem);
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .so {
+        margin-top: 1.25rem;
+        font-size: 1.05rem;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .en {
+        margin-top: 0.75rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: rgba(250, 245, 245, 0.58);
+      }
+
+      .actions {
+        margin-top: 2.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.85rem;
+        padding: 0 1.35rem;
+        border-radius: 0.9rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+      }
+
+      a:hover {
+        transform: translateY(-1px);
+      }
+
+      .whatsapp {
+        background: #25d366;
+        color: #062012;
+      }
+
+      .whatsapp:hover {
+        background: #1ebe57;
+      }
+
+      .mail {
+        border: 1px solid rgba(250, 245, 245, 0.22);
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .mail:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      footer {
+        margin-top: 2.75rem;
+        font-size: 0.8rem;
+        color: rgba(250, 245, 245, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="brand">Hel Calafkaaga</p>
+      <div class="rule" aria-hidden="true"></div>
+      <p class="eyebrow">Coming soon</p>
+      <h1>Waxaan dib u hagaajinaynaa</h1>
+      <p class="so">
+        Website-ka waa la dayactirayaa. Fadlan dib u soo noqo dhawaan —
+        ama nala soo xiriir WhatsApp haddii aad u baahan tahay caawimaad.
+      </p>
+      <p class="en">
+        We are improving Hel Calafkaaga. Please check back soon, or contact us
+        on WhatsApp if you need help.
+      </p>
+      <div class="actions">
+        <a
+          class="whatsapp"
+          href="https://wa.me/254793692710"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          WhatsApp +254 793 692710
+        </a>
+        <a class="mail" href="mailto:support@helcalafkaaga.com">
+          support@helcalafkaaga.com
+        </a>
+      </div>
+      <footer>© <span id="y"></span> Hel Calafkaaga</footer>
+    </main>
+    <script>
+      document.getElementById("y").textContent = String(new Date().getFullYear());
+    </script>
+  </body>
+</html>

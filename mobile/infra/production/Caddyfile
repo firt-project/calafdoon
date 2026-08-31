@@ -1,0 +1,26 @@
+# Production TLS reverse proxy (Caddy)
+# Replace hostnames before deploy. Requires DNS A/AAAA records.
+
+api.helcalafkaaga.com {
+  encode gzip zstd
+  reverse_proxy api:4000
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    -Server
+  }
+}
+
+# Optional static / marketing origin if hosted here.
+# app.helcalafkaaga.com {
+#   encode gzip zstd
+#   root * /srv/app
+#   try_files {path} /index.html
+#   file_server
+#   header {
+#     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#     X-Content-Type-Options nosniff
+#     -Server
+#   }
+# }

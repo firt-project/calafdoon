@@ -1,0 +1,3 @@
+{"_id":"authAccounts|acc001aaaaaaaa","_creationTime":1700000000001,"userId":"users|user001aaaaaaaa","provider":"password","providerAccountId":"alice@example.com","secret":"3c7deae437f55f85d820d7a868cadc30:cbc30a51925a5d1560aef6d0504f45e9d7b8fc4faabc49f010ddc22b3241d342c01ea90b4182638d634559742963be5932c7b5dd3331a8cc98abae73ff6dc2e6"}
+{"_id":"authAccounts|acc002bbbbbbbb","_creationTime":1700000001001,"userId":"users|user002bbbbbbbb","provider":"password","providerAccountId":"bob@example.com","secret":"deadbeefdeadbeefdeadbeefdeadbeef:notavalidkeybecauseitmustbeexactlyonehundredtwentyeighthexcharsxxxxxxxxxxxx"}
+{"_id":"authAccounts|acc003cccccccc","_creationTime":1700000002001,"userId":"users|user003cccccccc","provider":"password","providerAccountId":"carol@example.com"}

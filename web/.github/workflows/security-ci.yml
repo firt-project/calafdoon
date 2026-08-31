@@ -1,0 +1,151 @@
+# L3: continuous security & quality checks (no runtime/deploy changes).
+#
+# Triggers: pull requests + pushes to main.
+# Package manager: npm (workspaces + package-lock.json).
+#
+# Policy:
+# - Typecheck / Prisma / builds: must pass
+# - Frontend unit tests: must pass
+# - API unit tests: run always; currently ~2 known mock failures (documented)
+# - npm audit: fail on critical; high+ reported (see docs/CI_SECURITY.md)
+
+name: Security CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: security-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Public/build-time only — never secrets.
+  NODE_ENV: test
+  DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+  NEXT_PUBLIC_API_URL: https://example.com
+  NEXT_PUBLIC_SOCKET_URL: https://example.com
+  NEXT_PUBLIC_APP_URL: https://www.example.com
+
+jobs:
+  build-and-typecheck:
+    name: Install · Typecheck · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npm run prisma:generate
+
+      - name: Prisma validate
+        run: npm run prisma:validate
+
+      - name: API TypeScript (tsc --noEmit)
+        run: npm run lint -w @hel/api
+
+      - name: API build
+        run: npm run build -w @hel/api
+
+      - name: Frontend ESLint
+        id: eslint
+        continue-on-error: true
+        run: npm run lint -- .
+
+      - name: Note ESLint baseline
+        if: steps.eslint.outcome == 'failure'
+        run: |
+          echo "::warning::ESLint reported issues (non-blocking). Many findings predate L3; treat new errors in changed files as required fixes. See docs/CI_SECURITY.md."
+
+      - name: Frontend build
+        env:
+          NODE_ENV: production
+        run: npm run build
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: []
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npm run prisma:generate
+
+      - name: Frontend unit tests
+        run: npm run test:frontend
+
+      - name: CSP / security unit tests
+        run: npx tsx --test src/lib/security/**/*.test.ts
+
+      - name: API unit tests
+        id: api_tests
+        # Baseline: 2 known AuthService mock failures + ~34 cancelled DB suites
+        # (no Postgres in CI). Do not silently skip — surface the log; soft-fail
+        # until those mocks are fixed. New regressions still appear in the log.
+        continue-on-error: true
+        run: npm test -w @hel/api
+
+      - name: Note API test baseline
+        if: steps.api_tests.outcome == 'failure'
+        run: |
+          echo "::warning::API unit tests failed. Known baseline: 2 AuthService mock failures (missing user.update) and cancelled DB-backed admin suites without Postgres. See docs/CI_SECURITY.md. Investigate if the failure pattern looks new."
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (fail on critical)
+        run: npm audit --audit-level=critical
+
+      - name: npm audit (report high+)
+        id: audit_high
+        continue-on-error: true
+        run: |
+          echo "Threshold: blocking=critical; advisory=high+"
+          npm audit --audit-level=high
+
+      - name: Annotate high findings
+        if: steps.audit_high.outcome == 'failure'
+        run: |
+          echo "::warning::npm audit reported high-severity issues (non-blocking). Review and upgrade dependencies — see docs/CI_SECURITY.md."

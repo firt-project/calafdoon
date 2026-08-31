@@ -1,0 +1,1350 @@
+// Phase 1 Prisma schema — mirrors audited Convex persistent tables.
+// Sessions, refresh tokens, verification codes, OAuth verifiers,
+// typing indicators, and rate-limit buckets are intentionally omitted.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum UserRole {
+  user
+  admin
+  owner
+}
+
+enum ReviewStatus {
+  incomplete
+  pending_review
+  approved
+  rejected
+  suspended
+  paused
+  changes_requested
+}
+
+enum AccountStatusEventType {
+  registered
+  submitted
+  approved
+  rejected
+  paused
+  resumed
+  suspended
+  unsuspended
+  banned
+  unbanned
+  deleted
+  restored
+  appeal_submitted
+  appeal_reviewed
+  verification_submitted
+  verification_approved
+  verification_rejected
+  changes_requested
+  resubmitted
+  reviewer_assigned
+  other
+}
+
+enum PhotoVisibility {
+  everyone
+  matches
+  private
+}
+
+enum LikeAction {
+  like
+  pass
+  shortlist
+}
+
+enum MatchStatus {
+  active
+  archived
+  unmatched
+}
+
+enum NotificationType {
+  like
+  match
+  message
+  announcement
+  approval
+  payment
+}
+
+enum PaymentType {
+  registration
+  registration_premium
+  premium_upgrade
+  chat
+}
+
+enum RegistrationTier {
+  basic
+  premium
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+}
+
+enum AnnouncementAudience {
+  all
+  paid
+  trial
+  unpaid
+}
+
+enum StaffInviteStatus {
+  pending
+  accepted
+  revoked
+  expired
+}
+
+enum ReportStatus {
+  open
+  reviewed
+  dismissed
+}
+
+enum ReportPriority {
+  low
+  medium
+  high
+}
+
+enum SupportTopic {
+  photo_upload
+  account
+  payment
+  other
+  contact_form
+}
+
+enum SupportSource {
+  profile
+  questionnaire
+  contact_page
+  other
+}
+
+enum SupportContactStatus {
+  open
+  reviewed
+  closed
+}
+
+enum SupportAuthorRole {
+  member
+  admin
+  visitor
+}
+
+enum MemberEmailKind {
+  reminder_profile
+  reminder_payment
+  reminder_trial_ending
+  reminder_signup_incomplete
+  request_profile_photo
+}
+
+enum EvcStatus {
+  pending
+  approved
+  rejected
+}
+
+enum MediaPurpose {
+  profile_main
+  profile_additional
+  profile_private
+  chat_image
+  evc_screenshot
+  support_attachment
+  unknown
+}
+
+enum MediaMigrationStatus {
+  pending
+  uploaded
+  verified
+  failed
+  skipped
+}
+
+enum MigrationRunStatus {
+  pending
+  running
+  completed
+  failed
+  cancelled
+}
+
+enum PasswordAlgo {
+  lucia_scrypt
+  argon2id
+  unknown
+}
+
+model User {
+  id                     String    @id @default(uuid()) @db.Uuid
+  convexId               String    @unique @map("convex_id")
+  email                  String?   @unique
+  emailNormalized        String?   @unique @map("email_normalized")
+  name                   String?
+  image                  String?
+  phone                  String?
+  emailVerificationTime  DateTime? @map("email_verification_time")
+  phoneVerificationTime  DateTime? @map("phone_verification_time")
+  isAnonymous            Boolean?  @map("is_anonymous")
+  gender                 Gender?
+  mustResetPassword      Boolean   @default(false) @map("must_reset_password")
+  /// L4: TOTP MFA for staff (admin/owner). Secret stored encrypted at rest.
+  mfaEnabled             Boolean   @default(false) @map("mfa_enabled")
+  mfaSecretEncrypted     String?   @map("mfa_secret_encrypted")
+  /// Pending secret during enrollment (cleared on confirm or cancel).
+  mfaPendingSecretEncrypted String? @map("mfa_pending_secret_encrypted")
+  mfaEnabledAt           DateTime? @map("mfa_enabled_at")
+  /// Last accepted TOTP time-step (replay protection).
+  mfaLastStep            BigInt?   @map("mfa_last_step")
+  convexCreatedAt        DateTime? @map("convex_created_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  lastLoginAt            DateTime? @map("last_login_at")
+  lastActiveAt           DateTime? @map("last_active_at")
+  deletedAt              DateTime? @map("deleted_at")
+  restoredAt             DateTime? @map("restored_at")
+
+  authAccounts       AuthAccount[]
+  profile            Profile?
+  accountStatusEvents AccountStatusHistory[] @relation("AccountStatusSubject")
+  accountStatusPerformed AccountStatusHistory[] @relation("AccountStatusActor")
+  accountAppeals     AccountAppeal[] @relation("AppealSubject")
+  accountAppealsReviewed AccountAppeal[] @relation("AppealReviewer")
+  preferences        Preference?
+  uploads            UserUpload[]
+  likesSent          Like[]            @relation("LikesSent")
+  likesReceived      Like[]            @relation("LikesReceived")
+  matchesAsA         Match[]           @relation("MatchUserA")
+  matchesAsB         Match[]           @relation("MatchUserB")
+  messagesSent       Message[]
+  notifications      Notification[]
+  payments           Payment[]
+  announcementsCreated Announcement[]  @relation("AnnouncementCreator")
+  staffInvitesSent   StaffInvite[]     @relation("StaffInviteSender")
+  staffInvitesAccepted StaffInvite[]   @relation("StaffInviteAccepter")
+  blocksCreated      Block[]           @relation("Blocker")
+  blocksReceived     Block[]           @relation("Blocked")
+  reportsFiled       Report[]          @relation("Reporter")
+  reportsReceived    Report[]          @relation("Reported")
+  reportsReviewed    Report[]          @relation("ReportReviewer")
+  supportContacts    SupportContact[]
+  supportMessages    SupportMessage[]
+  supportReviewed    SupportContact[]  @relation("SupportReviewer")
+  memberEmailLogs    MemberEmailLog[]
+  auditLogsAsActor   AuditLog[]        @relation("AuditActor")
+  auditLogsAsTarget  AuditLog[]        @relation("AuditTargetUser")
+  evcProofs          EvcPaymentProof[]
+  evcReviewed        EvcPaymentProof[] @relation("EvcReviewer")
+  mediaObjects       MediaObject[]
+  scoresAsA          CompatibilityScore[] @relation("ScoreUserA")
+  scoresAsB          CompatibilityScore[] @relation("ScoreUserB")
+  sessions           Session[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  authAuditEvents    AuthAuditEvent[]
+  photoRevealsViewed PhotoReveal[] @relation("PhotoRevealViewer")
+  photoRevealsOwned  PhotoReveal[] @relation("PhotoRevealOwner")
+  profileAuditEvents ProfileAuditEvent[]
+  mfaRecoveryCodes   MfaRecoveryCode[]
+  mfaLoginChallenges MfaLoginChallenge[]
+
+  @@map("users")
+}
+
+model AuthAccount {
+  id                   String       @id @default(uuid()) @db.Uuid
+  convexId             String       @unique @map("convex_id")
+  userId               String       @map("user_id") @db.Uuid
+  convexUserId         String       @map("convex_user_id")
+  provider             String
+  providerAccountId    String       @map("provider_account_id")
+  /// Lucia Scrypt hash (saltHex:keyHex). Never log this field.
+  passwordHash         String?      @map("password_hash")
+  passwordAlgo         PasswordAlgo @default(lucia_scrypt) @map("password_algo")
+  emailVerified        Boolean?     @map("email_verified")
+  phoneVerified        Boolean?     @map("phone_verified")
+  convexCreatedAt      DateTime?    @map("convex_created_at")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([convexUserId])
+  @@map("auth_accounts")
+}
+
+model Profile {
+  id                         String           @id @default(uuid()) @db.Uuid
+  convexId                   String           @unique @map("convex_id")
+  userId                     String           @unique @map("user_id") @db.Uuid
+  convexUserId               String           @map("convex_user_id")
+  name                       String
+  gender                     Gender
+  age                        Int
+  height                     Int
+  weight                     Int
+  country                    String
+  city                       String
+  locationLat                Float?           @map("location_lat")
+  locationLng                Float?           @map("location_lng")
+  locationAccuracyM          Float?           @map("location_accuracy_m")
+  locationVerifiedAt         DateTime?        @map("location_verified_at")
+  education                  String
+  occupation                 String
+  religiousLevel             String           @map("religious_level")
+  maritalStatus              String           @map("marital_status")
+  children                   Int
+  bio                        String
+  profileImageConvexId       String?          @map("profile_image_convex_id")
+  profileImageMediaId        String?          @map("profile_image_media_id") @db.Uuid
+  verified                   Boolean
+  role                       UserRole
+  phone                      String?
+  prayerFrequency            String           @map("prayer_frequency")
+  spousePrayerImportance     String?          @map("spouse_prayer_importance")
+  wearsHijab                 Boolean?         @map("wears_hijab")
+  hasBeard                   Boolean?         @map("has_beard")
+  smokes                     String
+  substanceDetails           String?          @map("substance_details")
+  drinksAlcohol              String           @map("drinks_alcohol")
+  exercise                   String
+  wantChildren               String           @map("want_children")
+  familyInvolvement          String?          @map("family_involvement")
+  livingSituation            String?          @map("living_situation")
+  madhhab                    String?
+  polygynyOpenness           String?          @map("polygyny_openness")
+  hasCurrentWife             String?          @map("has_current_wife")
+  openToSecondWife           String?          @map("open_to_second_wife")
+  acceptManWithWife          String?          @map("accept_man_with_wife")
+  acceptPreviouslyMarriedMan String?          @map("accept_previously_married_man")
+  acceptFutureCoWife         String?          @map("accept_future_co_wife")
+  languagesSpoken            String[]         @default([]) @map("languages_spoken")
+  citizenshipStatus          String?          @map("citizenship_status")
+  financialReadiness         String?          @map("financial_readiness")
+  marriageWorkPreference     String?          @map("marriage_work_preference")
+  marriageTimeline           String           @map("marriage_timeline")
+  readyToRelocate            String?          @map("ready_to_relocate")
+  loveLanguage               String?          @map("love_language")
+  marrySomeoneWithChildren   String           @map("marry_someone_with_children")
+  qualities                  String[]         @default([])
+  hobbies                    String[]         @default([])
+  questionnaireComplete      Boolean          @map("questionnaire_complete")
+  questionnaireStep          Int?             @map("questionnaire_step")
+  lastSavedAt                DateTime?        @map("last_saved_at")
+  registrationComplete       Boolean?         @map("registration_complete")
+  hasPaid                    Boolean          @map("has_paid")
+  /// When set, paid access ends at this time (Waafi/EVC 30-day periods). Null = no period lock (e.g. Stripe subscription / legacy).
+  paidUntil                  DateTime?        @map("paid_until")
+  genderLocked               Boolean?         @map("gender_locked")
+  trialEndsAt                DateTime?        @map("trial_ends_at")
+  hasPersonalSupport         Boolean?         @map("has_personal_support")
+  advisorReviewed            Boolean?         @map("advisor_reviewed")
+  additionalImageConvexIds   String[]         @default([]) @map("additional_image_convex_ids")
+  /// Nest-era additional photo media UUIDs (ordered). Migrated photos resolve via convex IDs.
+  additionalImageMediaIds    String[]         @default([]) @map("additional_image_media_ids")
+  privateImageConvexIds      String[]         @default([]) @map("private_image_convex_ids")
+  privateImageMediaIds       String[]         @default([]) @map("private_image_media_ids")
+  waliName                   String?          @map("wali_name")
+  waliPhone                  String?          @map("wali_phone")
+  banned                     Boolean
+  approved                   Boolean
+  reviewStatus               ReviewStatus?    @map("review_status")
+  /// Status to restore after unban (saved before ban).
+  statusBeforeBan            ReviewStatus?    @map("status_before_ban")
+  /// Status to restore after resume (saved before pause).
+  statusBeforePause          ReviewStatus?    @map("status_before_pause")
+  /// Status to restore after unsuspend (saved before timed suspension).
+  statusBeforeSuspend        ReviewStatus?    @map("status_before_suspend")
+  approvedAt                 DateTime?        @map("approved_at")
+  rejectedAt                 DateTime?        @map("rejected_at")
+  pausedAt                   DateTime?        @map("paused_at")
+  resumedAt                  DateTime?        @map("resumed_at")
+  suspendedAt                DateTime?        @map("suspended_at")
+  suspensionExpiresAt        DateTime?        @map("suspension_expires_at")
+  bannedAt                   DateTime?        @map("banned_at")
+  unbannedAt                 DateTime?        @map("unbanned_at")
+  submittedAt                DateTime?        @map("submitted_at")
+  statusChangedAt            DateTime?        @map("status_changed_at")
+  verificationSubmittedAt    DateTime?        @map("verification_submitted_at")
+  verificationReviewedAt     DateTime?        @map("verification_reviewed_at")
+  assignedReviewerId         String?          @map("assigned_reviewer_id") @db.Uuid
+  assignedReviewerAt         DateTime?        @map("assigned_reviewer_at")
+  reviewStartedAt            DateTime?        @map("review_started_at")
+  reviewCompletedAt          DateTime?        @map("review_completed_at")
+  changesRequestedAt         DateTime?        @map("changes_requested_at")
+  changesDeadlineAt          DateTime?        @map("changes_deadline_at")
+  resubmittedAt              DateTime?        @map("resubmitted_at")
+  allowResubmission          Boolean?         @map("allow_resubmission")
+  photoVisibility            PhotoVisibility? @map("photo_visibility")
+  convexCreatedAt            DateTime?        @map("convex_created_at")
+  createdAt                  DateTime         @default(now()) @map("created_at")
+  updatedAt                  DateTime         @updatedAt @map("updated_at")
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  auditTargets   AuditLog[]        @relation("AuditTargetProfile")
+  evcProofs      EvcPaymentProof[]
+  profileAudits  ProfileAuditEvent[]
+  accountStatusEvents AccountStatusHistory[]
+  accountAppeals AccountAppeal[]
+
+  @@index([gender])
+  @@index([country])
+  @@index([approved])
+  @@index([reviewStatus])
+  @@index([role])
+  @@index([convexUserId])
+  @@index([approvedAt])
+  @@index([bannedAt])
+  @@index([statusChangedAt])
+  @@index([submittedAt])
+  @@index([assignedReviewerId])
+  @@index([changesRequestedAt])
+  @@map("profiles")
+}
+
+/// Append-only account status history. Never update or delete rows in app code.
+model AccountStatusHistory {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  userId              String                  @map("user_id") @db.Uuid
+  profileId           String?                 @map("profile_id") @db.Uuid
+  eventType           AccountStatusEventType  @map("event_type")
+  previousStatus      ReviewStatus?           @map("previous_status")
+  newStatus           ReviewStatus?           @map("new_status")
+  reason              String?
+  internalAdminNote   String?                 @map("internal_admin_note")
+  publicUserMessage   String?                 @map("public_user_message")
+  performedByAdminId  String?                 @map("performed_by_admin_id") @db.Uuid
+  performedByAdminName String?                @map("performed_by_admin_name")
+  metadata            Json?
+  /// Always UTC.
+  createdAt           DateTime                @default(now()) @map("created_at")
+
+  user    User     @relation("AccountStatusSubject", fields: [userId], references: [id], onDelete: Restrict)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  admin   User?    @relation("AccountStatusActor", fields: [performedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([createdAt])
+  @@map("account_status_history")
+}
+
+model AccountAppeal {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  profileId       String    @map("profile_id") @db.Uuid
+  status          String    @default("pending") // pending | approved | rejected
+  message         String
+  adminResponse   String?   @map("admin_response")
+  reviewedById    String?   @map("reviewed_by_id") @db.Uuid
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user     User    @relation("AppealSubject", fields: [userId], references: [id], onDelete: Restrict)
+  profile  Profile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  reviewer User?   @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, submittedAt])
+  @@index([status, submittedAt])
+  @@map("account_appeals")
+}
+
+model Preference {
+  id                 String   @id @default(uuid()) @db.Uuid
+  convexId           String   @unique @map("convex_id")
+  userId             String   @unique @map("user_id") @db.Uuid
+  convexUserId       String   @map("convex_user_id")
+  preferredGender    Gender   @map("preferred_gender")
+  minAge             Int      @map("min_age")
+  maxAge             Int      @map("max_age")
+  minHeight          Int      @map("min_height")
+  maxHeight          Int      @map("max_height")
+  minWeight          Int      @default(45) @map("min_weight")
+  maxWeight          Int      @default(150) @map("max_weight")
+  preferredCountries String[] @default([]) @map("preferred_countries")
+  acceptChildren     String   @map("accept_children")
+  educationLevel     String   @map("education_level")
+  religiousLevel     String?  @map("religious_level")
+  acceptDivorcee     String   @map("accept_divorcee")
+  acceptWidow        String   @map("accept_widow")
+  maxDistance        String?  @map("max_distance")
+  qualities          String[] @default([])
+  hobbies            String[] @default([])
+  partnerBeard       String?  @map("partner_beard")
+  partnerHijabLevel  String?  @map("partner_hijab_level")
+  readyToRelocate    String?  @map("ready_to_relocate")
+  convexCreatedAt    DateTime? @map("convex_created_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([convexUserId])
+  @@map("preferences")
+}
+
+model CompatibilityScore {
+  id               String    @id @default(uuid()) @db.Uuid
+  convexId         String    @unique @map("convex_id")
+  userAId          String    @map("user_a_id") @db.Uuid
+  userBId          String    @map("user_b_id") @db.Uuid
+  convexUserA      String    @map("convex_user_a")
+  convexUserB      String    @map("convex_user_b")
+  score            Float
+  scoreVersion     Int       @default(1) @map("score_version")
+  lastCalculatedAt DateTime? @map("last_calculated_at")
+  convexCreatedAt  DateTime? @map("convex_created_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  userA User @relation("ScoreUserA", fields: [userAId], references: [id], onDelete: Restrict)
+  userB User @relation("ScoreUserB", fields: [userBId], references: [id], onDelete: Restrict)
+
+  @@unique([userAId, userBId])
+  @@index([userAId, score])
+  @@index([userBId, score])
+  @@index([scoreVersion])
+  @@map("compatibility_scores")
+}
+
+model Like {
+  id               String     @id @default(uuid()) @db.Uuid
+  convexId         String     @unique @map("convex_id")
+  fromUserId       String     @map("from_user_id") @db.Uuid
+  toUserId         String     @map("to_user_id") @db.Uuid
+  convexFromUserId String     @map("convex_from_user_id")
+  convexToUserId   String     @map("convex_to_user_id")
+  action           LikeAction
+  convexCreatedAt  DateTime?  @map("convex_created_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  fromUser User @relation("LikesSent", fields: [fromUserId], references: [id], onDelete: Restrict)
+  toUser   User @relation("LikesReceived", fields: [toUserId], references: [id], onDelete: Restrict)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId])
+  @@index([fromUserId, action])
+  @@index([toUserId, action])
+  @@map("likes")
+}
+
+model Match {
+  id              String      @id @default(uuid()) @db.Uuid
+  convexId        String      @unique @map("convex_id")
+  /// Deterministic unordered pair: min(uuid):max(uuid)
+  pairKey         String      @unique @map("pair_key")
+  userAId         String      @map("user_a_id") @db.Uuid
+  userBId         String      @map("user_b_id") @db.Uuid
+  convexUserA     String      @map("convex_user_a")
+  convexUserB     String      @map("convex_user_b")
+  score           Float
+  status          MatchStatus
+  chatUnlocked    Boolean     @map("chat_unlocked")
+  seenAtByUser    Json?       @map("seen_at_by_user")
+  archivedAt      DateTime?   @map("archived_at")
+  convexCreatedAt DateTime?   @map("convex_created_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  userA        User          @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Restrict)
+  userB        User          @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Restrict)
+  conversation Conversation?
+  payments     Payment[]
+  photoReveals PhotoReveal[]
+
+  @@unique([userAId, userBId])
+  @@index([userAId, status])
+  @@index([userBId, status])
+  @@index([status, archivedAt])
+  @@map("matches")
+}
+
+/**
+ * One-time private photo unlock within an active mutual match.
+ * Viewer spends a reveal credit to permanently unlock one private photo
+ * for that match (while the match stays active).
+ */
+model PhotoReveal {
+  id           String   @id @default(uuid()) @db.Uuid
+  matchId      String   @map("match_id") @db.Uuid
+  viewerUserId String   @map("viewer_user_id") @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  mediaId      String   @map("media_id") @db.Uuid
+  revealedAt   DateTime @default(now()) @map("revealed_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  match  Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  viewer User  @relation("PhotoRevealViewer", fields: [viewerUserId], references: [id], onDelete: Restrict)
+  owner  User  @relation("PhotoRevealOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+
+  @@unique([matchId, viewerUserId, mediaId])
+  @@index([matchId, viewerUserId])
+  @@index([ownerUserId])
+  @@map("photo_reveals")
+}
+
+model Conversation {
+  id                   String   @id @default(uuid()) @db.Uuid
+  convexId             String   @unique @map("convex_id")
+  matchId              String   @unique @map("match_id") @db.Uuid
+  convexMatchId        String   @map("convex_match_id")
+  participantConvexIds String[] @default([]) @map("participant_convex_ids")
+  /// Postgres user UUIDs for authorization (backfilled from match).
+  participantUserIds   String[] @default([]) @map("participant_user_ids")
+  lastMessageAt        DateTime @map("last_message_at")
+  unreadByUser         Json?    @map("unread_by_user")
+  /// Daily photo streak (both partners send a chat photo on the same UTC day).
+  streakCount          Int      @default(0) @map("streak_count")
+  longestStreak        Int      @default(0) @map("longest_streak")
+  streakLastDay        String?  @map("streak_last_day")
+  streakPendingDay     String?  @map("streak_pending_day")
+  streakPendingUserIds Json?    @map("streak_pending_user_ids")
+  convexCreatedAt      DateTime? @map("convex_created_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  match    Match     @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  messages Message[]
+
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id                   String   @id @default(uuid()) @db.Uuid
+  convexId             String   @unique @map("convex_id")
+  conversationId       String   @map("conversation_id") @db.Uuid
+  convexConversationId String   @map("convex_conversation_id")
+  senderId             String   @map("sender_id") @db.Uuid
+  convexSenderId       String   @map("convex_sender_id")
+  body                 String
+  imageConvexId        String?  @map("image_convex_id")
+  imageMediaId         String?  @map("image_media_id") @db.Uuid
+  /// Client/retry idempotency — unique per conversation when present.
+  idempotencyKey       String?  @map("idempotency_key")
+  read                 Boolean
+  messageCreatedAt     DateTime @map("message_created_at")
+  convexCreatedAt      DateTime? @map("convex_created_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@unique([conversationId, idempotencyKey])
+  @@index([conversationId, messageCreatedAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Notification {
+  id                    String           @id @default(uuid()) @db.Uuid
+  convexId              String           @unique @map("convex_id")
+  userId                String           @map("user_id") @db.Uuid
+  convexUserId          String           @map("convex_user_id")
+  type                  NotificationType
+  title                 String
+  body                  String
+  read                  Boolean
+  relatedUserId         String?          @map("related_user_id") @db.Uuid
+  convexRelatedUserId   String?          @map("convex_related_user_id")
+  /// Dedup key for retried side-effects (e.g. message:{messageId}).
+  sourceKey             String?          @unique @map("source_key")
+  notificationCreatedAt DateTime         @map("notification_created_at")
+  convexCreatedAt       DateTime?        @map("convex_created_at")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, notificationCreatedAt])
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model Payment {
+  id                 String            @id @default(uuid()) @db.Uuid
+  convexId           String            @unique @map("convex_id")
+  userId             String            @map("user_id") @db.Uuid
+  convexUserId       String            @map("convex_user_id")
+  stripeSessionId    String            @unique @map("stripe_session_id")
+  amount             Int
+  paymentType        PaymentType?      @map("payment_type")
+  registrationTier   RegistrationTier? @map("registration_tier")
+  matchId            String?           @map("match_id") @db.Uuid
+  convexMatchId      String?           @map("convex_match_id")
+  status             PaymentStatus
+  /// When fulfillment completed (Stripe webhook/verify or EVC approve).
+  fulfilledAt        DateTime?         @map("fulfilled_at")
+  /// Idempotency key for grant path: stripe:{sessionId} | evc:{proofId}
+  fulfillmentKey     String?           @unique @map("fulfillment_key")
+  paymentCreatedAt   DateTime          @map("payment_created_at")
+  convexCreatedAt    DateTime?         @map("convex_created_at")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  match Match? @relation(fields: [matchId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([status, paymentCreatedAt])
+  @@map("payments")
+}
+
+model Announcement {
+  id              String                 @id @default(uuid()) @db.Uuid
+  convexId        String                 @unique @map("convex_id")
+  title           String
+  body            String
+  announcementCreatedAt DateTime         @map("announcement_created_at")
+  createdById     String                 @map("created_by_id") @db.Uuid
+  convexCreatedBy String                 @map("convex_created_by")
+  scheduledFor    DateTime?              @map("scheduled_for")
+  sentAt          DateTime?              @map("sent_at")
+  audience        AnnouncementAudience?
+  convexCreatedAt DateTime?              @map("convex_created_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  createdBy User @relation("AnnouncementCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@map("announcements")
+}
+
+model UserUpload {
+  id               String   @id @default(uuid()) @db.Uuid
+  convexId         String   @unique @map("convex_id")
+  userId           String   @map("user_id") @db.Uuid
+  convexUserId     String   @map("convex_user_id")
+  convexStorageId  String   @unique @map("convex_storage_id")
+  mediaObjectId    String?  @map("media_object_id") @db.Uuid
+  uploadedAt       DateTime @map("uploaded_at")
+  convexCreatedAt  DateTime? @map("convex_created_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  mediaObject MediaObject? @relation(fields: [mediaObjectId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@map("user_uploads")
+}
+
+model StaffInvite {
+  id                   String            @id @default(uuid()) @db.Uuid
+  convexId             String            @unique @map("convex_id")
+  email                String
+  /// Migrated Convex invites keep plaintext token for lookup; new Nest invites prefer tokenHash.
+  token                String            @unique
+  /// SHA-256 hex of invite token (new invites). Null for migrated plaintext-only rows.
+  tokenHash            String?           @unique @map("token_hash")
+  role                 UserRole          @default(admin)
+  invitedById          String            @map("invited_by_id") @db.Uuid
+  convexInvitedBy      String            @map("convex_invited_by")
+  status               StaffInviteStatus
+  inviteCreatedAt      DateTime          @map("invite_created_at")
+  expiresAt            DateTime          @map("expires_at")
+  acceptedAt           DateTime?         @map("accepted_at")
+  acceptedByUserId     String?           @map("accepted_by_user_id") @db.Uuid
+  convexAcceptedByUserId String?         @map("convex_accepted_by_user_id")
+  convexCreatedAt      DateTime?         @map("convex_created_at")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  invitedBy  User  @relation("StaffInviteSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  acceptedBy User? @relation("StaffInviteAccepter", fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([email])
+  @@index([status])
+  @@map("staff_invites")
+}
+
+model Block {
+  id                String   @id @default(uuid()) @db.Uuid
+  convexId          String   @unique @map("convex_id")
+  blockerId         String   @map("blocker_id") @db.Uuid
+  blockedId         String   @map("blocked_id") @db.Uuid
+  convexBlockerId   String   @map("convex_blocker_id")
+  convexBlockedId   String   @map("convex_blocked_id")
+  blockedAt         DateTime @map("blocked_at")
+  convexCreatedAt   DateTime? @map("convex_created_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Restrict)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Restrict)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+model Report {
+  id                  String          @id @default(uuid()) @db.Uuid
+  convexId            String          @unique @map("convex_id")
+  reporterId          String          @map("reporter_id") @db.Uuid
+  reportedUserId      String          @map("reported_user_id") @db.Uuid
+  convexReporterId    String          @map("convex_reporter_id")
+  convexReportedUserId String         @map("convex_reported_user_id")
+  reason              String
+  details             String?
+  status              ReportStatus
+  priority            ReportPriority?
+  adminNotes          String?         @map("admin_notes")
+  resolution          String?
+  reportCreatedAt     DateTime        @map("report_created_at")
+  reviewedAt          DateTime?       @map("reviewed_at")
+  reviewedById        String?         @map("reviewed_by_id") @db.Uuid
+  convexReviewedBy    String?         @map("convex_reviewed_by")
+  convexCreatedAt     DateTime?       @map("convex_created_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  reporter     User  @relation("Reporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  reportedUser User  @relation("Reported", fields: [reportedUserId], references: [id], onDelete: Restrict)
+  reviewedBy   User? @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([reporterId, reportedUserId])
+  @@map("reports")
+}
+
+model SupportContact {
+  id               String               @id @default(uuid()) @db.Uuid
+  convexId         String               @unique @map("convex_id")
+  userId           String?              @map("user_id") @db.Uuid
+  convexUserId     String?              @map("convex_user_id")
+  name             String
+  email            String?
+  phone            String?
+  topic            SupportTopic
+  subject          String
+  message          String
+  imageConvexId    String?              @map("image_convex_id")
+  imageMediaId     String?              @map("image_media_id") @db.Uuid
+  source           SupportSource
+  status           SupportContactStatus
+  adminNotes       String?              @map("admin_notes")
+  contactCreatedAt DateTime             @map("contact_created_at")
+  reviewedAt       DateTime?            @map("reviewed_at")
+  reviewedById     String?              @map("reviewed_by_id") @db.Uuid
+  convexReviewedBy String?              @map("convex_reviewed_by")
+  convexCreatedAt  DateTime?            @map("convex_created_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  user     User?            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  reviewedBy User?          @relation("SupportReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  messages SupportMessage[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([contactCreatedAt])
+  @@map("support_contacts")
+}
+
+model SupportMessage {
+  id                String            @id @default(uuid()) @db.Uuid
+  convexId          String            @unique @map("convex_id")
+  contactId         String            @map("contact_id") @db.Uuid
+  convexContactId   String            @map("convex_contact_id")
+  authorUserId      String?           @map("author_user_id") @db.Uuid
+  convexAuthorUserId String?          @map("convex_author_user_id")
+  authorRole        SupportAuthorRole @map("author_role")
+  body              String
+  messageCreatedAt  DateTime          @map("message_created_at")
+  convexCreatedAt   DateTime?         @map("convex_created_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  contact SupportContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  author  User?          @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([contactId])
+  @@map("support_messages")
+}
+
+model MemberEmailLog {
+  id              String          @id @default(uuid()) @db.Uuid
+  convexId        String          @unique @map("convex_id")
+  userId          String          @map("user_id") @db.Uuid
+  convexUserId    String          @map("convex_user_id")
+  kind            MemberEmailKind
+  sentAt          DateTime        @map("sent_at")
+  convexCreatedAt DateTime?       @map("convex_created_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, kind])
+  @@map("member_email_logs")
+}
+
+model SiteMetrics {
+  id                 String   @id @default(uuid()) @db.Uuid
+  convexId           String   @unique @map("convex_id")
+  key                String   @unique @default("global")
+  totalUsers         Int      @map("total_users")
+  maleUsers          Int      @map("male_users")
+  femaleUsers        Int      @map("female_users")
+  approvedMale       Int      @map("approved_male")
+  approvedFemale     Int      @map("approved_female")
+  approvedTotal      Int      @map("approved_total")
+  paidBasicMembers   Int      @map("paid_basic_members")
+  freeBasicWomen     Int      @map("free_basic_women")
+  paidPremiumCount   Int      @map("paid_premium_count")
+  unpaidCount        Int      @map("unpaid_count")
+  trialCount         Int      @map("trial_count")
+  pendingApproval    Int      @map("pending_approval")
+  bannedUsers        Int      @map("banned_users")
+  paidMembers        Int      @map("paid_members")
+  memberCount        Int      @map("member_count")
+  completeMembers    Int      @map("complete_members")
+  trialMembers       Int      @map("trial_members")
+  genderBreakdown    Json     @map("gender_breakdown")
+  reviewBreakdown    Json     @map("review_breakdown")
+  countryBreakdown   Json     @map("country_breakdown")
+  monthlySignups     Json     @map("monthly_signups")
+  metricsUpdatedAt   DateTime @map("metrics_updated_at")
+  rebuildScheduledAt DateTime? @map("rebuild_scheduled_at")
+  convexCreatedAt    DateTime? @map("convex_created_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("site_metrics")
+}
+
+model AuditLog {
+  id                 String   @id @default(uuid()) @db.Uuid
+  convexId           String   @unique @map("convex_id")
+  actorUserId        String   @map("actor_user_id") @db.Uuid
+  convexActorUserId  String   @map("convex_actor_user_id")
+  action             String
+  targetUserId       String?  @map("target_user_id") @db.Uuid
+  convexTargetUserId String?  @map("convex_target_user_id")
+  targetProfileId    String?  @map("target_profile_id") @db.Uuid
+  convexTargetProfileId String? @map("convex_target_profile_id")
+  metadata           String?
+  correlationId      String?  @map("correlation_id")
+  requestId          String?  @map("request_id")
+  loggedAt           DateTime @map("logged_at")
+  convexCreatedAt    DateTime? @map("convex_created_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  actor         User     @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  targetUser    User?    @relation("AuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  targetProfile Profile? @relation("AuditTargetProfile", fields: [targetProfileId], references: [id], onDelete: SetNull)
+
+  @@index([loggedAt])
+  @@index([actorUserId])
+  @@index([targetUserId])
+  @@index([action, loggedAt])
+  @@map("audit_logs")
+}
+
+/// Phase 9: dry-run / execute plans for member account deletion.
+model DeletionJob {
+  id              String    @id @default(uuid()) @db.Uuid
+  targetUserId    String?   @map("target_user_id") @db.Uuid
+  targetProfileId String?   @map("target_profile_id") @db.Uuid
+  actorUserId     String    @map("actor_user_id") @db.Uuid
+  mode            String // dry_run | execute
+  status          String // pending | completed | failed
+  planJson        Json      @map("plan_json")
+  resultJson      Json?     @map("result_json")
+  correlationId   String?   @map("correlation_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  @@index([actorUserId, createdAt])
+  @@index([status, createdAt])
+  @@map("deletion_jobs")
+}
+
+/// Media detached from deleted members — not physically purged in tests.
+model OrphanedMediaObject {
+  id            String    @id @default(uuid()) @db.Uuid
+  mediaObjectId String    @map("media_object_id") @db.Uuid
+  reason        String
+  deletionJobId String?   @map("deletion_job_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at")
+  purgedAt      DateTime? @map("purged_at")
+
+  @@index([mediaObjectId])
+  @@index([deletionJobId])
+  @@map("orphaned_media_objects")
+}
+
+model EvcPaymentProof {
+  id                 String            @id @default(uuid()) @db.Uuid
+  convexId           String            @unique @map("convex_id")
+  userId             String            @map("user_id") @db.Uuid
+  profileId          String            @map("profile_id") @db.Uuid
+  convexUserId       String            @map("convex_user_id")
+  convexProfileId    String            @map("convex_profile_id")
+  tier               RegistrationTier
+  payerFullName      String            @map("payer_full_name")
+  lastFourDigits     String            @map("last_four_digits")
+  screenshotConvexId String            @map("screenshot_convex_id")
+  screenshotMediaId  String?           @map("screenshot_media_id") @db.Uuid
+  amountCents        Int               @map("amount_cents")
+  status             EvcStatus
+  proofCreatedAt     DateTime          @map("proof_created_at")
+  reviewedAt         DateTime?         @map("reviewed_at")
+  reviewedById       String?           @map("reviewed_by_id") @db.Uuid
+  convexReviewedBy   String?           @map("convex_reviewed_by")
+  rejectionReason    String?           @map("rejection_reason")
+  convexCreatedAt    DateTime?         @map("convex_created_at")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  reviewedBy User?    @relation("EvcReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([status, proofCreatedAt])
+  @@map("evc_payment_proofs")
+}
+
+model MediaObject {
+  id                   String                @id @default(uuid()) @db.Uuid
+  convexStorageId      String                @unique @map("convex_storage_id")
+  purpose              MediaPurpose          @default(unknown)
+  bucket               String?               @map("bucket")
+  /// Deterministic key: `{convexStorageId}.{ext}` within the purpose bucket.
+  objectKey            String?               @map("object_key")
+  contentType          String?               @map("content_type")
+  sizeBytes            BigInt?               @map("size_bytes")
+  checksumSha256       String?               @map("checksum_sha256")
+  ownerUserId          String?               @map("owner_user_id") @db.Uuid
+  /// Convex user id when owner is known from export refs; null if unresolved.
+  convexOwnerUserId    String?               @map("convex_owner_user_id")
+  migrationStatus      MediaMigrationStatus  @default(pending) @map("migration_status")
+  /// Primary source table that determined purpose (profiles, messages, …).
+  sourceTable          String?               @map("source_table")
+  sourceRecordConvexId String?               @map("source_record_convex_id")
+  /// All known references: [{table,recordId,field,purpose,ownerConvexUserId}]
+  sourceRefs           Json?                 @map("source_refs")
+  migratedAt           DateTime?             @map("migrated_at")
+  failureReason        String?               @map("failure_reason")
+  verifiedReadable     Boolean               @default(false) @map("verified_readable")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+
+  owner   User?        @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  uploads UserUpload[]
+
+  @@unique([bucket, objectKey])
+  @@index([purpose])
+  @@index([migrationStatus])
+  @@index([ownerUserId])
+  @@map("media_objects")
+}
+
+model MigrationRun {
+  id                 String             @id @default(uuid()) @db.Uuid
+  sourceExportPath   String             @map("source_export_path")
+  sourceExportHash   String             @map("source_export_hash")
+  startedAt          DateTime           @default(now()) @map("started_at")
+  completedAt        DateTime?          @map("completed_at")
+  status             MigrationRunStatus @default(pending)
+  dryRun             Boolean            @default(false) @map("dry_run")
+  tableCounts        Json?              @map("table_counts")
+  insertedCounts     Json?              @map("inserted_counts")
+  updatedCounts      Json?              @map("updated_counts")
+  skippedCounts      Json?              @map("skipped_counts")
+  failureCounts      Json?              @map("failure_counts")
+  orphanCounts       Json?              @map("orphan_counts")
+  fileCounts         Json?              @map("file_counts")
+  validationResult   Json?              @map("validation_result")
+  notes              String?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  failures MigrationFailure[]
+
+  @@index([startedAt])
+  @@map("migration_runs")
+}
+
+model MigrationFailure {
+  id             String   @id @default(uuid()) @db.Uuid
+  runId          String   @map("run_id") @db.Uuid
+  tableName      String   @map("table_name")
+  convexId       String?  @map("convex_id")
+  reasonCode     String   @map("reason_code")
+  /// Safe, redacted detail — never store secrets or full hashes.
+  safeDetail     String?  @map("safe_detail")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  run MigrationRun @relation(fields: [runId], references: [id], onDelete: Restrict)
+
+  @@index([runId])
+  @@index([tableName])
+  @@map("migration_failures")
+}
+
+// ─── Phase 4: local Nest auth (sessions / reset / audit) ───
+
+enum AuthAuditAction {
+  login_success
+  login_failure
+  logout
+  logout_all
+  password_change
+  password_reset_request
+  password_reset_success
+  password_reset_failure
+  session_revoked
+  rehash_success
+  rehash_failure
+  register_success
+  register_failed
+  email_verification_sent
+  email_verification_send_failed
+  email_verification_success
+  email_verification_failure
+  email_verification_resend
+  mfa_enroll_start
+  mfa_enroll_confirm
+  mfa_enroll_cancel
+  mfa_disable
+  mfa_login_challenge
+  mfa_login_success
+  mfa_login_failure
+  mfa_recovery_used
+  mfa_recovery_regen
+  mfa_admin_reset
+}
+
+model Session {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  /// SHA-256 hex of the raw session token (never store raw token).
+  tokenHash          String    @unique @map("token_hash")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  lastSeenAt         DateTime  @default(now()) @map("last_seen_at")
+  expiresAt          DateTime  @map("expires_at")
+  absoluteExpiresAt  DateTime  @map("absolute_expires_at")
+  revokedAt          DateTime? @map("revoked_at")
+  /// HMAC/SHA-256 of client IP (never store raw IP).
+  ipHash             String?   @map("ip_hash")
+  /// SHA-256 of user-agent string.
+  userAgentHash      String?   @map("user_agent_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  /// SHA-256 hex of raw reset token.
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  /// Optional request metadata hashes (no secrets).
+  ipHash     String?   @map("ip_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+/// M3: single-use email ownership proof. Store only tokenHash — never the raw token.
+model EmailVerificationToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  /// Email address this token proves ownership of (snapshot at issue time).
+  email      String
+  /// SHA-256 hex of raw verification token.
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  /// Set on successful verify or when replaced by a newer token.
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  ipHash     String?   @map("ip_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+/// L4: hashed single-use MFA recovery codes (never store plaintext).
+model MfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+}
+
+/// L4: short-lived post-password MFA challenge (no session until verified).
+model MfaLoginChallenge {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  ipHash     String?   @map("ip_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("mfa_login_challenges")
+}
+
+model AuthAuditEvent {
+  id         String          @id @default(uuid()) @db.Uuid
+  userId     String?         @map("user_id") @db.Uuid
+  action     AuthAuditAction
+  /// Safe metadata only (no passwords, tokens, or hashes).
+  metadata   Json?
+  ipHash     String?         @map("ip_hash")
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("auth_audit_events")
+}
+
+enum ProfileAuditAction {
+  profile_ensure
+  profile_update
+  profile_gender_complete
+  questionnaire_autosave
+  questionnaire_update
+  questionnaire_complete
+  preferences_upsert
+  wali_update
+  photo_sign_upload
+  photo_confirm
+  photo_delete
+  photo_reorder
+  score_recalc_stub
+}
+
+model ProfileAuditEvent {
+  id         String             @id @default(uuid()) @db.Uuid
+  userId     String             @map("user_id") @db.Uuid
+  profileId  String?            @map("profile_id") @db.Uuid
+  action     ProfileAuditAction
+  /// Safe metadata only (no secrets, no signed URLs).
+  metadata   Json?
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([action, createdAt])
+  @@map("profile_audit_events")
+}
+
+// ─── Phase 8: Stripe webhook events + mail delivery ───
+
+enum StripeWebhookStatus {
+  received
+  processing
+  completed
+  failed
+}
+
+enum MailDeliveryStatus {
+  queued
+  sent
+  failed
+  skipped
+}
+
+model StripeWebhookEvent {
+  id            String              @id @default(uuid()) @db.Uuid
+  stripeEventId String              @unique @map("stripe_event_id")
+  eventType     String              @map("event_type")
+  receivedAt    DateTime            @default(now()) @map("received_at")
+  processedAt   DateTime?           @map("processed_at")
+  status        StripeWebhookStatus @default(received)
+  error         String?
+  /// SHA-256 of raw body — never store full card/PII payloads.
+  payloadHash   String              @map("payload_hash")
+  retryCount    Int                 @default(0) @map("retry_count")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  @@index([status, receivedAt])
+  @@index([eventType, receivedAt])
+  @@map("stripe_webhook_events")
+}
+
+model MailDelivery {
+  id              String             @id @default(uuid()) @db.Uuid
+  /// Dedup key e.g. payment:completed:{paymentId}
+  idempotencyKey  String             @unique @map("idempotency_key")
+  userId          String?            @map("user_id") @db.Uuid
+  /// SHA-256 of recipient email — never store raw address in this table.
+  toHash          String             @map("to_hash")
+  template        String
+  subject         String
+  status          MailDeliveryStatus @default(queued)
+  error           String?
+  sentAt          DateTime?          @map("sent_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("mail_deliveries")
+}

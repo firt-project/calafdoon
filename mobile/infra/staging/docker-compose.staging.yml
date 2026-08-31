@@ -1,0 +1,41 @@
+# Local staging stack — DOCUMENTATION / optional compose override.
+# Does NOT deploy to cloud. Prefer existing `infra/docker-compose.yml` for local.
+#
+# Usage (from repo root):
+#   docker compose -f infra/docker-compose.yml -f infra/staging/docker-compose.staging.yml up -d
+#
+# Or start only data plane from main compose:
+#   docker compose -f infra/docker-compose.yml up -d postgres redis minio minio-init
+#   npm run dev:api
+#
+# Env: copy apps/api/.env.example → apps/api/.env
+# Frontend:
+#   NEXT_PUBLIC_BACKEND_PROVIDER=api
+#   NEXT_PUBLIC_API_URL=http://127.0.0.1:4000
+#   NEXT_PUBLIC_SOCKET_URL=http://127.0.0.1:4000
+#   STRIPE_GATEWAY=fake
+#   MAIL_DRIVER=console
+
+services:
+  # Staging-local override labels only — services defined in parent compose.
+  postgres:
+    labels:
+      - "hel.stack=staging-local"
+
+  redis:
+    labels:
+      - "hel.stack=staging-local"
+
+  minio:
+    labels:
+      - "hel.stack=staging-local"
+
+  api:
+    labels:
+      - "hel.stack=staging-local"
+    environment:
+      STRIPE_GATEWAY: ${STRIPE_GATEWAY:-fake}
+      MAIL_DRIVER: ${MAIL_DRIVER:-console}
+      COOKIE_SECURE: "false"
+      APP_URL: ${APP_URL:-http://127.0.0.1:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:3000,http://localhost:3000}

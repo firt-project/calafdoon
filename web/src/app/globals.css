@@ -1,0 +1,489 @@
+@import "tailwindcss";
+@import "react-phone-number-input/style.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #faf7f7;
+  --foreground: #1a1214;
+  --card: #ffffff;
+  --card-foreground: #1a1214;
+  --muted: #f4eeee;
+  --muted-foreground: #6b5c5f;
+  --border: #e8dcde;
+  --input: #ffffff;
+  --ring: #c41e3a;
+  --primary: #a61b2b;
+  --primary-foreground: #ffffff;
+  --accent: #fdf2f3;
+  --accent-foreground: #7a1520;
+  --destructive: #b91c1c;
+  --navy: #1a1214;
+  --brand-dark: #6b1220;
+  --whatsapp: #25d366;
+  --gold: #c9a227;
+  --gold-foreground: #3d2e00;
+  --radius: 0.875rem;
+  --app-header: 4rem;
+  --app-tabbar: 3.5rem;
+  --shadow-sm: 0 1px 2px rgba(26, 18, 20, 0.04);
+  --shadow-md: 0 4px 16px rgba(26, 18, 20, 0.07);
+  --shadow-lg: 0 12px 40px rgba(26, 18, 20, 0.09);
+}
+
+.dark {
+  --background: #120d0e;
+  --foreground: #faf5f5;
+  --card: #1a1214;
+  --card-foreground: #faf5f5;
+  --muted: #241a1c;
+  --muted-foreground: #b5a3a6;
+  --border: #3a2a2d;
+  --input: #241a1c;
+  --ring: #fb7185;
+  --primary: #e11d48;
+  --primary-foreground: #ffffff;
+  --accent: #2a1519;
+  --accent-foreground: #fecdd3;
+  --destructive: #f87171;
+  --gold: #d4af37;
+  --gold-foreground: #1a1400;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-navy: var(--navy);
+  --color-brand-dark: var(--brand-dark);
+  --color-whatsapp: var(--whatsapp);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --font-sans: var(--font-jakarta);
+  --font-serif: var(--font-cormorant);
+  --font-display: var(--font-cormorant);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth day/night handoff for surfaces without janking animations */
+.dark-transition,
+.dark-transition * {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.font-display {
+  font-weight: 600;
+}
+
+.dashboard-bg {
+  background:
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(166, 27, 43, 0.07), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(201, 162, 39, 0.07), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(166, 27, 43, 0.04), transparent 60%),
+    var(--background);
+}
+
+.dark .dashboard-bg {
+  background:
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(225, 29, 72, 0.12), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(212, 175, 55, 0.08), transparent 50%),
+    var(--background);
+}
+
+/* Warm welcome banner on the member home feed (Muzz-style hero) */
+.member-hero {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.22), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(201, 162, 39, 0.55), transparent 45%),
+    linear-gradient(135deg, #7a1520 0%, #a61b2b 46%, #c9324a 100%);
+  box-shadow: 0 18px 40px -18px rgba(122, 21, 32, 0.65);
+}
+
+.member-hero::after {
+  content: "";
+  position: absolute;
+  right: -60px;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.dark .member-hero {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.12), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(212, 175, 55, 0.4), transparent 45%),
+    linear-gradient(135deg, #4d0d16 0%, #7a1520 50%, #a61b2b 100%);
+}
+
+/* Bold tappable stat card on the home feed */
+.stat-card {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--card) 94%, #fff6f6), var(--card));
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.dark .stat-card {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--card) 88%, #2a1519), var(--card));
+}
+
+/* Soft marriage-app card glow used on home feed / match surfaces */
+.romance-card {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--card) 92%, #fff7f5) 0%,
+      var(--card) 45%,
+      color-mix(in srgb, var(--card) 96%, #f8efd8) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--gold));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    var(--shadow-md);
+}
+
+.dark .romance-card {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--card) 90%, #3a1a22) 0%,
+      var(--card) 50%,
+      color-mix(in srgb, var(--card) 92%, #2a2410) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--border) 75%, var(--gold));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    var(--shadow-md);
+}
+
+.auth-bg {
+  background: var(--background);
+}
+
+.dark .auth-bg {
+  background: var(--background);
+}
+
+.auth-form-panel {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 18px 50px rgba(26, 18, 20, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.dark .auth-form-panel {
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.form-surface {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.gradient-hero {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(166, 27, 43, 0.09), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(201, 162, 39, 0.06), transparent),
+    var(--background);
+}
+
+.dark .gradient-hero {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(225, 29, 72, 0.14), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(212, 175, 55, 0.06), transparent),
+    var(--background);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark .glass {
+  background: rgba(26, 18, 20, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.form-surface {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.marketing-section {
+  padding: 4rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .marketing-section {
+    padding: 5rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketing-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.marketing-h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.marketing-lead {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .marketing-lead {
+    font-size: 1.125rem;
+  }
+}
+
+.marketing-body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .marketing-body {
+    font-size: 1rem;
+  }
+}
+
+.marketing-section-intro {
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 640px) {
+  .marketing-section-intro {
+    margin-bottom: 3.5rem;
+  }
+}
+
+.landing-section-title {
+  position: relative;
+  display: inline-block;
+}
+
+.landing-section-title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 9999px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0.01;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0.01;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-rise {
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-hero-zoom {
+  animation: hero-zoom 8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* International phone input — matches app form styling */
+.PhoneInput {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.PhoneInput--large {
+  --phone-input-height: 3.5rem;
+}
+
+.PhoneInput--compact {
+  --phone-input-height: 3rem;
+}
+
+.PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--input);
+  transition: border-color 0.2s ease;
+}
+
+.PhoneInput--large .PhoneInputCountry {
+  border-radius: 1rem;
+  min-height: var(--phone-input-height);
+}
+
+.PhoneInputCountry:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.PhoneInputCountry:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 30%, transparent);
+}
+
+.PhoneInputCountryIcon {
+  width: 1.5rem;
+  height: 1rem;
+  box-shadow: none;
+  background: transparent;
+}
+
+.PhoneInputCountryIcon--border {
+  box-shadow: none;
+}
+
+.PhoneInputCountrySelect {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.PhoneInputCountrySelectArrow {
+  opacity: 0.45;
+  margin-left: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-color: var(--muted-foreground);
+}
+
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--input);
+}
+
+.PhoneInput--large .PhoneInputInput {
+  min-height: var(--phone-input-height);
+}
