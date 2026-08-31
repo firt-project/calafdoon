@@ -453,14 +453,7 @@ export function SettingsHomePage() {
             icon={CreditCard}
             tone="green"
             title={t("settingsPage.planBilling")}
-            subtitle={t("settingsPage.planBillingDesc")}
-          />
-          <SettingsLinkRow
-            to="/plans?upgrade=premium"
-            icon={CreditCard}
-            tone="orange"
-            title={t("settingsPage.unlockPremium")}
-            subtitle={t("settingsPage.unlockPremiumDesc")}
+            subtitle="WaafiPay membership — pay or renew with mobile wallet"
           />
         </SettingsGroup>
       )}

@@ -18,11 +18,11 @@ export const EVC_PAYEE_PHONE_DISPLAY = "+252 617 975 403";
 export const MPESA_PAYEE_NAME = "Abdulkadir Mohamed Farah";
 export const MPESA_PAYEE_PHONE = "+254793692710";
 export const MPESA_PAYEE_PHONE_DISPLAY = "+254 793 692 710";
-/** Basic registration — first payment, then $1/month (Stripe). */
+/** Basic membership via WaafiPay (mobile). Website may still use Stripe. */
 export const REGISTRATION_PRICE = 4.99;
 /** @deprecated Same as REGISTRATION_PRICE — kept for older UI imports. */
 export const WOMEN_BASIC_PRICE = 4.99;
-/** Monthly membership after the first Stripe payment. */
+/** Website Stripe monthly amount — not used for mobile Waafi-only checkout. */
 export const MONTHLY_PRICE = 1;
 /** New-user Premium signup (personal match support). */
 export const PERSONAL_SUPPORT_PRICE = 20;
