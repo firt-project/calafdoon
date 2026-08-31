@@ -8,7 +8,7 @@ import type { LikeAction, MatchStatus, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { hasPaidAccess, isPremiumMember, isStaffRole, shouldHideProfileFromViewer } from "../common/access";
-import { isDiscoverable } from "../common/review-status";
+import { isDiscoverable, interactionLockMessage, isInteractionLocked } from "../common/review-status";
 import { canViewerSeePhotos } from "../profile/photo-rules";
 import {
   PRIVATE_REVEALS_PER_MATCH_BASIC,
@@ -32,6 +32,7 @@ import {
   utcDayKey,
 } from "./highlights";
 import { ScoreService } from "./score.service";
+import { PresenceService } from "../presence/presence.service";
 
 type AccessCtx = { userId: string; profile: Profile };
 
@@ -40,13 +41,16 @@ export class MatchService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scores: ScoreService,
-    private readonly media: MediaAccessService
+    private readonly media: MediaAccessService,
+    private readonly presence: PresenceService
   ) {}
 
   private async requireMatchAccess(userId: string): Promise<AccessCtx> {
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile required");
-    if (profile.banned) throw new ForbiddenException("Account suspended");
+    if (isInteractionLocked(profile)) {
+      throw new ForbiddenException(interactionLockMessage(profile));
+    }
     if (!profile.questionnaireComplete) {
       throw new ForbiddenException("Complete your questionnaire first");
     }
@@ -290,7 +294,6 @@ export class MatchService {
       isNew: boolean;
       name: string;
       imageUrl: string | null;
-      userId?: string;
     }> = [];
 
     for (const m of activeMatches) {
@@ -315,7 +318,7 @@ export class MatchService {
         ] ?? 0;
       if (unread > 0 || isNew) pendingChatCount += 1;
 
-      if (recentMutuals.length < 10) {
+      if (recentMutuals.length < 3) {
         const photo = other
           ? await this.photoMeta(userId, other, access.profile.role, true)
           : { imageUrl: null as string | null };
@@ -326,103 +329,9 @@ export class MatchService {
           isNew,
           name: other?.name ?? "Member",
           imageUrl: photo.imageUrl,
-          userId: otherId,
         });
       }
     }
-
-    const poolIds = discoverable.map((s) => s.userBId).slice(0, 80);
-    const recentCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    const activeNowCutoff = new Date(Date.now() - 15 * 60 * 1000);
-    const recentSessions =
-      poolIds.length > 0
-        ? await this.prisma.session.findMany({
-            where: {
-              userId: { in: poolIds },
-              revokedAt: null,
-              lastSeenAt: { gte: recentCutoff },
-            },
-            orderBy: { lastSeenAt: "desc" },
-            select: { userId: true, lastSeenAt: true },
-            take: 120,
-          })
-        : [];
-
-    const recentOrder: Array<{ userId: string; activeNow: boolean }> = [];
-    const seenRecent = new Set<string>();
-    for (const s of recentSessions) {
-      if (seenRecent.has(s.userId)) continue;
-      seenRecent.add(s.userId);
-      recentOrder.push({
-        userId: s.userId,
-        activeNow: s.lastSeenAt.getTime() >= activeNowCutoff.getTime(),
-      });
-      if (recentOrder.length >= 12) break;
-    }
-    for (const s of discoverable) {
-      if (recentOrder.length >= 12) break;
-      if (seenRecent.has(s.userBId)) continue;
-      if (dailyMatch?.userId === s.userBId) continue;
-      seenRecent.add(s.userBId);
-      recentOrder.push({ userId: s.userBId, activeNow: false });
-    }
-
-    const recentlyActive: Array<{
-      userId: string;
-      name: string;
-      imageUrl: string | null;
-      activeNow: boolean;
-      city?: string;
-      age?: number | null;
-    }> = [];
-    for (const row of recentOrder) {
-      if (recentlyActive.length >= 10) break;
-      const card = await this.buildCard(
-        access,
-        row.userId,
-        discoverable.find((d) => d.userBId === row.userId)?.score ?? 0,
-        null,
-        {},
-        false
-      );
-      if (!card) continue;
-      recentlyActive.push({
-        userId: row.userId,
-        name: card.name ?? "Member",
-        imageUrl: card.imageUrl ?? null,
-        activeNow: row.activeNow,
-        city: card.city,
-        age: card.age ?? null,
-      });
-    }
-
-    const myCity = (access.profile.city ?? "").trim().toLowerCase();
-    const nearYou: Awaited<ReturnType<typeof this.buildCard>>[] = [];
-    const nearFallback: Awaited<ReturnType<typeof this.buildCard>>[] = [];
-    for (const s of discoverable) {
-      if (nearYou.length >= 6) break;
-      if (dailyMatch?.userId === s.userBId) continue;
-      const card = await this.buildCard(access, s.userBId, s.score, null, {}, false);
-      if (!card) continue;
-      const city = (card.city ?? "").trim().toLowerCase();
-      if (myCity && city && city === myCity) {
-        nearYou.push(card);
-      } else if (nearFallback.length < 6 && city) {
-        nearFallback.push(card);
-      }
-    }
-    const nearYouCards = nearYou.length > 0 ? nearYou : nearFallback;
-
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const newMembersCount =
-      poolIds.length === 0
-        ? 0
-        : await this.prisma.profile.count({
-            where: {
-              userId: { in: poolIds },
-              createdAt: { gte: weekAgo },
-            },
-          });
 
     return {
       dayKey,
@@ -434,10 +343,7 @@ export class MatchService {
       newMutualCount,
       pendingChatCount,
       discoverCount: discoverable.length,
-      newMembersCount,
       recentMutuals,
-      recentlyActive,
-      nearYou: nearYouCards,
     };
   }
 
@@ -1079,30 +985,12 @@ export class MatchService {
       isMatch
     );
 
-    const prefs = await this.prisma.preference.findUnique({
-      where: { userId: targetUserId },
-    });
-
-    const recentSession = await this.prisma.session.findFirst({
-      where: {
-        userId: targetUserId,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { lastSeenAt: "desc" },
-      select: { lastSeenAt: true },
-    });
-    const online =
-      !!recentSession &&
-      Date.now() - recentSession.lastSeenAt.getTime() < 15 * 60 * 1000;
-
     return {
       userId: targetUserId,
       matchId,
       mutualMatch: isMatch,
       name: profile.name ?? "Member",
       age: profile.age,
-      gender: profile.gender ?? undefined,
       country: profile.country ?? "",
       city: profile.city ?? undefined,
       height: profile.height ?? undefined,
@@ -1110,27 +998,12 @@ export class MatchService {
       occupation: profile.occupation ?? "",
       religiousLevel: profile.religiousLevel ?? "",
       prayerFrequency: profile.prayerFrequency ?? undefined,
-      madhhab: profile.madhhab ?? undefined,
       bio: profile.bio || undefined,
       maritalStatus: profile.maritalStatus ?? undefined,
       marriageTimeline: profile.marriageTimeline ?? undefined,
       wantChildren: profile.wantChildren ?? undefined,
-      marrySomeoneWithChildren: profile.marrySomeoneWithChildren ?? undefined,
-      familyInvolvement: profile.familyInvolvement ?? undefined,
-      livingSituation: profile.livingSituation ?? undefined,
-      readyToRelocate: profile.readyToRelocate ?? undefined,
-      financialReadiness: profile.financialReadiness ?? undefined,
-      marriageWorkPreference: profile.marriageWorkPreference ?? undefined,
-      exercise: profile.exercise ?? undefined,
-      smokes: profile.smokes ?? undefined,
-      drinksAlcohol: profile.drinksAlcohol ?? undefined,
-      polygynyOpenness: profile.polygynyOpenness ?? undefined,
       languagesSpoken: profile.languagesSpoken ?? [],
-      qualities: profile.qualities ?? [],
       hobbies: profile.hobbies ?? [],
-      interests: profile.hobbies ?? [],
-      loveLanguage: profile.loveLanguage ?? undefined,
-      children: profile.children ?? undefined,
       score,
       action,
       liked: action === "like",
@@ -1146,24 +1019,6 @@ export class MatchService {
       hasPersonalSupport: !!profile.hasPersonalSupport,
       questionnaireComplete: profile.questionnaireComplete,
       verified: profile.verified,
-      advisorReviewed: profile.advisorReviewed ?? false,
-      online,
-      lastSeenAt: recentSession?.lastSeenAt?.toISOString() ?? null,
-      lookingFor: prefs
-        ? {
-            minAge: prefs.minAge,
-            maxAge: prefs.maxAge,
-            preferredCountries: prefs.preferredCountries ?? [],
-            educationLevel: prefs.educationLevel ?? undefined,
-            religiousLevel: prefs.religiousLevel ?? undefined,
-            acceptChildren: prefs.acceptChildren ?? undefined,
-            acceptDivorcee: prefs.acceptDivorcee ?? undefined,
-            acceptWidow: prefs.acceptWidow ?? undefined,
-            readyToRelocate: prefs.readyToRelocate ?? undefined,
-            qualities: prefs.qualities ?? [],
-            hobbies: prefs.hobbies ?? [],
-          }
-        : null,
       contactPrivacyNote:
         "Contact details stay private. Email and phone are never shared here.",
     };
@@ -1468,6 +1323,7 @@ export class MatchService {
       hasPersonalSupport: !!profile.hasPersonalSupport,
       questionnaireComplete: profile.questionnaireComplete,
       verified: profile.verified,
+      isOnline: await this.presence.isOnline(targetUserId),
     };
   }
 

@@ -11,7 +11,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { computeAccessState, type AccessState } from "../common/access-state";
 import { isStaffRole, STAFF_PROFILE_COMPLETION_PATCH } from "../common/access";
 import { assertGenderMutable } from "./gender-lock";
-import { normalizeContactPhone } from "./phone";
+import { isValidContactPhone } from "./phone";
 import {
   assertProfileFullyComplete,
   type ProfileLike,
@@ -24,7 +24,6 @@ import {
   PROFILE_DEFAULTS,
   pruneIncompleteAutosaveWrites,
   sanitizeContactProfileUpdates,
-  assertEligibleAge,
   splitQuestionnaireData,
   STAFF_ONLY_PROFILE_FIELDS,
   stripClientLocationWrites,
@@ -37,6 +36,10 @@ import {
   resolveProfileMainImageUrl,
   resolveProfileMainMediaId,
 } from "../media/profile-image-url";
+import { AuthService } from "../auth/auth.service";
+import { DeletionService } from "../admin/deletion.service";
+import { MetricsService } from "../admin/metrics.service";
+import { AccountStatusService } from "../admin/account-status.service";
 
 const MEMBER_PATCH_ALLOW = new Set([
   "name",
@@ -85,7 +88,11 @@ export class ProfileService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scoreStub: ScoreRecalcStub,
-    private readonly mediaAccess: MediaAccessService
+    private readonly mediaAccess: MediaAccessService,
+    private readonly auth: AuthService,
+    private readonly deletion: DeletionService,
+    private readonly metrics: MetricsService,
+    private readonly accountStatus: AccountStatusService
   ) {}
 
   private async audit(
@@ -307,14 +314,9 @@ export class ProfileService {
     }
 
     if (typeof body.phone === "string" && body.phone.trim()) {
-      const normalized = normalizeContactPhone(body.phone);
-      if (!normalized) {
-        throw new BadRequestException(
-          "Enter a valid phone number with country code, e.g. +252 61 234 5678."
-        );
+      if (!isValidContactPhone(body.phone)) {
+        throw new BadRequestException("A valid phone number is required");
       }
-      body.phone = normalized;
-      (data as Record<string, unknown>).phone = normalized;
     }
 
     const updated = await this.prisma.profile.update({
@@ -390,7 +392,6 @@ export class ProfileService {
 
     const { profileUpdates, preferences } = splitQuestionnaireData(data);
     sanitizeContactProfileUpdates(profileUpdates);
-    assertEligibleAge(profileUpdates);
     pruneIncompleteAutosaveWrites(profileUpdates, preferences);
 
     if (
@@ -474,8 +475,7 @@ export class ProfileService {
   ) {
     const profile = await this.requireProfile(userId);
     const { profileUpdates, preferences } = splitQuestionnaireData(data);
-    sanitizeContactProfileUpdates(profileUpdates, { strict: true });
-    assertEligibleAge(profileUpdates);
+    sanitizeContactProfileUpdates(profileUpdates);
     stripClientLocationWrites(profileUpdates);
 
     const genderUpdate = profileUpdates.gender;
@@ -528,8 +528,7 @@ export class ProfileService {
   async saveProfileEdits(userId: string, data: Record<string, unknown>) {
     const profile = await this.requireProfile(userId);
     const { profileUpdates, preferences } = splitQuestionnaireData(data);
-    sanitizeContactProfileUpdates(profileUpdates, { strict: true });
-    assertEligibleAge(profileUpdates);
+    sanitizeContactProfileUpdates(profileUpdates);
     stripClientLocationWrites(profileUpdates);
 
     const genderUpdate = profileUpdates.gender;
@@ -585,26 +584,39 @@ export class ProfileService {
       );
     }
 
-    const womenBasicNeedsReview = profile.gender === "female";
+    const alreadyApproved =
+      profile.approved === true || profile.reviewStatus === "approved";
+    const isPremium = profile.hasPersonalSupport === true;
+    const isMale = profile.gender === "male";
+    // Women Basic still need admin review only if not already approved
+    // (Stripe/admin force-approve must not be undone here).
+    const womenBasicNeedsReview =
+      profile.gender === "female" &&
+      !isPremium &&
+      !alreadyApproved &&
+      profile.hasPaid === true;
 
     let patch: Prisma.ProfileUpdateInput = {
       questionnaireComplete: true,
       questionnaireStep: QUESTIONNAIRE_COMPLETE_STEP,
       lastSavedAt: new Date(),
       verified: false,
+      submittedAt: new Date(),
+      statusChangedAt: new Date(),
     };
 
-    if (womenBasicNeedsReview) {
-      patch = {
-        ...patch,
-        reviewStatus: "incomplete",
-        approved: false,
-      };
-    } else if (profile.hasPaid) {
+    if (alreadyApproved || isPremium || (isMale && profile.hasPaid)) {
       patch = {
         ...patch,
         reviewStatus: "approved",
         approved: true,
+        approvedAt: profile.approvedAt ?? new Date(),
+      };
+    } else if (womenBasicNeedsReview) {
+      patch = {
+        ...patch,
+        reviewStatus: "pending_review",
+        approved: false,
       };
     } else {
       patch = {
@@ -614,26 +626,44 @@ export class ProfileService {
       };
     }
 
-    let updated = await this.prisma.profile.update({
+    const updated = await this.prisma.profile.update({
       where: { id: profile.id },
       data: patch,
     });
 
-    if (womenBasicNeedsReview && profile.hasPaid) {
-      updated = await this.prisma.profile.update({
-        where: { id: profile.id },
-        data: { reviewStatus: "pending_review", approved: false },
-      });
-    }
-
-    if (!womenBasicNeedsReview && profile.hasPaid) {
-      await this.scoreStub.enqueue(userId, "questionnaire_complete_paid_male");
+    if (updated.reviewStatus === "approved" && updated.hasPaid) {
+      await this.scoreStub.enqueue(
+        userId,
+        isMale
+          ? "questionnaire_complete_paid_male"
+          : "questionnaire_complete_paid_approved"
+      );
     }
 
     await this.audit(userId, "questionnaire_complete", profile.id, {
       gender: profile.gender,
       hasPaid: profile.hasPaid,
+      reviewStatus: updated.reviewStatus,
     });
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.accountStatus.recordHistory(tx, {
+        userId,
+        profileId: profile.id,
+        eventType:
+          updated.reviewStatus === "approved" ? "approved" : "submitted",
+        previousStatus: profile.reviewStatus,
+        newStatus: updated.reviewStatus,
+        publicUserMessage:
+          updated.reviewStatus === "approved"
+            ? "Profile completed and approved. You can browse matches."
+            : updated.reviewStatus === "pending_review"
+              ? "Profile information submitted for review."
+              : "Profile information saved. Complete payment to continue.",
+        performedByAdminName: "System",
+      });
+    });
+
     return this.toPublicProfile(updated);
   }
 
@@ -816,6 +846,7 @@ export class ProfileService {
       lastSavedAt: profile.lastSavedAt,
       registrationComplete: profile.registrationComplete,
       hasPaid: profile.hasPaid,
+      paidUntil: profile.paidUntil?.toISOString() ?? null,
       genderLocked: profile.genderLocked,
       hasPersonalSupport: profile.hasPersonalSupport,
       profileImageId,
@@ -840,66 +871,22 @@ export class ProfileService {
     };
   }
 
-  /**
-   * Limited share card for deep links. Uses opaque convexId (never sequential DB id).
-   * Non-owners only see discoverable, non-banned profiles. No email/phone/private answers.
-   */
-  async getShareableCard(viewerUserId: string, publicId: string) {
-    const id = publicId.trim();
-    if (!id || id.length < 8 || id.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(id)) {
-      throw new BadRequestException("Invalid profile link");
-    }
-    if (/^\d+$/.test(id)) {
-      throw new BadRequestException("Invalid profile link");
-    }
-
-    const profile = await this.prisma.profile.findFirst({
-      where: { convexId: id },
-    });
-    if (!profile || profile.banned) {
-      throw new NotFoundException("Profile unavailable");
-    }
-
-    const isOwner = profile.userId === viewerUserId;
-    if (!isOwner && !isDiscoverable(profile)) {
-      throw new NotFoundException("Profile unavailable");
-    }
-
-    const viewer = {
-      userId: viewerUserId,
-      roles: [] as Array<"user" | "admin" | "owner">,
-    };
-    let imageUrl: string | null = null;
-    if (profile.photoVisibility !== "private" || isOwner) {
-      imageUrl = await resolveProfileMainImageUrl(
-        this.prisma,
-        this.mediaAccess,
-        profile,
-        viewer
-      );
-    }
-
-    const bio =
-      typeof profile.bio === "string" && profile.bio.trim()
-        ? profile.bio.trim().slice(0, 280)
-        : null;
-
-    return {
-      publicId: profile.convexId,
-      name: profile.name,
-      age: profile.age > 0 ? profile.age : null,
-      city: profile.city || null,
-      country: profile.country || null,
-      bio,
-      imageUrl,
-      verified: profile.verified === true,
-      isOwner,
-    };
-  }
-
   /** Test helper — generate local convex-style ids without colliding. */
   static localId(prefix: string): string {
     return `${prefix}_${randomUUID()}`;
+  }
+
+  async deleteMyAccount(userId: string, password: string, ip?: string) {
+    await this.auth.verifyCurrentPassword(userId, password);
+    const result = await this.deletion.executeSelfDelete(userId, {
+      requestId: ip,
+    });
+    try {
+      await this.metrics.scheduleRebuild();
+    } catch {
+      // Account already deleted; metrics must not fail the request.
+    }
+    return result;
   }
 }
 

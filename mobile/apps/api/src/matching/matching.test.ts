@@ -48,8 +48,6 @@ function basePrefs(over: Partial<Preferences> = {}): Preferences {
     maxAge: 40,
     minHeight: 150,
     maxHeight: 190,
-    minWeight: 45,
-    maxWeight: 100,
     preferredCountries: [],
     acceptChildren: "Depends",
     educationLevel: "Bachelor",

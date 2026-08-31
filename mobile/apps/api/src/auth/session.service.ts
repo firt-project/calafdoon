@@ -69,13 +69,20 @@ export class SessionService {
       where: { tokenHash },
       include: {
         user: {
-          include: {
+          select: {
+            id: true,
+            email: true,
+            emailNormalized: true,
+            mustResetPassword: true,
+            emailVerificationTime: true,
+            mfaEnabled: true,
             profile: {
               select: {
                 id: true,
                 role: true,
                 banned: true,
                 hasPaid: true,
+                paidUntil: true,
                 reviewStatus: true,
                 name: true,
               },

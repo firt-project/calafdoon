@@ -13,6 +13,9 @@ import { DeletionService } from "./deletion.service";
 import { MetricsService } from "./metrics.service";
 import { AdminUsersService } from "./admin-users.service";
 import { AdminUsersController } from "./admin-users.controller";
+import { AccountStatusService } from "./account-status.service";
+import { AccountStatusReportsController } from "./account-status-reports.controller";
+import { AccountStatusMemberController } from "./account-status-member.controller";
 import { ModerationService } from "./moderation.service";
 import { ModerationController } from "./moderation.controller";
 import { AdminEvcController } from "./admin-evc.controller";
@@ -39,6 +42,8 @@ import { AdminMiscController } from "./admin-misc.controller";
   ],
   controllers: [
     AdminUsersController,
+    AccountStatusReportsController,
+    AccountStatusMemberController,
     ModerationController,
     AdminEvcController,
     AdminPaymentsController,
@@ -53,6 +58,7 @@ import { AdminMiscController } from "./admin-misc.controller";
     DeletionService,
     MetricsService,
     MetricsQueueService,
+    AccountStatusService,
     AdminUsersService,
     ModerationService,
     AdminPaymentsService,
@@ -68,6 +74,7 @@ import { AdminMiscController } from "./admin-misc.controller";
     MetricsService,
     DeletionService,
     AdminUsersService,
+    AccountStatusService,
   ],
 })
 export class AdminModule {}

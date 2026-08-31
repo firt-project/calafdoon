@@ -48,7 +48,7 @@ export class AdminStatsService {
       } else if (amount >= 1500) {
         premiumSignupCount++;
         premiumSignupRevenueCents += amount;
-      } else if (amount >= 400) {
+      } else if (amount >= 200) {
         basicPaidCount++;
         basicRevenueCents += amount;
       } else {
@@ -88,7 +88,7 @@ export class AdminStatsService {
       unpaidCount: m?.unpaidCount ?? 0,
       trialCount: 0,
       freeBasicWomen: m?.freeBasicWomen ?? 0,
-      // Profile-flag count (paid basic men). Dashboard "Basic ($5)" uses money.basicPaidCount.
+      // Profile-flag count (paid basic men). Dashboard "Basic ($2)" uses money.basicPaidCount.
       paidBasicMembers: m?.paidBasicMembers ?? 0,
       pendingApproval: m?.pendingApproval ?? 0,
       bannedUsers: m?.bannedUsers ?? 0,
@@ -98,7 +98,7 @@ export class AdminStatsService {
       money: {
         basicPaidCount,
         basicRevenueCents,
-        basicPriceCents: 500,
+        basicPriceCents: 200,
         premiumSignupCount,
         premiumSignupRevenueCents,
         premiumSignupPriceCents: 2000,

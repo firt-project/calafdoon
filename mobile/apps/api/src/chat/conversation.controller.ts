@@ -52,10 +52,9 @@ export class ConversationController {
     return this.conversations.getConversation(user.id, id);
   }
 
-  /** Public dating card for the chat partner (no email/phone). */
   @Get(":id/partner")
   async partner(@CurrentUser() user: RequestUser, @Param("id") id: string) {
-    return this.conversations.getPartner(user.id, id);
+    return this.conversations.getPartnerProfile(user.id, id);
   }
 
   @Get(":id/messages")
@@ -82,7 +81,7 @@ export class ConversationController {
     const parsed = parseBody(
       z.object({
         contentType: z.string().min(3).max(100),
-        sizeBytes: z.number().int().positive().optional(),
+        sizeBytes: z.number().int().positive(),
       }),
       body
     );

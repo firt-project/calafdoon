@@ -202,7 +202,7 @@ describe("Phase 8 payments e2e", () => {
       .expect(200);
     assert.ok(res.body.url);
     assert.ok(res.body.sessionId.startsWith("cs_test_fake_"));
-    assert.equal(res.body.amount, 500);
+    assert.equal(res.body.amount, 200);
     const pending = await prisma.payment.findUnique({
       where: { stripeSessionId: res.body.sessionId },
     });

@@ -4,6 +4,8 @@ export const MAX_MESSAGE_PAGE = 100;
 export const DEFAULT_NOTIFICATION_PAGE = 50;
 export const MAX_NOTIFICATION_PAGE = 100;
 export const TYPING_TTL_SECONDS = 4;
+/** Client should ping about every half of PRESENCE_TTL_SECONDS. */
+export const PRESENCE_HEARTBEAT_HINT_MS = 30_000;
 export const IMAGE_MESSAGE_PLACEHOLDER = "📷 Image";
 
 /** Strip HTML/script tags; Convex stored plain text — keep payloads safe. */

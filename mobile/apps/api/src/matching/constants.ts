@@ -6,7 +6,7 @@ export const MATCH_DISCOVER_LIMIT = 50;
 export const MATCH_LIST_LIMIT = 100;
 export const SCORE_PAGE_SIZE = 20;
 /** Nest algorithm version — bump when weights change. */
-export const SCORE_VERSION = 2;
+export const SCORE_VERSION = 1;
 
 export function makePairKey(userAId: string, userBId: string): string {
   return userAId < userBId

@@ -6,6 +6,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.module";
 import { MediaAccessService } from "../media/media-access.service";
+import { resolveProfileMainImageUrl } from "../media/profile-image-url";
 import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import {
   DEFAULT_NOTIFICATION_PAGE,
@@ -13,6 +14,8 @@ import {
   decodeNotificationCursor,
   encodeNotificationCursor,
 } from "../chat/chat.constants";
+import { isStaffRole } from "../common/access";
+import { canViewerSeePhotos } from "../profile/photo-rules";
 
 @Injectable()
 export class NotificationsService {
@@ -32,6 +35,76 @@ export class NotificationsService {
     if (count > 120) {
       throw new ForbiddenException("Too many requests. Try again later.");
     }
+  }
+
+  /**
+   * M8: avatar URLs use the same photoVisibility rules as profile/match surfaces
+   * (`canViewerSeePhotos` + MediaAccessService / H1–H2). Never sign before allow.
+   */
+  private async relatedAvatarUrls(
+    viewerUserId: string,
+    viewerRole: "user" | "admin" | "owner",
+    relatedUserIds: string[]
+  ): Promise<Map<string, string | null>> {
+    const out = new Map<string, string | null>();
+    const unique = [...new Set(relatedUserIds.filter(Boolean))];
+    if (unique.length === 0) return out;
+
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId: { in: unique } },
+      select: {
+        userId: true,
+        banned: true,
+        photoVisibility: true,
+        profileImageMediaId: true,
+        profileImageConvexId: true,
+      },
+    });
+    const byUser = new Map(profiles.map((p) => [p.userId, p]));
+
+    const matches = await this.prisma.match.findMany({
+      where: {
+        status: "active",
+        OR: [
+          { userAId: viewerUserId, userBId: { in: unique } },
+          { userBId: viewerUserId, userAId: { in: unique } },
+        ],
+      },
+      select: { userAId: true, userBId: true },
+    });
+    const matchedPartners = new Set<string>();
+    for (const m of matches) {
+      matchedPartners.add(m.userAId === viewerUserId ? m.userBId : m.userAId);
+    }
+
+    const staff = isStaffRole(viewerRole);
+    for (const relatedId of unique) {
+      const related = byUser.get(relatedId);
+      if (!related || related.banned) {
+        out.set(relatedId, null);
+        continue;
+      }
+      const allowed = canViewerSeePhotos({
+        viewerUserId,
+        profileOwnerUserId: relatedId,
+        photoVisibility: related.photoVisibility,
+        isStaff: staff,
+        hasActiveMatch: matchedPartners.has(relatedId),
+      });
+      if (!allowed) {
+        out.set(relatedId, null);
+        continue;
+      }
+      // Sign only after authorization (same helper as match/chat).
+      const url = await resolveProfileMainImageUrl(
+        this.prisma,
+        this.media,
+        related,
+        { userId: viewerUserId, roles: [viewerRole] }
+      );
+      out.set(relatedId, url);
+    }
+    return out;
   }
 
   async list(
@@ -69,44 +142,30 @@ export class NotificationsService {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
+    const viewerRole = (profile?.role ?? "user") as "user" | "admin" | "owner";
 
-    const items = [];
-    for (const n of page) {
-      let relatedImageUrl: string | null = null;
-      if (n.relatedUserId) {
-        const related = await this.prisma.profile.findUnique({
-          where: { userId: n.relatedUserId },
-          select: { profileImageMediaId: true },
-        });
-        if (related?.profileImageMediaId) {
-          try {
-            const signed = await this.media.createSignedDownloadUrl(
-              related.profileImageMediaId,
-              {
-                userId,
-                roles: [profile?.role ?? "user"],
-                privatePhotoPeerIds: [n.relatedUserId],
-              }
-            );
-            relatedImageUrl = signed.url;
-          } catch {
-            relatedImageUrl = null;
-          }
-        }
-      }
-      items.push({
-        id: n.id,
-        convexId: n.convexId,
-        type: n.type,
-        title: n.title,
-        body: n.body,
-        read: n.read,
-        relatedUserId: n.relatedUserId,
-        relatedImageUrl,
-        createdAt: n.notificationCreatedAt.toISOString(),
-        sourceKey: n.sourceKey,
-      });
-    }
+    const avatarByRelated = await this.relatedAvatarUrls(
+      userId,
+      viewerRole,
+      page
+        .map((n) => n.relatedUserId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    );
+
+    const items = page.map((n) => ({
+      id: n.id,
+      convexId: n.convexId,
+      type: n.type,
+      title: n.title,
+      body: n.body,
+      read: n.read,
+      relatedUserId: n.relatedUserId,
+      relatedImageUrl: n.relatedUserId
+        ? (avatarByRelated.get(n.relatedUserId) ?? null)
+        : null,
+      createdAt: n.notificationCreatedAt.toISOString(),
+      sourceKey: n.sourceKey,
+    }));
 
     const nextCursor =
       hasMore && page.length

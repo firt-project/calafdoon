@@ -5,6 +5,7 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { resolveRedisUrl } from "../redis/redis-url";
 import { ModuleRef } from "@nestjs/core";
 import { Queue, Worker, type Job, type ConnectionOptions } from "bullmq";
 import { PaymentMailService } from "../mail/payment-mail.service";
@@ -40,7 +41,10 @@ export class PaymentEmailQueueService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly moduleRef: ModuleRef
   ) {
-    const url = this.config.get<string>("REDIS_URL") ?? "redis://127.0.0.1:6379";
+    const url = resolveRedisUrl({
+      redisUrl: this.config.get<string>("REDIS_URL"),
+      redisPassword: this.config.get<string>("REDIS_PASSWORD"),
+    });
     this.connectionOpts = { url } as ConnectionOptions;
   }
 
@@ -122,7 +126,10 @@ export class PaymentReconcileQueueService
     | null = null;
 
   constructor(private readonly config: ConfigService) {
-    const url = this.config.get<string>("REDIS_URL") ?? "redis://127.0.0.1:6379";
+    const url = resolveRedisUrl({
+      redisUrl: this.config.get<string>("REDIS_URL"),
+      redisPassword: this.config.get<string>("REDIS_PASSWORD"),
+    });
     this.connectionOpts = { url } as ConnectionOptions;
   }
 

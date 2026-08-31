@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
-import { Public } from "../auth/auth.guards";
+import { Public, Roles } from "../auth/auth.guards";
 import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.module";
 import { ScoreQueueService } from "../queue/score-queue.service";
@@ -51,30 +51,48 @@ export class HealthController {
     });
   }
 
+  /** L1: public liveness — process up only. */
   @Public()
   @Get("live")
   live() {
-    return {
-      status: "ok",
-      service: "hel-api",
-      timestamp: new Date().toISOString(),
-    };
+    return { status: "ok" as const };
   }
 
+  /**
+   * L1: public health for Render / uptime / frontend banner.
+   * HTTP 200 + minimal body — no topology, versions, CORS, or metrics.
+   */
   @Public()
   @Get()
-  async check() {
-    return this.buildStatus(false);
+  check() {
+    return { status: "ok" as const };
   }
 
+  /**
+   * L1: readiness for load balancers / compose probes.
+   * Still probes dependencies; response body stays minimal.
+   */
   @Public()
   @Get("ready")
   async ready() {
-    const body = await this.buildStatus(true);
-    if (body.status !== "ok") {
-      throw new HttpException(body, HttpStatus.SERVICE_UNAVAILABLE);
+    const detailed = await this.buildStatus(true);
+    if (detailed.status !== "ok") {
+      throw new HttpException(
+        { status: "unavailable" as const },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
-    return body;
+    return { status: "ok" as const };
+  }
+
+  /**
+   * Staff-only diagnostics (previous public `/health` payload).
+   * Not for Render probes — use `/health` or `/health/ready`.
+   */
+  @Get("details")
+  @Roles("admin")
+  async details() {
+    return this.buildStatus(false);
   }
 
   private async buildStatus(strict: boolean) {

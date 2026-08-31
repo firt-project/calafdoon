@@ -112,8 +112,6 @@ async function createMember(prisma: PrismaClient, opts: {
           maxAge: 40,
           minHeight: 150,
           maxHeight: 190,
-          minWeight: 45,
-          maxWeight: 120,
           preferredCountries: [],
           acceptChildren: "Depends",
           educationLevel: "Bachelor",

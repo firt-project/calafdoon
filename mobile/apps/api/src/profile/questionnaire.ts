@@ -1,12 +1,7 @@
 /** Port of convex/lib/questionnaire.ts — exact field keys and autosave pruning. */
 
-import { BadRequestException } from "@nestjs/common";
 import { enrichProfileUpdates } from "./profile-enrichment";
-import {
-  isValidContactName,
-  isValidContactPhone,
-  normalizeContactPhone,
-} from "./phone";
+import { isValidContactName, isValidContactPhone } from "./phone";
 
 /** Profile fields that may be written by the questionnaire. */
 export const PROFILE_FIELD_KEYS = new Set([
@@ -186,49 +181,24 @@ export function hasValidContact(
 }
 
 export function sanitizeContactProfileUpdates(
-  updates: Record<string, unknown>,
-  opts?: { strict?: boolean }
+  updates: Record<string, unknown>
 ): void {
-  const strict = opts?.strict === true;
-
   if (typeof updates.name === "string") {
     const name = updates.name.trim();
     if (!isValidContactName(name)) {
-      if (strict) {
-        throw new BadRequestException(
-          "Enter your full name (at least 2 characters)."
-        );
-      }
       delete updates.name;
     } else {
       updates.name = name;
     }
   }
   if (typeof updates.phone === "string") {
-    const normalized = normalizeContactPhone(updates.phone);
-    if (!normalized) {
-      if (strict) {
-        throw new BadRequestException(
-          "Enter a valid phone number with country code, e.g. +252 61 234 5678."
-        );
-      }
+    const phone = updates.phone.trim();
+    if (!isValidContactPhone(phone)) {
       delete updates.phone;
     } else {
-      updates.phone = normalized;
+      updates.phone = phone;
     }
   }
-}
-
-/** Adults-only product: reject under-18 ages on write. Self-reported until DOB exists. */
-export function assertEligibleAge(updates: Record<string, unknown>): void {
-  if (!("age" in updates) || updates.age === undefined || updates.age === null) {
-    return;
-  }
-  const age = Number(updates.age);
-  if (!Number.isInteger(age) || age < 18 || age > 100) {
-    throw new BadRequestException("Age must be an integer between 18 and 100");
-  }
-  updates.age = age;
 }
 
 /** Staff-controlled fields members must never write. */

@@ -18,11 +18,14 @@ import { EvcPaymentsService } from "./evc-payments.service";
 import { GrantPaidAccessService } from "./grant-paid-access.service";
 import { PaymentsController } from "./payments.controller";
 import { PaymentsService } from "./payments.service";
+import { WaafiPayClient } from "./waafi-pay.client";
+import { WaafiPaymentsService } from "./waafi-payments.service";
 import {
   FakeStripeGateway,
   STRIPE_GATEWAY,
   StripeService,
 } from "./stripe.gateway";
+import { isStripeFakeForbidden } from "../config/env.validation";
 
 @Module({
   imports: [
@@ -45,10 +48,26 @@ import {
     GrantPaidAccessService,
     PaymentsService,
     EvcPaymentsService,
+    WaafiPayClient,
+    WaafiPaymentsService,
     {
       provide: STRIPE_GATEWAY,
       useFactory: (config: ConfigService) => {
-        if (config.get<string>("STRIPE_GATEWAY") === "fake") {
+        const gateway = config.get<string>("STRIPE_GATEWAY");
+        if (gateway === "fake") {
+          if (
+            isStripeFakeForbidden({
+              NODE_ENV: (config.get<string>("NODE_ENV") ??
+                "development") as "development" | "test" | "production",
+              RENDER: config.get("RENDER") ?? process.env.RENDER,
+              RENDER_SERVICE_ID:
+                config.get("RENDER_SERVICE_ID") ?? process.env.RENDER_SERVICE_ID,
+            })
+          ) {
+            throw new Error(
+              "STRIPE_GATEWAY=fake is forbidden in production/Render. Refusing to start FakeStripeGateway."
+            );
+          }
           return new FakeStripeGateway();
         }
         return new StripeService(config);
@@ -59,6 +78,7 @@ import {
   exports: [
     PaymentsService,
     EvcPaymentsService,
+    WaafiPaymentsService,
     GrantPaidAccessService,
     PaymentMailService,
     STRIPE_GATEWAY,

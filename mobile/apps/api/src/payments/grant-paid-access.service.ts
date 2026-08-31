@@ -5,9 +5,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ScoreRecalcStub } from "../profile/score-recalc.stub";
 import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import { PaymentMailService } from "../mail/payment-mail.service";
-import { isPremiumPayment } from "./pricing";
+import { isPremiumPayment, nextMembershipPaidUntil } from "./pricing";
 
-export type GrantSource = "stripe" | "evc";
+export type GrantSource = "stripe" | "evc" | "waafi";
+
+/** Waafi / EVC use a 30-day paidUntil lock; Stripe subscriptions leave it null. */
+function isPeriodLockedSource(source: GrantSource): boolean {
+  return source === "waafi" || source === "evc";
+}
 
 /**
  * Port of convex/lib/grantPaidAccess.ts + payments.applyPaymentCompletion.
@@ -39,6 +44,22 @@ export class GrantPaidAccessService {
     });
   }
 
+  /** Stripe does not use screenshots — close any leftover EVC proof queue rows. */
+  async supersedePendingEvcProofs(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    reason: string
+  ) {
+    await tx.evcPaymentProof.updateMany({
+      where: { userId, status: "pending" },
+      data: {
+        status: "rejected",
+        reviewedAt: new Date(),
+        rejectionReason: reason,
+      },
+    });
+  }
+
   /**
    * Unlock paid membership — exact Convex rules:
    * - hasPaid + genderLocked always
@@ -55,6 +76,7 @@ export class GrantPaidAccessService {
       notify?: boolean;
       sourceKey: string;
       paymentId: string;
+      source: GrantSource;
       /** When true (admin EVC approve), member is fully approved immediately. */
       forceProfileApproval?: boolean;
     }
@@ -69,20 +91,33 @@ export class GrantPaidAccessService {
       args.isPremium ||
       profile.gender === "male";
 
+    const paidUntil = isPeriodLockedSource(args.source)
+      ? nextMembershipPaidUntil(profile.paidUntil)
+      : undefined;
+    const isRenewal =
+      isPeriodLockedSource(args.source) &&
+      profile.hasPaid === true &&
+      (profile.paidUntil == null ||
+        profile.paidUntil.getTime() <= Date.now());
+
     await tx.profile.update({
       where: { id: profile.id },
       data: {
         hasPaid: true,
         genderLocked: true,
+        ...(paidUntil ? { paidUntil } : {}),
         ...(args.isPremium ? { hasPersonalSupport: true } : {}),
         ...(fullyApproved
           ? {
               approved: true,
               reviewStatus: "approved" as const,
+              approvedAt: new Date(),
+              statusChangedAt: new Date(),
             }
           : {
               approved: false,
               reviewStatus: "pending_review" as const,
+              statusChangedAt: new Date(),
             }),
       },
     });
@@ -96,8 +131,11 @@ export class GrantPaidAccessService {
           event: "grant_paid_access",
           isPremium: args.isPremium,
           isUpgrade: !!args.isUpgrade,
+          isRenewal,
+          source: args.source,
           sourceKey: args.sourceKey,
           paymentId: args.paymentId,
+          ...(paidUntil ? { paidUntil: paidUntil.toISOString() } : {}),
         },
       },
     });
@@ -108,9 +146,11 @@ export class GrantPaidAccessService {
       ? args.isUpgrade
         ? "Your premium plan is active. WhatsApp support and match-search help are ready."
         : "Your registration and personal support plan are active. Browse matches from your dashboard."
-      : fullyApproved
-        ? "Your registration is complete. Browse matches from your dashboard."
-        : "Payment received. An admin will review your profile shortly — you will be notified when matches unlock.";
+      : isRenewal
+        ? "Your membership is renewed for another 30 days. Browse matches from your dashboard."
+        : fullyApproved
+          ? "Your registration is complete. Browse matches from your dashboard."
+          : "Payment received. An admin will review your profile shortly — you will be notified when matches unlock.";
 
     const notifSource = `payment:${args.sourceKey}`;
     let notification = null;
@@ -192,6 +232,17 @@ export class GrantPaidAccessService {
 
       await this.supersedeOtherPendingPayments(tx, payment.userId, payment.id);
 
+      // Instant gateways never need a screenshot. Clear any pending EVC proofs.
+      if (args.source === "stripe" || args.source === "waafi") {
+        await this.supersedePendingEvcProofs(
+          tx,
+          payment.userId,
+          args.source === "waafi"
+            ? "Paid via WaafiPay — payment proof not required."
+            : "Paid via Stripe — payment proof not required."
+        );
+      }
+
       const isPremium = isPremiumPayment(payment);
       const isUpgrade = payment.paymentType === "premium_upgrade";
       const shouldNotify =
@@ -202,6 +253,12 @@ export class GrantPaidAccessService {
           payment.paymentType === null ||
           payment.paymentType === undefined);
 
+      // Stripe / WaafiPay are verified by the gateway — no admin payment proof wait.
+      const forceProfileApproval =
+        args.forceProfileApproval === true ||
+        args.source === "stripe" ||
+        args.source === "waafi";
+
       const grant = await this.grantProfileAccess(tx, {
         userId: payment.userId,
         isPremium,
@@ -209,7 +266,8 @@ export class GrantPaidAccessService {
         notify: shouldNotify,
         sourceKey: args.fulfillmentKey,
         paymentId: payment.id,
-        forceProfileApproval: args.forceProfileApproval,
+        source: args.source,
+        forceProfileApproval,
       });
 
       const planType =
@@ -272,6 +330,9 @@ export class GrantPaidAccessService {
               gender: profile?.gender ?? "male",
               title: n.title,
               body: n.body,
+              profileApproved:
+                profile?.approved === true ||
+                profile?.reviewStatus === "approved",
             });
           }
         }

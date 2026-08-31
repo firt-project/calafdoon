@@ -145,8 +145,8 @@ export class ScoreService {
         banned: false,
         questionnaireComplete: true,
         hasPaid: true,
-        // Align with isDiscoverable / discover backfill (either flag can approve).
-        OR: [{ approved: true }, { reviewStatus: "approved" }],
+        approved: true,
+        reviewStatus: "approved",
         userId: { not: userId },
       },
       orderBy: { id: "asc" },

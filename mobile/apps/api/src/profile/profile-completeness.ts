@@ -1,4 +1,4 @@
-/** Port of convex/lib/profileCompleteness.ts — shortened questionnaire (Aug 2026). */
+/** Port of convex/lib/profileCompleteness.ts */
 
 import { isValidContactName, isValidContactPhone } from "./phone";
 
@@ -19,13 +19,21 @@ export type ProfileLike = {
   financialReadiness?: string | null;
   marriageWorkPreference?: string | null;
   maritalStatus?: string | null;
+  wantChildren?: string | null;
+  polygynyOpenness?: string | null;
   hasCurrentWife?: string | null;
+  openToSecondWife?: string | null;
+  acceptPreviouslyMarriedMan?: string | null;
+  acceptFutureCoWife?: string | null;
   smokes?: string | null;
   substanceDetails?: string | null;
+  exercise?: string | null;
   marriageTimeline?: string | null;
   loveLanguage?: string | null;
   qualities?: string[] | null;
   hobbies?: string[] | null;
+  spousePrayerImportance?: string | null;
+  marrySomeoneWithChildren?: string | null;
   profileImageId?: string | null;
   profileImageConvexId?: string | null;
   profileImageMediaId?: string | null;
@@ -40,6 +48,7 @@ export type PrefsLike = {
   maxWeight?: number | null;
   preferredCountries?: string[] | null;
   educationLevel?: string | null;
+  acceptChildren?: string | null;
   partnerHijabLevel?: string | null;
 } | null;
 
@@ -48,28 +57,14 @@ function hasText(value: string | null | undefined): boolean {
 }
 
 function isBasicComplete(profile: ProfileLike): boolean {
-  const age = profile.age ?? 0;
   return (
-    age >= 18 &&
-    age <= 100 &&
+    (profile.age ?? 0) > 0 &&
     hasText(profile.country) &&
     hasText(profile.city) &&
     (profile.height ?? 0) > 0 &&
     (profile.weight ?? 0) > 0 &&
     (profile.languagesSpoken?.length ?? 0) > 0
   );
-}
-
-function basicMissingFields(profile: ProfileLike): string[] {
-  const missing: string[] = [];
-  const age = profile.age ?? 0;
-  if (!(age >= 18 && age <= 100)) missing.push("age");
-  if (!hasText(profile.country)) missing.push("country");
-  if (!hasText(profile.city)) missing.push("city");
-  if (!((profile.height ?? 0) > 0)) missing.push("height");
-  if (!((profile.weight ?? 0) > 0)) missing.push("weight");
-  if (!((profile.languagesSpoken?.length ?? 0) > 0)) missing.push("languages");
-  return missing;
 }
 
 function isReligiousComplete(profile: ProfileLike): boolean {
@@ -83,20 +78,15 @@ function isReligiousComplete(profile: ProfileLike): boolean {
 function isEducationComplete(profile: ProfileLike): boolean {
   const employmentOk =
     profile.gender === "female"
-      ? hasText(profile.marriageWorkPreference) ||
-        hasText(profile.financialReadiness)
-      : hasText(profile.financialReadiness);
+      ? hasText(profile.marriageWorkPreference)
+      : true;
   return (
     hasText(profile.education) && hasText(profile.occupation) && employmentOk
   );
 }
 
 function isMarriageComplete(profile: ProfileLike): boolean {
-  if (!hasText(profile.maritalStatus)) return false;
-  if (profile.gender === "male") {
-    return hasText(profile.hasCurrentWife);
-  }
-  return true;
+  return hasText(profile.maritalStatus);
 }
 
 function isLifestyleComplete(profile: ProfileLike): boolean {
@@ -109,7 +99,6 @@ function isLifestyleComplete(profile: ProfileLike): boolean {
 function isAboutYouComplete(profile: ProfileLike): boolean {
   return (
     hasText(profile.marriageTimeline) &&
-    hasText(profile.loveLanguage) &&
     (profile.qualities?.length ?? 0) > 0 &&
     (profile.hobbies?.length ?? 0) > 0
   );
@@ -125,7 +114,7 @@ function isContactComplete(profile: ProfileLike): boolean {
 function isPreferencesComplete(profile: ProfileLike, prefs: PrefsLike): boolean {
   if (!prefs) return false;
   const appearanceOk =
-    profile.gender === "male" ? !!prefs.partnerHijabLevel?.trim() : true;
+    profile.gender === "male" ? !!prefs.partnerHijabLevel : true;
   return (
     appearanceOk &&
     prefs.minAge !== undefined &&
@@ -134,7 +123,7 @@ function isPreferencesComplete(profile: ProfileLike, prefs: PrefsLike): boolean 
     prefs.minHeight !== null &&
     prefs.minWeight !== undefined &&
     prefs.minWeight !== null &&
-    !!prefs.educationLevel?.trim()
+    !!prefs.educationLevel
   );
 }
 
@@ -143,10 +132,7 @@ export function getProfileIncompleteReason(
   prefs?: PrefsLike
 ): string | null {
   if (!isBasicComplete(profile)) {
-    const missing = basicMissingFields(profile);
-    return missing.length
-      ? `Profile is incomplete: basic information is missing (${missing.join(", ")}).`
-      : "Profile is incomplete: basic information is missing.";
+    return "Profile is incomplete: basic information is missing.";
   }
   if (!isReligiousComplete(profile)) {
     return "Profile is incomplete: religious practice answers are missing.";

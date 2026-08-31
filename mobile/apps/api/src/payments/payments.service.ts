@@ -16,7 +16,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.module";
 import { GrantPaidAccessService } from "./grant-paid-access.service";
 import {
-  CHECKOUT_MODE,
   getRegistrationCheckoutDetails,
   PENDING_MAX_AGE_MS,
   PREMIUM_UPGRADE_AMOUNT_CENTS,
@@ -31,6 +30,7 @@ import {
   PaymentReconcileQueueService,
   type PaymentReconcileJob,
 } from "../queue/payment-email-queue.service";
+import { claimStripeWebhookEvent } from "./stripe-webhook-claim";
 
 @Injectable()
 export class PaymentsService implements OnModuleInit {
@@ -78,49 +78,7 @@ export class PaymentsService implements OnModuleInit {
     ).replace(/\/$/, "");
   }
 
-  /** Deep-link scheme registered in AndroidManifest / iOS URL types. */
-  private mobileAppScheme() {
-    return (
-      this.config.get<string>("MOBILE_APP_SCHEME") ?? "telcalafkaaga"
-    ).replace(/:\/\/*$/, "");
-  }
-
-  private checkoutUrls(client: "web" | "mobile") {
-    if (client === "mobile") {
-      const scheme = this.mobileAppScheme();
-      return {
-        successUrl: `${scheme}://plans?session_id={CHECKOUT_SESSION_ID}&checkout=success`,
-        cancelUrl: `${scheme}://plans?canceled=true`,
-      };
-    }
-    const base = this.appUrl();
-    return {
-      successUrl: `${base}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${base}/payment?canceled=true`,
-    };
-  }
-
-  private async createStripeSession(
-    input: Parameters<StripeGateway["createCheckoutSession"]>[0]
-  ) {
-    try {
-      return await this.stripe.createCheckoutSession(input);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Stripe error";
-      this.logger.error(`Stripe checkout failed: ${message}`);
-      throw new BadRequestException(
-        message.includes("not configured")
-          ? "Card payments are temporarily unavailable. Try EVC / M-PESA, or contact support."
-          : `Could not start Stripe checkout: ${message}`
-      );
-    }
-  }
-
-  async createRegistrationCheckout(
-    userId: string,
-    tier: RegistrationTier,
-    client: "web" | "mobile" = "web"
-  ) {
+  async createRegistrationCheckout(userId: string, tier: RegistrationTier) {
     await this.failClosedRate("payments.checkout", userId);
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile not found");
@@ -128,29 +86,44 @@ export class PaymentsService implements OnModuleInit {
     if (isPremiumMember(profile)) {
       throw new BadRequestException("Already on the premium plan");
     }
-    if (profile.hasPaid) {
+    if (hasPaidAccess(profile)) {
       if (tier === "basic") throw new BadRequestException("Already paid");
       throw new BadRequestException("Use the Premium upgrade button");
     }
 
     const checkout = getRegistrationCheckoutDetails(tier, profile.gender);
-    if (CHECKOUT_MODE !== "payment") {
-      throw new Error("Checkout mode must be payment");
-    }
+    const isBasicSubscription =
+      tier === "basic" &&
+      typeof checkout.monthlyAmountCents === "number" &&
+      typeof checkout.setupAmountCents === "number";
 
-    const urls = this.checkoutUrls(client);
-    const session = await this.createStripeSession({
+    const session = await this.stripe.createCheckoutSession({
       amountCents: checkout.amount,
       productName: checkout.productName,
       productDescription: checkout.productDescription,
-      successUrl: urls.successUrl,
-      cancelUrl: urls.cancelUrl,
+      successUrl: `${this.appUrl()}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${this.appUrl()}/payment?canceled=true`,
       metadata: {
         userId,
         type: checkout.metadataType,
         tier: checkout.registrationTier,
-        client,
+        ...(isBasicSubscription
+          ? {
+              billing: "subscription",
+              monthlyCents: String(checkout.monthlyAmountCents),
+            }
+          : {}),
       },
+      ...(isBasicSubscription
+        ? {
+            subscription: {
+              monthlyCents: checkout.monthlyAmountCents!,
+              setupCents: checkout.setupAmountCents!,
+              monthlyProductName: "Hel Calafkaaga Monthly Membership",
+              setupProductName: "Hel Calafkaaga First Payment",
+            },
+          }
+        : {}),
     });
 
     if (!session.url) {
@@ -168,10 +141,7 @@ export class PaymentsService implements OnModuleInit {
     return { url: session.url, sessionId: session.id, amount: checkout.amount };
   }
 
-  async createPremiumUpgradeCheckout(
-    userId: string,
-    client: "web" | "mobile" = "web"
-  ) {
+  async createPremiumUpgradeCheckout(userId: string) {
     await this.failClosedRate("payments.checkout", userId);
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile not found");
@@ -186,21 +156,17 @@ export class PaymentsService implements OnModuleInit {
     }
 
     const amount = PREMIUM_UPGRADE_AMOUNT_CENTS;
-    const urls = this.checkoutUrls(client);
-    const session = await this.createStripeSession({
+    const session = await this.stripe.createCheckoutSession({
       amountCents: amount,
       productName: "Hel Calafkaaga Premium",
       productDescription:
         "WhatsApp personal support and help finding your match — same app features as Basic",
-      successUrl: urls.successUrl,
-      cancelUrl: client === "mobile"
-        ? `${this.mobileAppScheme()}://plans?canceled=true`
-        : `${this.appUrl()}/profile?upgrade_canceled=true`,
+      successUrl: `${this.appUrl()}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${this.appUrl()}/profile?upgrade_canceled=true`,
       metadata: {
         userId,
         type: "premium_upgrade",
         tier: "premium",
-        client,
       },
     });
 
@@ -346,28 +312,24 @@ export class PaymentsService implements OnModuleInit {
       .update(typeof rawBody === "string" ? rawBody : rawBody)
       .digest("hex");
 
-    const existing = await this.prisma.stripeWebhookEvent.findUnique({
-      where: { stripeEventId: event.id },
+    // M6: durable atomic claim via UNIQUE(stripe_event_id) — never find-then-create.
+    const claim = await claimStripeWebhookEvent(this.prisma, {
+      stripeEventId: event.id,
+      eventType: event.type,
+      payloadHash,
     });
-    if (existing?.status === "completed") {
+
+    if (claim.outcome === "duplicate_completed") {
       return { received: true, duplicate: true };
     }
+    if (claim.outcome === "busy") {
+      // Another instance owns a fresh processing claim — ask Stripe to retry.
+      throw new ServiceUnavailableException(
+        "Webhook event is already being processed. Retry later."
+      );
+    }
 
-    const row =
-      existing ??
-      (await this.prisma.stripeWebhookEvent.create({
-        data: {
-          stripeEventId: event.id,
-          eventType: event.type,
-          payloadHash,
-          status: "received",
-        },
-      }));
-
-    await this.prisma.stripeWebhookEvent.update({
-      where: { id: row.id },
-      data: { status: "processing" },
-    });
+    const row = claim.row;
 
     try {
       if (event.type === "checkout.session.completed") {
@@ -382,6 +344,8 @@ export class PaymentsService implements OnModuleInit {
         const session = event.data.object as { id: string };
         await this.expireSession(session.id);
       }
+      // Unknown signed types: record completed with no business effects so Stripe
+      // does not retry forever.
 
       await this.prisma.stripeWebhookEvent.update({
         where: { id: row.id },
@@ -432,7 +396,12 @@ export class PaymentsService implements OnModuleInit {
       },
       orderBy: { paymentCreatedAt: "desc" },
     });
-    const pendingPayment = latestStripe?.status === "pending";
+    const latestEvc = await this.prisma.evcPaymentProof.findFirst({
+      where: { userId },
+      orderBy: { proofCreatedAt: "desc" },
+    });
+    const pendingPayment =
+      latestStripe?.status === "pending" || latestEvc?.status === "pending";
 
     const access = computeAccessState({
       authenticated: true,
@@ -443,7 +412,6 @@ export class PaymentsService implements OnModuleInit {
       hasPaid: profile.hasPaid,
       hasPaidAccess: access.hasPaidAccess,
       paymentPending: pendingPayment,
-      provider: "stripe" as const,
       registrationTier:
         latestStripe?.registrationTier ??
         (profile.hasPersonalSupport ? "premium" : profile.hasPaid ? "basic" : null),
@@ -462,7 +430,16 @@ export class PaymentsService implements OnModuleInit {
             createdAt: latestStripe.paymentCreatedAt.toISOString(),
           }
         : null,
-      latestEvcProof: null,
+      latestEvcProof: latestEvc
+        ? {
+            id: latestEvc.id,
+            status: latestEvc.status,
+            tier: latestEvc.tier,
+            amountCents: latestEvc.amountCents,
+            createdAt: latestEvc.proofCreatedAt.toISOString(),
+            rejectionReason: latestEvc.rejectionReason,
+          }
+        : null,
     };
   }
 
@@ -471,7 +448,8 @@ export class PaymentsService implements OnModuleInit {
     let updated = 0;
     let cursor: string | undefined;
 
-    // Mark pending as failed when user already has a completed payment.
+    // Mark pending as failed when the member already has *active* paid access
+    // (not merely a past completed payment — Waafi/EVC renewals need a new pending).
     for (;;) {
       const pending = await this.prisma.payment.findMany({
         where: { status: "pending" },
@@ -484,15 +462,21 @@ export class PaymentsService implements OnModuleInit {
       cursor = pending[pending.length - 1]!.id;
 
       const userIds = [...new Set(pending.map((p) => p.userId))];
-      const completedUsers = await this.prisma.payment.findMany({
-        where: { userId: { in: userIds }, status: "completed" },
-        select: { userId: true },
-        distinct: ["userId"],
+      const profiles = await this.prisma.profile.findMany({
+        where: { userId: { in: userIds } },
+        select: {
+          userId: true,
+          hasPaid: true,
+          paidUntil: true,
+          role: true,
+        },
       });
-      const completedSet = new Set(completedUsers.map((u) => u.userId));
+      const activeAccess = new Set(
+        profiles.filter((p) => hasPaidAccess(p)).map((p) => p.userId)
+      );
 
       for (const p of pending) {
-        if (completedSet.has(p.userId)) {
+        if (activeAccess.has(p.userId)) {
           await this.prisma.payment.update({
             where: { id: p.id },
             data: { status: "failed" },

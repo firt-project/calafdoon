@@ -22,17 +22,15 @@ export function shouldHideProfileFromViewer(
 }
 
 /**
- * App access: Stripe `hasPaid`, staff, or manual admin approval.
- * Waafi/EVC access ends when `paidUntil` has passed.
  * Trial fields are legacy and do NOT grant access.
+ * hasPaid or staff determines paid access.
+ * When paidUntil is set (Waafi/EVC periods), access ends after that time.
  */
 export function hasPaidAccess(
   profile:
     | {
         hasPaid?: boolean | null;
         role?: string | null;
-        approved?: boolean | null;
-        reviewStatus?: string | null;
         trialEndsAt?: Date | number | null;
         isInTrial?: boolean;
         paidUntil?: Date | number | string | null;
@@ -42,12 +40,7 @@ export function hasPaidAccess(
 ): boolean {
   if (!profile) return false;
   if (isStaffRole(profile.role)) return true;
-  // Admin can grant access without Stripe by approving the profile.
-  if (profile.approved === true || profile.reviewStatus === "approved") {
-    return true;
-  }
   if (!profile.hasPaid) return false;
-  // Waafi/EVC: access ends when paidUntil has passed.
   if (profile.paidUntil != null) {
     const until =
       typeof profile.paidUntil === "number"

@@ -111,24 +111,19 @@ export function calculateCompatibilityBreakdown(
   }
   push("height", heightScore, 5);
 
-  const candWeight = candidate.weight ?? 0;
   let weightScore = 0;
-  if (
-    candWeight > 0 &&
-    userPrefs.minWeight != null &&
-    userPrefs.maxWeight != null
-  ) {
-    if (candWeight >= userPrefs.minWeight && candWeight <= userPrefs.maxWeight) {
-      weightScore = 5;
-    } else {
-      const diff = Math.min(
-        Math.abs(candWeight - userPrefs.minWeight),
-        Math.abs(candWeight - userPrefs.maxWeight)
-      );
-      weightScore = Math.max(0, 5 - Math.floor(diff / 5));
-    }
+  const minWeight = userPrefs.minWeight ?? 45;
+  const maxWeight = userPrefs.maxWeight ?? 150;
+  if (candidate.weight >= minWeight && candidate.weight <= maxWeight) {
+    weightScore = 3;
+  } else {
+    const diff = Math.min(
+      Math.abs(candidate.weight - minWeight),
+      Math.abs(candidate.weight - maxWeight)
+    );
+    weightScore = Math.max(0, 3 - Math.floor(diff / 5));
   }
-  push("weight", weightScore, 5);
+  push("weight", weightScore, 3);
 
   const userEdu = EDUCATION_SCORES[userPrefs.educationLevel] ?? 2;
   const candEdu = EDUCATION_SCORES[candidate.education] ?? 2;
@@ -355,7 +350,7 @@ export interface Profile {
   country: string;
   city?: string;
   height: number;
-  weight?: number;
+  weight: number;
   education: string;
   maritalStatus: string;
   children: number;

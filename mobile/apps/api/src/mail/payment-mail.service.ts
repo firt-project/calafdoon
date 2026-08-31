@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { MAIL_ADAPTER } from "../auth/auth.service";
 import type { MailAdapter } from "../auth/mail.adapter";
 import { PaymentEmailQueueService } from "../queue/payment-email-queue.service";
+import { escapeHtml } from "./html-escape";
 
 export type PaymentMailTemplate =
   | "payment_success"
@@ -13,7 +14,8 @@ export type PaymentMailTemplate =
   | "evc_approved"
   | "evc_rejected"
   | "premium_upgrade"
-  | "password_reset";
+  | "password_reset"
+  | "admin_evc_alert";
 
 @Injectable()
 export class PaymentMailService {
@@ -38,15 +40,17 @@ export class PaymentMailService {
     gender: string;
     title: string;
     body: string;
+    /** When true (Stripe / force approve), never use pending-review template. */
+    profileApproved?: boolean;
   }) {
     const template: PaymentMailTemplate =
       opts.isUpgrade || opts.isPremium
         ? opts.isUpgrade
           ? "premium_upgrade"
           : "payment_success"
-        : opts.gender === "female"
-          ? "payment_pending_review"
-          : "payment_success";
+        : opts.profileApproved === true || opts.gender !== "female"
+          ? "payment_success"
+          : "payment_pending_review";
 
     await this.enqueue({
       userId: opts.userId,
@@ -65,6 +69,86 @@ export class PaymentMailService {
       subject: "EVC payment received",
       text: "We received your EVC payment proof. An admin will review it shortly.",
     });
+  }
+
+  /** Notify staff when a member submits manual EVC proof (admin inbox alert). */
+  async queueAdminEvcAlert(opts: {
+    proofId: string;
+    memberName: string;
+    amountCents: number;
+  }) {
+    const recipients = await this.resolveAdminAlertEmails();
+    if (!recipients.length) {
+      this.logger.warn(
+        `No admin alert recipients — skip EVC alert ${opts.proofId}`
+      );
+      return;
+    }
+
+    const appUrl = (
+      this.config.get<string>("APP_URL") ?? "https://www.helcalafkaaga.com"
+    ).replace(/\/$/, "");
+    const reviewUrl = `${appUrl}/admin?tab=payments`;
+    const amount = (opts.amountCents / 100).toFixed(2);
+    const subject = "New EVC payment proof — review needed";
+    const text = [
+      `${opts.memberName} submitted an EVC/mobile payment proof for $${amount}.`,
+      `Review in admin: ${reviewUrl}`,
+    ].join("\n");
+
+    for (const to of recipients) {
+      const idempotencyKey = `mail:admin_evc_alert:${opts.proofId}:${this.hashEmail(to)}`;
+      try {
+        await this.prisma.mailDelivery.create({
+          data: {
+            idempotencyKey,
+            userId: null,
+            toHash: this.hashEmail(to),
+            template: "admin_evc_alert",
+            subject,
+            status: "queued",
+          },
+        });
+      } catch (err: unknown) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? (err as { code?: string }).code
+            : undefined;
+        if (code === "P2002") continue;
+        throw err;
+      }
+
+      await this.queue.enqueue({
+        idempotencyKey,
+        userId: "",
+        to,
+        subject,
+        text,
+        template: "admin_evc_alert",
+      });
+    }
+  }
+
+  private async resolveAdminAlertEmails(): Promise<string[]> {
+    const configured = this.config.get<string>("ADMIN_ALERT_EMAILS")?.trim();
+    if (configured) {
+      return configured
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.includes("@"));
+    }
+
+    const staff = await this.prisma.user.findMany({
+      where: {
+        email: { not: null },
+        profile: { role: { in: ["admin", "owner"] }, banned: false },
+      },
+      select: { email: true },
+      take: 10,
+    });
+    return staff
+      .map((s) => s.email)
+      .filter((e): e is string => typeof e === "string" && e.includes("@"));
   }
 
   async queueEvcRejected(userId: string, proofId: string, reason?: string) {
@@ -145,7 +229,7 @@ export class PaymentMailService {
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
-      html: `<p>${opts.text.replace(/</g, "&lt;")}</p>`,
+      html: `<p>${escapeHtml(opts.text)}</p>`,
     });
 
     await this.prisma.mailDelivery.updateMany({

@@ -12,6 +12,8 @@ import {
   CurrentUser,
   Public,
   Roles,
+  AllowDuringPasswordReset,
+  AllowWhileUnverified,
   type RequestUser,
 } from "../auth/auth.guards";
 import { CsrfGuard } from "../auth/csrf";
@@ -53,6 +55,13 @@ export class StaffInvitesController {
     return this.invites.revoke(user.id, id);
   }
 
+  @Post("admin/staff-invites/:id/resend")
+  @Roles("owner")
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  resend(@CurrentUser() user: RequestUser, @Param("id") id: string) {
+    return this.invites.resend(user.id, id);
+  }
+
   @Public()
   @Get("staff-invites/:token")
   getByToken(@Param("token") token: string) {
@@ -60,6 +69,8 @@ export class StaffInvitesController {
   }
 
   @Post("staff-invites/:token/accept")
+  @AllowDuringPasswordReset()
+  @AllowWhileUnverified()
   @UseGuards(CsrfGuard, RateLimitGuard)
   accept(@CurrentUser() user: RequestUser, @Param("token") token: string) {
     return this.invites.accept(user.id, token);

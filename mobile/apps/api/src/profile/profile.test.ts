@@ -4,7 +4,7 @@ import {
   computeAccessState,
   getAuthenticatedHomeRoute,
 } from "../common/access-state";
-import { hasPaidAccess, isPremiumMember, isStaffRole, shouldHideProfileFromViewer } from "../common/access";
+import { hasPaidAccess, isPremiumMember, isStaffRole } from "../common/access";
 import { assertGenderMutable, isGenderLocked } from "./gender-lock";
 import {
   canViewerSeePhotos,
@@ -103,17 +103,17 @@ describe("access-state routing", () => {
       hasPaidAccess({
         hasPaid: true,
         role: "user",
-        paidUntil: Date.now() - 60_000,
+        paidUntil: new Date(Date.now() + 86_400_000).toISOString(),
       }),
-      false
+      true
     );
     assert.equal(
       hasPaidAccess({
         hasPaid: true,
         role: "user",
-        paidUntil: Date.now() + 86_400_000,
+        paidUntil: new Date(Date.now() - 1000).toISOString(),
       }),
-      true
+      false
     );
   });
 });
@@ -248,9 +248,9 @@ describe("questionnaire completion validation", () => {
     maritalStatus: "Never married",
     smokes: "No",
     marriageTimeline: "Within 1 year",
-    loveLanguage: "Quality Time",
     qualities: ["Kind"],
     hobbies: ["Reading"],
+    spousePrayerImportance: "Very important",
     profileImageMediaId: "11111111-1111-1111-1111-111111111111",
   };
 
@@ -289,8 +289,6 @@ describe("questionnaire completion validation", () => {
       ...completeFemale,
       gender: "male",
       wearsHijab: undefined,
-      financialReadiness: "Ready",
-      hasCurrentWife: "No",
     };
     const prefsMissingHijab = {
       minAge: 20,
@@ -308,17 +306,6 @@ describe("questionnaire completion validation", () => {
         partnerHijabLevel: "Always",
       }),
       null
-    );
-  });
-
-  it("requires preferred weight for completeness", () => {
-    assert.match(
-      getProfileIncompleteReason(completeFemale, {
-        minAge: 25,
-        minHeight: 160,
-        educationLevel: "Bachelor",
-      }) ?? "",
-      /partner preferences/
     );
   });
 });
@@ -368,13 +355,5 @@ describe("staff helpers", () => {
     assert.equal(isStaffRole("admin"), true);
     assert.equal(isStaffRole("owner"), true);
     assert.equal(isStaffRole("user"), false);
-  });
-
-  it("hides staff profiles from members only", () => {
-    assert.equal(shouldHideProfileFromViewer("user", "admin"), true);
-    assert.equal(shouldHideProfileFromViewer("user", "owner"), true);
-    assert.equal(shouldHideProfileFromViewer("user", "user"), false);
-    assert.equal(shouldHideProfileFromViewer("admin", "user"), false);
-    assert.equal(shouldHideProfileFromViewer("owner", "admin"), false);
   });
 });

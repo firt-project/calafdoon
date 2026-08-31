@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { sanitizeForLog } from "../observability/log-redact";
 import { PrismaService } from "../prisma/prisma.service";
 import { parseLimit } from "./admin-auth.helpers";
 
@@ -42,8 +43,8 @@ export class AuditLogService {
       args.metadata === undefined
         ? null
         : typeof args.metadata === "string"
-          ? args.metadata.slice(0, 2000)
-          : JSON.stringify(args.metadata).slice(0, 2000);
+          ? String(sanitizeForLog(args.metadata)).slice(0, 2000)
+          : JSON.stringify(sanitizeForLog(args.metadata)).slice(0, 2000);
 
     return this.prisma.auditLog.create({
       data: {

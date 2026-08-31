@@ -28,6 +28,7 @@ export type AccessProfileInput = {
   hasPersonalSupport?: boolean | null;
   paidCents?: number | null;
   genderLocked?: boolean | null;
+  paidUntil?: Date | number | string | null;
   waliName?: string | null;
   waliPhone?: string | null;
   profileImageConvexId?: string | null;
@@ -43,6 +44,7 @@ export type AccessState = {
   questionnaireComplete: boolean;
   hasPaid: boolean;
   hasPaidAccess: boolean;
+  paidUntil: string | null;
   approved: boolean;
   reviewStatus: ReviewStatus;
   isPremium: boolean;
@@ -94,6 +96,12 @@ export function computeAccessState(opts: {
     questionnaireComplete,
     hasPaid,
     hasPaidAccess: paidAccess,
+    paidUntil:
+      profile?.paidUntil == null
+        ? null
+        : typeof profile.paidUntil === "string"
+          ? profile.paidUntil
+          : new Date(profile.paidUntil).toISOString(),
     approved: !!profile?.approved,
     reviewStatus,
     isPremium,

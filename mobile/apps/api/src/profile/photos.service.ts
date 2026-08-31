@@ -16,13 +16,12 @@ import { PrismaService } from "../prisma/prisma.service";
 import { MediaAccessService } from "../media/media-access.service";
 import { isStaffRole } from "../common/access";
 import {
-  ALLOWED_IMAGE_CONTENT_TYPES,
   canViewerSeePhotos,
   MAX_ADDITIONAL_PHOTOS,
   MAX_PRIVATE_PHOTOS,
   MAX_PROFILE_PHOTOS,
-  MAX_UPLOAD_BYTES,
 } from "./photo-rules";
+import { assertStoredUpload, assertUploadIntent } from "../media/upload-policy";
 import { ProfileService } from "./profile.service";
 
 @Injectable()
@@ -101,17 +100,17 @@ export class ProfilePhotosService {
     }
   ) {
     const profile = await this.profiles.requireProfile(userId);
-    const contentType = opts.contentType.toLowerCase().trim();
-    if (!ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
-      throw new BadRequestException(
-        "Only JPG, PNG, or WebP images are allowed"
-      );
-    }
-    if (opts.sizeBytes !== undefined && opts.sizeBytes > MAX_UPLOAD_BYTES) {
-      throw new BadRequestException(
-        "Image is too large. Please choose a photo under 2MB after compression."
-      );
-    }
+    const purpose =
+      opts.slot === "main"
+        ? "profile_main"
+        : opts.slot === "additional"
+          ? "profile_additional"
+          : "profile_private";
+    const { contentType, sizeBytes, maxBytes } = assertUploadIntent({
+      purpose,
+      contentType: opts.contentType,
+      sizeBytes: opts.sizeBytes,
+    });
 
     const counts = await this.countPhotos(profile);
     if (opts.slot === "private") {
@@ -135,18 +134,12 @@ export class ProfilePhotosService {
       }
     }
 
-    const purpose =
-      opts.slot === "main"
-        ? "profile_main"
-        : opts.slot === "additional"
-          ? "profile_additional"
-          : "profile_private";
     const bucket =
       opts.slot === "private" ? this.privateBucket : this.profileBucket;
     const ext =
-      contentType.includes("png")
+      contentType === "image/png"
         ? "png"
-        : contentType.includes("webp")
+        : contentType === "image/webp"
           ? "webp"
           : "jpg";
     const localStorageId = `local_${randomUUID()}`;
@@ -159,6 +152,7 @@ export class ProfilePhotosService {
         bucket,
         objectKey,
         contentType,
+        sizeBytes: BigInt(sizeBytes),
         ownerUserId: userId,
         convexOwnerUserId: profile.convexUserId,
         migrationStatus: "pending",
@@ -171,6 +165,7 @@ export class ProfilePhotosService {
       Bucket: bucket,
       Key: objectKey,
       ContentType: contentType,
+      ContentLength: sizeBytes,
     });
     const uploadUrl = await getSignedUrl(this.s3, command, {
       expiresIn: this.ttlSeconds,
@@ -192,7 +187,7 @@ export class ProfilePhotosService {
       bucket,
       objectKey,
       contentType,
-      maxBytes: MAX_UPLOAD_BYTES,
+      maxBytes,
     };
   }
 
@@ -211,25 +206,47 @@ export class ProfilePhotosService {
       throw new BadRequestException("Upload not ready");
     }
 
-    const head = await this.s3.send(
-      new HeadObjectCommand({
-        Bucket: media.bucket,
-        Key: media.objectKey,
-      })
-    );
-    const size = Number(head.ContentLength ?? 0);
-    const contentType = (head.ContentType ?? media.contentType ?? "")
-      .toLowerCase()
-      .trim();
-    if (!ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
+    let head;
+    try {
+      head = await this.s3.send(
+        new HeadObjectCommand({
+          Bucket: media.bucket,
+          Key: media.objectKey,
+        })
+      );
+    } catch {
       throw new BadRequestException(
-        "Only JPG, PNG, or WebP images are allowed"
+        "Image upload did not finish. Please try again."
       );
     }
-    if (size <= 0 || size > MAX_UPLOAD_BYTES) {
-      throw new BadRequestException(
-        "Image is too large. Please choose a photo under 2MB after compression."
-      );
+    const size = Number(head.ContentLength ?? 0);
+    const declared =
+      media.sizeBytes != null ? Number(media.sizeBytes) : undefined;
+
+    let contentType: string;
+    try {
+      ({ contentType } = assertStoredUpload({
+        purpose: media.purpose as
+          | "profile_main"
+          | "profile_additional"
+          | "profile_private",
+        contentType: head.ContentType ?? media.contentType,
+        sizeBytes: size,
+        declaredSizeBytes: declared,
+      }));
+    } catch (err) {
+      await this.mediaAccess.deleteObjectQuietly(media.bucket, media.objectKey);
+      await this.prisma.mediaObject
+        .update({
+          where: { id: media.id },
+          data: {
+            migrationStatus: "failed",
+            failureReason: "upload_validation_failed",
+            verifiedReadable: false,
+          },
+        })
+        .catch(() => undefined);
+      throw err;
     }
 
     await this.prisma.mediaObject.update({

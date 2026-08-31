@@ -118,6 +118,8 @@ function asUser(
     banned: false,
     hasProfile: true,
     hasPaid: true,
+    mustResetPassword: false,
+    emailVerified: true,
     sessionId: randomUUID(),
   };
 }
@@ -176,6 +178,8 @@ describe("Phase 9 admin unit tests", () => {
           purpose: "profile_main",
         }),
       } as never,
+      { transition: async () => ({ ok: true }), recordHistory: async () => {} } as never,
+      { get: () => "https://www.helcalafkaaga.com" } as never,
       mail
     );
     moderation = new ModerationService(prisma as never, audit);
@@ -192,7 +196,12 @@ describe("Phase 9 admin unit tests", () => {
       audit,
       mail
     );
-    invites = new StaffInvitesService(prisma as never, audit, mail);
+    invites = new StaffInvitesService(
+      prisma as never,
+      audit,
+      { get: () => "https://www.helcalafkaaga.com" } as never,
+      mail
+    );
     announcements = new AnnouncementsService(
       prisma as never,
       audit,
@@ -391,6 +400,82 @@ describe("Phase 9 admin unit tests", () => {
       where: { id: media.id },
     });
     assert.equal(mediaRow?.ownerUserId, null);
+  });
+
+  it("10b. admin delete with status history + email verification token", async () => {
+    const victim = await createSynthetic(prisma, {
+      email: `p9.delhist.${randomUUID().slice(0, 8)}@hel.local`,
+      gender: "female",
+      hasPaid: true,
+      approved: true,
+      reviewStatus: "approved",
+    });
+    await prisma.accountStatusHistory.create({
+      data: {
+        userId: victim.id,
+        profileId: victim.profile!.id,
+        eventType: "approved",
+        previousStatus: "pending_review",
+        newStatus: "approved",
+        performedByAdminId: admin.id,
+        performedByAdminName: "Admin",
+      },
+    });
+    await prisma.emailVerificationToken.create({
+      data: {
+        userId: victim.id,
+        email: victim.email!,
+        tokenHash: `hash_${randomUUID()}`,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+    const result = await users.deleteUser(admin.id, victim.profile!.id);
+    assert.equal((result as { deleted?: boolean }).deleted, true);
+    assert.equal(await prisma.user.findUnique({ where: { id: victim.id } }), null);
+    assert.equal(
+      await prisma.accountStatusHistory.count({ where: { userId: victim.id } }),
+      0
+    );
+    assert.equal(
+      await prisma.emailVerificationToken.count({ where: { userId: victim.id } }),
+      0
+    );
+  });
+
+  it("10c. self-delete succeeds even after writing actor audit would have blocked", async () => {
+    const victim = await createSynthetic(prisma, {
+      email: `p9.selfdel.${randomUUID().slice(0, 8)}@hel.local`,
+      gender: "male",
+      hasPaid: true,
+      approved: true,
+      reviewStatus: "approved",
+    });
+    await prisma.accountStatusHistory.create({
+      data: {
+        userId: victim.id,
+        profileId: victim.profile!.id,
+        eventType: "approved",
+        previousStatus: "pending_review",
+        newStatus: "approved",
+      },
+    });
+    // Simulate prior activity where the member was an audit actor
+    await audit.write({
+      actorUserId: victim.id,
+      action: "profile_update",
+      targetUserId: victim.id,
+      targetProfileId: victim.profile!.id,
+      metadata: { note: "self activity" },
+    });
+    const result = await deletion.executeSelfDelete(victim.id);
+    assert.equal(result.deleted, true);
+    assert.equal(await prisma.user.findUnique({ where: { id: victim.id } }), null);
+    const job = await prisma.deletionJob.findFirst({
+      where: { targetUserId: victim.id, mode: "execute" },
+      orderBy: { createdAt: "desc" },
+    });
+    assert.ok(job);
+    assert.equal(job!.status, "completed");
   });
 
   it("11. report resolve/dismiss", async () => {
@@ -608,23 +693,34 @@ describe("Phase 9 admin unit tests", () => {
       approved: true,
       reviewStatus: "approved",
     });
+    const victimConvexId = victim.convexId;
+    const victimProfileId = victim.profile!.id;
     await audit.write({
       actorUserId: admin.id,
-      action: "delete_user",
+      action: "approve_user",
       targetUserId: victim.id,
       targetProfileId: victim.profile!.id,
       metadata: { name: "Phase9" },
     });
     await users.deleteUser(admin.id, victim.profile!.id);
     const logs = await audit.list({ action: "delete_user", limit: 20 });
-    const orphaned = logs.items.find(
-      (l) => l.convexTargetUserId === victim.convexId || l.targetUserId === null
-    );
-    assert.ok(orphaned);
-    assert.ok(
-      orphaned!.convexTargetUserId === victim.convexId ||
-        orphaned!.targetUserId === null
-    );
+    const postDelete = logs.items.find((l) => {
+      if (l.action !== "delete_user") return false;
+      try {
+        const meta = l.metadata ? JSON.parse(String(l.metadata)) : null;
+        return meta?.deletedUserId === victim.id || meta?.deletedProfileId === victimProfileId;
+      } catch {
+        return false;
+      }
+    });
+    assert.ok(postDelete, "expected post-delete audit row");
+    assert.equal(postDelete!.targetUserId, null);
+
+    const prior = await prisma.auditLog.findFirst({
+      where: { action: "approve_user", convexTargetUserId: victimConvexId },
+    });
+    assert.ok(prior);
+    assert.equal(prior!.targetUserId, null);
   });
 
   it("bonus: email masking", () => {

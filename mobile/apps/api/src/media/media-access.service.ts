@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -9,6 +10,7 @@ import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import type { MediaPurpose } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { canViewerSeePhotos } from "../profile/photo-rules";
 
 export type MediaAccessContext = {
   /** Authenticated user UUID (Postgres). */
@@ -60,6 +62,69 @@ export class MediaAccessService {
     });
   }
 
+  private async hasActiveMatch(a: string, b: string): Promise<boolean> {
+    if (!a || !b || a === b) return a === b;
+    const match = await this.prisma.match.findFirst({
+      where: {
+        status: "active",
+        OR: [
+          { userAId: a, userBId: b },
+          { userAId: b, userBId: a },
+        ],
+      },
+      select: { id: true },
+    });
+    return !!match;
+  }
+
+  /**
+   * Public gallery photos (main/additional) follow profile photoVisibility —
+   * same rules as PhotosService.photoAccess. Never grant by mediaId alone.
+   */
+  private async assertProfileGalleryAccess(
+    media: { ownerUserId: string | null },
+    ctx: MediaAccessContext,
+    isStaff: boolean,
+    isOwner: boolean
+  ): Promise<void> {
+    if (!ctx.userId) {
+      throw new ForbiddenException("Authentication required");
+    }
+
+    const ownerUserId = media.ownerUserId;
+    // Unresolvable ownership (deleted member / migration orphan) — never serve.
+    if (!ownerUserId) {
+      throw new NotFoundException("Media not found");
+    }
+
+    // Owner and staff may view gallery of an active (non-deleted) owner.
+    if (isOwner || isStaff) return;
+
+    const ownerProfile = await this.prisma.profile.findUnique({
+      where: { userId: ownerUserId },
+      select: {
+        userId: true,
+        banned: true,
+        photoVisibility: true,
+      },
+    });
+    if (!ownerProfile || ownerProfile.banned) {
+      throw new NotFoundException("Media not found");
+    }
+
+    const hasActiveMatch = await this.hasActiveMatch(ctx.userId, ownerUserId);
+    const allowed = canViewerSeePhotos({
+      viewerUserId: ctx.userId,
+      profileOwnerUserId: ownerUserId,
+      photoVisibility: ownerProfile.photoVisibility,
+      isStaff: false,
+      hasActiveMatch,
+    });
+    if (!allowed) {
+      throw new ForbiddenException("Photo visibility restricted");
+    }
+  }
+
   async assertCanAccess(
     mediaId: string,
     ctx: MediaAccessContext
@@ -76,15 +141,26 @@ export class MediaAccessService {
       throw new NotFoundException("Media not found");
     }
 
+    // H2: member deletion retains media rows/objects but registers them as
+    // orphaned. Deny all application access (including staff) immediately —
+    // do not wait for physical R2 purge, and do not issue new signed URLs.
+    const orphaned = await this.prisma.orphanedMediaObject.findFirst({
+      where: { mediaObjectId: media.id },
+      select: { id: true },
+    });
+    if (orphaned) {
+      throw new NotFoundException("Media not found");
+    }
+
     const isStaff =
       ctx.roles.includes("admin") || ctx.roles.includes("owner");
-    const isOwner = media.ownerUserId === ctx.userId;
+    const isOwner =
+      !!media.ownerUserId && media.ownerUserId === ctx.userId;
 
     switch (media.purpose) {
       case "profile_main":
       case "profile_additional":
-        // Authenticated discovery — caller must be signed in (ctx.userId present).
-        if (!ctx.userId) throw new ForbiddenException("Authentication required");
+        await this.assertProfileGalleryAccess(media, ctx, isStaff, isOwner);
         break;
       case "profile_private":
         if (
@@ -176,16 +252,22 @@ export class MediaAccessService {
     return { url, expiresInSeconds: this.ttlSeconds, purpose };
   }
 
-  /** Signed PUT URL for direct browser uploads (e.g. chat attachments). */
+  /**
+   * Signed PUT URL for direct browser uploads (e.g. chat attachments).
+   * Binds Content-Type and Content-Length so R2/S3 rejects mismatched PUTs.
+   */
   async createSignedUploadUrl(opts: {
     bucket: string;
     objectKey: string;
     contentType: string;
+    /** Exact byte length the client must PUT (required for H3 size binding). */
+    contentLength: number;
   }): Promise<{ uploadUrl: string; expiresInSeconds: number }> {
     const command = new PutObjectCommand({
       Bucket: opts.bucket,
       Key: opts.objectKey,
       ContentType: opts.contentType,
+      ContentLength: opts.contentLength,
     });
     const uploadUrl = await getSignedUrl(this.s3, command, {
       expiresIn: this.ttlSeconds,
@@ -205,6 +287,20 @@ export class MediaAccessService {
       sizeBytes: Number(res.ContentLength ?? 0),
       contentType: res.ContentType ?? null,
     };
+  }
+
+  /**
+   * Best-effort removal of an invalid / rejected upload object.
+   * Never throws — callers still return their validation error.
+   */
+  async deleteObjectQuietly(bucket: string, objectKey: string): Promise<void> {
+    try {
+      await this.s3.send(
+        new DeleteObjectCommand({ Bucket: bucket, Key: objectKey })
+      );
+    } catch {
+      // Retention / retry handled elsewhere; do not leak provider errors.
+    }
   }
 
   async getObjectStream(mediaId: string, ctx: MediaAccessContext) {

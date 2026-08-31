@@ -1,5 +1,5 @@
 import { Controller, Get } from "@nestjs/common";
-import { Public, Roles } from "../auth/auth.guards";
+import { Roles } from "../auth/auth.guards";
 import { MetricsService } from "./metrics.service";
 
 @Controller("metrics")
@@ -13,9 +13,9 @@ export class MetricsController {
     return this.metrics.snapshot();
   }
 
-  /** Lightweight public counters for local staging smoke (no PII). */
-  @Public()
+  /** Aggregate latency/error counters — staff only (L1: was public). */
   @Get("health-summary")
+  @Roles("admin")
   summary() {
     const snap = this.metrics.snapshot();
     return {

@@ -10,18 +10,16 @@ import {
 import { ConfigService } from "@nestjs/config";
 import type { Conversation, Match, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import { hasPaidAccess, isStaffRole, shouldHideProfileFromViewer } from "../common/access";
+import { hasPaidAccess, isStaffRole } from "../common/access";
+import {
+  interactionLockMessage,
+  isInteractionLocked,
+} from "../common/review-status";
 import { MediaAccessService } from "../media/media-access.service";
-import {
-  resolveAdditionalImageUrls,
-  resolveProfileMainImageUrl,
-} from "../media/profile-image-url";
+import { resolveProfileMainImageUrl, resolveAdditionalImageUrls } from "../media/profile-image-url";
+import { assertStoredUpload, assertUploadIntent } from "../media/upload-policy";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-  ALLOWED_IMAGE_CONTENT_TYPES,
-  MAX_UPLOAD_BYTES,
-  canViewerSeePhotos,
-} from "../profile/photo-rules";
+import { canViewerSeePhotos } from "../profile/photo-rules";
 import { RedisService } from "../redis/redis.module";
 import { NotificationQueueService } from "../queue/notification-queue.service";
 import { ChatRealtimeService } from "./chat-realtime.service";
@@ -36,6 +34,7 @@ import {
 } from "./chat.constants";
 import { TypingService } from "./typing.service";
 import { bumpUnread, readUnreadCount, zeroUnread } from "./unread";
+import { PresenceService } from "../presence/presence.service";
 
 type ConvWithMatch = Conversation & { match: Match };
 
@@ -50,6 +49,7 @@ export class ConversationService {
     private readonly typing: TypingService,
     private readonly realtime: ChatRealtimeService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly presence: PresenceService,
     private readonly config: ConfigService
   ) {
     this.chatBucket = this.config.get<string>("S3_BUCKET_CHAT") ?? "hel-chat";
@@ -58,7 +58,9 @@ export class ConversationService {
   private async requireProfile(userId: string): Promise<Profile> {
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile required");
-    if (profile.banned) throw new ForbiddenException("Account suspended");
+    if (isInteractionLocked(profile)) {
+      throw new ForbiddenException(interactionLockMessage(profile));
+    }
     return profile;
   }
 
@@ -112,6 +114,77 @@ export class ConversationService {
       set.add(r.blockerId === userId ? r.blockedId : r.blockerId);
     }
     return set;
+  }
+
+  /** Public member card for chat — never includes email or phone. */
+  private async buildPublicPartnerCard(
+    viewer: Profile,
+    other: Profile,
+    otherUserId: string,
+    hasActiveMatch: boolean
+  ) {
+    let imageUrl: string | null = null;
+    let additionalImageUrls: string[] = [];
+    let photoHidden = false;
+    const hasPhoto = !!(
+      other.profileImageMediaId || other.profileImageConvexId
+    );
+    const allowed = canViewerSeePhotos({
+      viewerUserId: viewer.userId,
+      profileOwnerUserId: otherUserId,
+      photoVisibility: other.photoVisibility,
+      isStaff: isStaffRole(viewer.role),
+      hasActiveMatch,
+    });
+    if (!allowed) {
+      photoHidden = hasPhoto;
+    } else if (hasPhoto) {
+      imageUrl = await resolveProfileMainImageUrl(
+        this.prisma,
+        this.media,
+        other,
+        { userId: viewer.userId, roles: [viewer.role] }
+      );
+      if (!imageUrl) photoHidden = true;
+      additionalImageUrls = await resolveAdditionalImageUrls(
+        this.prisma,
+        this.media,
+        other,
+        { userId: viewer.userId, roles: [viewer.role] }
+      );
+    }
+
+    return {
+      userId: otherUserId,
+      name: other.name,
+      age: other.age,
+      gender: other.gender,
+      country: other.country,
+      city: other.city,
+      height: other.height,
+      education: other.education,
+      occupation: other.occupation,
+      religiousLevel: other.religiousLevel,
+      prayerFrequency: other.prayerFrequency,
+      bio: other.bio || null,
+      maritalStatus: other.maritalStatus,
+      marriageTimeline: other.marriageTimeline,
+      wantChildren: other.wantChildren,
+      languagesSpoken: other.languagesSpoken ?? [],
+      qualities: other.qualities ?? [],
+      hobbies: other.hobbies ?? [],
+      imageUrl,
+      additionalImageUrls,
+      photoHidden,
+      verified: other.verified,
+      hasPaid: other.hasPaid,
+      hasPersonalSupport: !!other.hasPersonalSupport,
+      questionnaireComplete: other.questionnaireComplete,
+      photoVisibility: other.photoVisibility,
+      approved: other.approved,
+      reviewStatus: other.reviewStatus,
+      isOnline: await this.presence.isOnline(otherUserId),
+    };
   }
 
   private async failClosedRateLimit(bucket: string, userId: string) {
@@ -170,12 +243,6 @@ export class ConversationService {
       const other = await this.prisma.profile.findUnique({
         where: { userId: otherId },
       });
-      if (
-        other &&
-        shouldHideProfileFromViewer(profile.role, other.role)
-      ) {
-        continue;
-      }
       const conversation = m.conversation;
       let lastMessage: string | null = null;
       if (conversation) {
@@ -195,30 +262,14 @@ export class ConversationService {
           )
         : 0;
 
-      let imageUrl: string | null = null;
-      let photoHidden = false;
+      let profileCard = null;
       if (other) {
-        const hasPhoto = !!(
-          other.profileImageMediaId || other.profileImageConvexId
+        profileCard = await this.buildPublicPartnerCard(
+          profile,
+          other,
+          otherId,
+          m.status === "active"
         );
-        const allowed = canViewerSeePhotos({
-          viewerUserId: userId,
-          profileOwnerUserId: otherId,
-          photoVisibility: other.photoVisibility,
-          isStaff: isStaffRole(profile.role),
-          hasActiveMatch: m.status === "active",
-        });
-        if (!allowed) {
-          photoHidden = hasPhoto;
-        } else if (hasPhoto) {
-          imageUrl = await resolveProfileMainImageUrl(
-            this.prisma,
-            this.media,
-            other,
-            { userId, roles: [profile.role] }
-          );
-          if (!imageUrl) photoHidden = true;
-        }
       }
 
       items.push({
@@ -228,36 +279,7 @@ export class ConversationService {
         chatUnlocked: paid || m.chatUnlocked,
         status: m.status,
         isNew,
-        profile: other
-          ? {
-              name: other.name,
-              imageUrl,
-              photoHidden,
-              userId: otherId,
-              age: other.age,
-              gender: other.gender,
-              city: other.city ?? null,
-              country: other.country ?? null,
-              height: other.height ?? null,
-              education: other.education ?? null,
-              occupation: other.occupation ?? null,
-              religiousLevel: other.religiousLevel ?? null,
-              prayerFrequency: other.prayerFrequency ?? null,
-              bio: other.bio || null,
-              maritalStatus: other.maritalStatus ?? null,
-              marriageTimeline: other.marriageTimeline ?? null,
-              wantChildren: other.wantChildren ?? null,
-              languagesSpoken: other.languagesSpoken ?? [],
-              qualities: other.qualities ?? [],
-              hobbies: other.hobbies ?? [],
-              verified: other.verified,
-              hasPaid: other.hasPaid,
-              hasPersonalSupport: !!other.hasPersonalSupport,
-              questionnaireComplete: other.questionnaireComplete,
-              approved: other.approved,
-              reviewStatus: other.reviewStatus,
-            }
-          : null,
+        profile: profileCard,
         lastMessage,
         lastMessageAt: conversation?.lastMessageAt?.toISOString() ?? null,
         unreadCount,
@@ -273,103 +295,6 @@ export class ConversationService {
     return { items };
   }
 
-  /**
-   * Full public dating profile for the chat partner — never includes email/phone.
-   * Fetched on open from the chat UI (do not rely on the conversation list payload).
-   */
-  async getPartner(userId: string, conversationId: string) {
-    const viewer = await this.requireProfile(userId);
-    const conv = await this.loadConversation(conversationId);
-    this.assertParticipant(conv, userId);
-
-    const otherId = this.otherUserId(conv, userId);
-    if (!otherId) throw new NotFoundException("Partner not found");
-    if (await this.isEitherBlocked(userId, otherId)) {
-      throw new ForbiddenException("Not authorized");
-    }
-
-    const other = await this.prisma.profile.findUnique({
-      where: { userId: otherId },
-    });
-    if (!other || other.banned) {
-      throw new NotFoundException("Partner not found");
-    }
-    if (shouldHideProfileFromViewer(viewer.role, other.role)) {
-      throw new NotFoundException("Partner not found");
-    }
-
-    const hasActiveMatch = conv.match.status === "active";
-    const hasPhoto = !!(
-      other.profileImageMediaId || other.profileImageConvexId
-    );
-    const allowed = canViewerSeePhotos({
-      viewerUserId: userId,
-      profileOwnerUserId: otherId,
-      photoVisibility: other.photoVisibility,
-      isStaff: isStaffRole(viewer.role),
-      hasActiveMatch,
-    });
-
-    let imageUrl: string | null = null;
-    let additionalImageUrls: string[] = [];
-    let photoHidden = false;
-    if (!allowed) {
-      photoHidden = hasPhoto;
-    } else {
-      const viewerCtx = {
-        userId,
-        roles: [viewer.role as "user" | "admin" | "owner"],
-      };
-      imageUrl = await resolveProfileMainImageUrl(
-        this.prisma,
-        this.media,
-        other,
-        viewerCtx
-      );
-      additionalImageUrls = await resolveAdditionalImageUrls(
-        this.prisma,
-        this.media,
-        other,
-        viewerCtx
-      );
-      if (hasPhoto && !imageUrl) photoHidden = true;
-    }
-
-    return {
-      conversationId: conv.id,
-      matchId: conv.matchId,
-      score: conv.match.score ?? null,
-      profile: {
-        name: other.name ?? "Member",
-        age: other.age,
-        gender: other.gender,
-        city: other.city ?? null,
-        country: other.country ?? null,
-        height: other.height ?? null,
-        education: other.education ?? null,
-        occupation: other.occupation ?? null,
-        religiousLevel: other.religiousLevel ?? null,
-        prayerFrequency: other.prayerFrequency ?? null,
-        bio: other.bio || null,
-        maritalStatus: other.maritalStatus ?? null,
-        marriageTimeline: other.marriageTimeline ?? null,
-        wantChildren: other.wantChildren ?? null,
-        languagesSpoken: other.languagesSpoken ?? [],
-        qualities: other.qualities ?? [],
-        hobbies: other.hobbies ?? [],
-        imageUrl,
-        additionalImageUrls,
-        photoHidden,
-        verified: other.verified,
-        hasPaid: other.hasPaid,
-        hasPersonalSupport: !!other.hasPersonalSupport,
-        questionnaireComplete: other.questionnaireComplete,
-        approved: other.approved,
-        reviewStatus: other.reviewStatus,
-      },
-    };
-  }
-
   async getConversation(userId: string, conversationId: string) {
     const profile = await this.requireProfile(userId);
     const conv = await this.loadConversation(conversationId);
@@ -380,17 +305,10 @@ export class ConversationService {
     );
     const item = list.items.find((i) => i.conversationId === conversationId);
     if (!item) {
-      // Blocked / staff-hidden pairs are omitted from list — deny detail too.
+      // Blocked pairs are hidden from list — still deny detail if blocked
       const otherId = this.otherUserId(conv, userId);
       if (await this.isEitherBlocked(userId, otherId)) {
         throw new ForbiddenException("Not authorized");
-      }
-      const other = await this.prisma.profile.findUnique({
-        where: { userId: otherId },
-        select: { role: true },
-      });
-      if (shouldHideProfileFromViewer(profile.role, other?.role)) {
-        throw new NotFoundException("Conversation not found");
       }
       return {
         id: conv.id,
@@ -407,6 +325,32 @@ export class ConversationService {
       };
     }
     return item;
+  }
+
+  async getPartnerProfile(userId: string, conversationId: string) {
+    const viewer = await this.requireProfile(userId);
+    const conv = await this.loadConversation(conversationId);
+    this.assertParticipant(conv, userId);
+    const otherId = this.otherUserId(conv, userId);
+    if (!otherId) throw new NotFoundException("Partner not found");
+    if (await this.isEitherBlocked(userId, otherId)) {
+      throw new ForbiddenException("Not authorized");
+    }
+    const other = await this.prisma.profile.findUnique({
+      where: { userId: otherId },
+    });
+    if (!other) throw new NotFoundException("Partner not found");
+    return {
+      profile: await this.buildPublicPartnerCard(
+        viewer,
+        other,
+        otherId,
+        conv.match.status === "active"
+      ),
+      score: conv.match.score,
+      matchId: conv.match.id,
+      conversationId: conv.id,
+    };
   }
 
   async listMessages(
@@ -517,23 +461,18 @@ export class ConversationService {
       throw new ForbiddenException("You cannot message this user");
     }
 
-    const contentType = opts.contentType.toLowerCase().trim();
-    if (!ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
-      throw new BadRequestException(
-        "Only JPG, PNG, or WebP images are allowed"
-      );
-    }
-    if (opts.sizeBytes !== undefined && opts.sizeBytes > MAX_UPLOAD_BYTES) {
-      throw new BadRequestException(
-        "Image is too large. Please choose a photo under 2MB after compression."
-      );
-    }
+    const { contentType, sizeBytes, maxBytes } = assertUploadIntent({
+      purpose: "chat_image",
+      contentType: opts.contentType,
+      sizeBytes: opts.sizeBytes,
+    });
 
-    const ext = contentType.includes("png")
-      ? "png"
-      : contentType.includes("webp")
-        ? "webp"
-        : "jpg";
+    const ext =
+      contentType === "image/png"
+        ? "png"
+        : contentType === "image/webp"
+          ? "webp"
+          : "jpg";
     const localStorageId = `local_chat_${randomUUID()}`;
     const objectKey = `${conversationId}/${localStorageId}.${ext}`;
 
@@ -548,6 +487,7 @@ export class ConversationService {
         bucket: this.chatBucket,
         objectKey,
         contentType,
+        sizeBytes: BigInt(sizeBytes),
         ownerUserId: userId,
         convexOwnerUserId: senderUser?.convexId ?? profile.convexUserId,
         migrationStatus: "pending",
@@ -560,6 +500,7 @@ export class ConversationService {
         bucket: this.chatBucket,
         objectKey,
         contentType,
+        contentLength: sizeBytes,
       });
 
     return {
@@ -567,7 +508,7 @@ export class ConversationService {
       uploadUrl,
       expiresInSeconds,
       contentType,
-      maxBytes: MAX_UPLOAD_BYTES,
+      maxBytes,
     };
   }
 
@@ -636,16 +577,35 @@ export class ConversationService {
             "Image upload did not finish. Please try again."
           );
         }
-        if (head.sizeBytes <= 0 || head.sizeBytes > MAX_UPLOAD_BYTES) {
-          throw new BadRequestException(
-            "Image is too large. Please choose a photo under 2MB after compression."
-          );
+        const declared =
+          media.sizeBytes != null ? Number(media.sizeBytes) : undefined;
+        let verifiedType: string;
+        try {
+          ({ contentType: verifiedType } = assertStoredUpload({
+            purpose: "chat_image",
+            contentType: head.contentType ?? media.contentType,
+            sizeBytes: head.sizeBytes,
+            declaredSizeBytes: declared,
+          }));
+        } catch (err) {
+          await this.media.deleteObjectQuietly(media.bucket, media.objectKey);
+          await this.prisma.mediaObject
+            .update({
+              where: { id: media.id },
+              data: {
+                migrationStatus: "failed",
+                failureReason: "upload_validation_failed",
+                verifiedReadable: false,
+              },
+            })
+            .catch(() => undefined);
+          throw err;
         }
         await this.prisma.mediaObject.update({
           where: { id: media.id },
           data: {
             sizeBytes: BigInt(head.sizeBytes),
-            ...(head.contentType ? { contentType: head.contentType } : {}),
+            contentType: verifiedType,
             migrationStatus: "verified",
             verifiedReadable: true,
             migratedAt: new Date(),

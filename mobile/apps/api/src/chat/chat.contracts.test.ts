@@ -19,6 +19,10 @@ describe("chat authorization contracts", () => {
     assert.match("Account suspended", /suspended/i);
   });
 
+  it("paused sender uses account paused", () => {
+    assert.match("Account paused", /paused/i);
+  });
+
   it("payment unlock message matches Convex", () => {
     assert.equal(
       "Please complete payment to unlock chat.",

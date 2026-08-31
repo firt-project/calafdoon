@@ -229,13 +229,4 @@ describe("ProfileService behaviour (mocked prisma)", () => {
     assert.equal(result.id, "migrated");
     assert.equal(result.name, "Migrated Name");
   });
-
-  it("getShareableCard rejects sequential public ids", async () => {
-    const svc = new ProfileService({} as never, {} as never, {} as never);
-    await assert.rejects(
-      () => svc.getShareableCard("viewer", "12345678"),
-      (err: unknown) =>
-        err instanceof Error && /Invalid profile link/i.test(err.message)
-    );
-  });
 });

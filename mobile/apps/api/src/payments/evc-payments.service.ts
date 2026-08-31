@@ -15,10 +15,15 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "node:crypto";
-import { isStaffRole } from "../common/access";
+import { isStaffRole, hasPaidAccess } from "../common/access";
 import { PrismaService } from "../prisma/prisma.service";
 import { RedisService } from "../redis/redis.module";
 import { MediaAccessService } from "../media/media-access.service";
+import {
+  assertStoredUpload,
+  assertUploadIntent,
+  UPLOAD_MAX_BYTES,
+} from "../media/upload-policy";
 import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import { PaymentMailService } from "../mail/payment-mail.service";
 import { GrantPaidAccessService } from "./grant-paid-access.service";
@@ -28,9 +33,9 @@ import {
   PREMIUM_UPGRADE_AMOUNT_CENTS,
   type RegistrationTier,
 } from "./pricing";
+import { assertEvcClaimed, claimEvcProofReview } from "./evc-review-claim";
 
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = UPLOAD_MAX_BYTES.evc_screenshot;
 
 @Injectable()
 export class EvcPaymentsService {
@@ -95,15 +100,21 @@ export class EvcPaymentsService {
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile required");
     if (profile.banned) throw new ForbiddenException("Account suspended");
-    if (!ALLOWED.has(opts.contentType)) {
-      throw new BadRequestException("Unsupported image type");
-    }
-    if (opts.sizeBytes && opts.sizeBytes > MAX_BYTES) {
-      throw new BadRequestException("File too large");
-    }
+
+    const { contentType, sizeBytes } = assertUploadIntent({
+      purpose: "evc_screenshot",
+      contentType: opts.contentType,
+      sizeBytes: opts.sizeBytes,
+    });
 
     const mediaId = randomUUID();
-    const objectKey = `${userId}/${mediaId}.jpg`;
+    const ext =
+      contentType === "image/png"
+        ? "png"
+        : contentType === "image/webp"
+          ? "webp"
+          : "jpg";
+    const objectKey = `${userId}/${mediaId}.${ext}`;
     await this.prisma.mediaObject.create({
       data: {
         id: mediaId,
@@ -111,8 +122,8 @@ export class EvcPaymentsService {
         purpose: "evc_screenshot",
         bucket: this.bucket,
         objectKey,
-        contentType: opts.contentType,
-        sizeBytes: opts.sizeBytes ? BigInt(opts.sizeBytes) : null,
+        contentType,
+        sizeBytes: BigInt(sizeBytes),
         ownerUserId: userId,
         migrationStatus: "pending",
       },
@@ -121,7 +132,8 @@ export class EvcPaymentsService {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: objectKey,
-      ContentType: opts.contentType,
+      ContentType: contentType,
+      ContentLength: sizeBytes,
     });
     const uploadUrl = await getSignedUrl(this.s3, command, {
       expiresIn: this.ttlSeconds,
@@ -131,46 +143,66 @@ export class EvcPaymentsService {
       mediaId,
       uploadUrl,
       expiresInSeconds: this.ttlSeconds,
-      headers: { "Content-Type": opts.contentType },
+      headers: { "Content-Type": contentType },
+      maxBytes: MAX_BYTES,
     };
   }
 
   /**
-   * Mobile-friendly upload: phone sends the image bytes through the API
-   * (avoids WebView → S3 CORS / cleartext failures on Capacitor).
+   * Mobile-friendly EVC screenshot upload: base64 (or data-URL) in JSON.
+   * Avoids cross-origin PUT to S3 from Capacitor WebViews.
    */
   async uploadProofImage(
     userId: string,
-    opts: { contentType: string; dataBase64: string }
+    opts: {
+      contentType: string;
+      dataBase64: string;
+      sizeBytes?: number;
+    }
   ) {
     await this.failClosed(userId);
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new ForbiddenException("Profile required");
     if (profile.banned) throw new ForbiddenException("Account suspended");
 
-    const contentType = ALLOWED.has(opts.contentType)
-      ? opts.contentType
-      : "image/jpeg";
-    if (!ALLOWED.has(contentType)) {
-      throw new BadRequestException("Unsupported image type");
+    let raw = opts.dataBase64.trim();
+    const dataUrl = /^data:([^;]+);base64,(.+)$/i.exec(raw);
+    if (dataUrl) {
+      const declared = dataUrl[1].toLowerCase();
+      if (declared !== opts.contentType.toLowerCase().trim()) {
+        throw new BadRequestException("contentType does not match data URL");
+      }
+      raw = dataUrl[2];
     }
 
-    const raw = opts.dataBase64.includes(",")
-      ? opts.dataBase64.split(",").pop() ?? ""
-      : opts.dataBase64;
     let buffer: Buffer;
     try {
       buffer = Buffer.from(raw, "base64");
     } catch {
-      throw new BadRequestException("Invalid image data");
+      throw new BadRequestException("Invalid base64 image data");
     }
-    if (!buffer.length) throw new BadRequestException("Empty image");
-    if (buffer.length > MAX_BYTES) {
-      throw new BadRequestException("File too large (max 8MB)");
+    if (!buffer.length) {
+      throw new BadRequestException("Empty image data");
+    }
+
+    const { contentType } = assertUploadIntent({
+      purpose: "evc_screenshot",
+      contentType: opts.contentType,
+      sizeBytes: buffer.length,
+    });
+    if (opts.sizeBytes && Math.abs(opts.sizeBytes - buffer.length) > 1024) {
+      throw new BadRequestException("sizeBytes does not match payload");
     }
 
     const mediaId = randomUUID();
-    const objectKey = `${userId}/${mediaId}.jpg`;
+    const ext =
+      contentType === "image/png"
+        ? "png"
+        : contentType === "image/webp"
+          ? "webp"
+          : "jpg";
+    const objectKey = `${userId}/${mediaId}.${ext}`;
+
     await this.prisma.mediaObject.create({
       data: {
         id: mediaId,
@@ -190,21 +222,40 @@ export class EvcPaymentsService {
         new PutObjectCommand({
           Bucket: this.bucket,
           Key: objectKey,
-          ContentType: contentType,
           Body: buffer,
+          ContentType: contentType,
+          ContentLength: buffer.length,
         })
       );
       await this.prisma.mediaObject.update({
         where: { id: mediaId },
-        data: { migrationStatus: "uploaded", verifiedReadable: true },
+        data: {
+          migrationStatus: "uploaded",
+          verifiedReadable: true,
+        },
       });
-    } catch {
+    } catch (err) {
+      await this.media.deleteObjectQuietly(this.bucket, objectKey);
+      await this.prisma.mediaObject
+        .update({
+          where: { id: mediaId },
+          data: {
+            migrationStatus: "failed",
+            failureReason:
+              err instanceof Error ? err.message.slice(0, 200) : "upload_failed",
+          },
+        })
+        .catch(() => undefined);
       throw new ServiceUnavailableException(
-        "Could not store payment screenshot. Check storage configuration."
+        "Could not store payment screenshot. Try again."
       );
     }
 
-    return { mediaId };
+    return {
+      mediaId,
+      sizeBytes: buffer.length,
+      contentType,
+    };
   }
 
   async submitProof(
@@ -222,11 +273,11 @@ export class EvcPaymentsService {
     if (profile.banned) throw new ForbiddenException("Account suspended");
 
     const isPremiumUpgrade =
-      profile.hasPaid === true &&
+      hasPaidAccess(profile) &&
       profile.hasPersonalSupport !== true &&
       opts.tier === "premium";
 
-    if (profile.hasPaid && !isPremiumUpgrade) {
+    if (hasPaidAccess(profile) && !isPremiumUpgrade) {
       throw new BadRequestException("You already have paid access.");
     }
 
@@ -252,21 +303,54 @@ export class EvcPaymentsService {
     }
     if (media.bucket && media.objectKey) {
       if (media.migrationStatus === "uploaded" && media.verifiedReadable) {
-        // Already confirmed (e2e / retry)
+        // Already confirmed (e2e / retry) — still enforce size if known.
+        if (media.sizeBytes != null && Number(media.sizeBytes) > MAX_BYTES) {
+          throw new BadRequestException("File too large");
+        }
       } else {
+        let head: { ContentLength?: number; ContentType?: string };
         try {
-          await this.s3.send(
+          head = await this.s3.send(
             new HeadObjectCommand({
               Bucket: media.bucket,
               Key: media.objectKey,
             })
           );
-          await this.prisma.mediaObject.update({
-            where: { id: media.id },
-            data: { migrationStatus: "uploaded", verifiedReadable: true },
-          });
         } catch {
           throw new BadRequestException("Upload not found in storage");
+        }
+        const size = Number(head.ContentLength ?? 0);
+        const declared =
+          media.sizeBytes != null ? Number(media.sizeBytes) : undefined;
+        try {
+          const verified = assertStoredUpload({
+            purpose: "evc_screenshot",
+            contentType: head.ContentType ?? media.contentType,
+            sizeBytes: size,
+            declaredSizeBytes: declared,
+          });
+          await this.prisma.mediaObject.update({
+            where: { id: media.id },
+            data: {
+              migrationStatus: "uploaded",
+              verifiedReadable: true,
+              sizeBytes: BigInt(verified.sizeBytes),
+              contentType: verified.contentType,
+            },
+          });
+        } catch (err) {
+          await this.media.deleteObjectQuietly(media.bucket, media.objectKey);
+          await this.prisma.mediaObject
+            .update({
+              where: { id: media.id },
+              data: {
+                migrationStatus: "failed",
+                failureReason: "upload_validation_failed",
+                verifiedReadable: false,
+              },
+            })
+            .catch(() => undefined);
+          throw err;
         }
       }
     }
@@ -305,6 +389,11 @@ export class EvcPaymentsService {
     // Side effects must not fail the HTTP submit if mail queue rejects a job id.
     try {
       await this.mail.queueEvcSubmitted(userId, proof.id);
+      await this.mail.queueAdminEvcAlert({
+        proofId: proof.id,
+        memberName: profile.name,
+        amountCents,
+      });
     } catch {
       // ignore
     }
@@ -361,11 +450,15 @@ export class EvcPaymentsService {
       take: 100,
       include: {
         user: { select: { email: true, phone: true } },
-        profile: { select: { name: true, phone: true, gender: true } },
+        profile: {
+          select: { name: true, phone: true, gender: true, hasPaid: true },
+        },
       },
     });
+    // Stripe payers already unlocked — hide leftover proofs from the admin queue.
+    const needsReview = pending.filter((p) => !p.profile?.hasPaid);
     return Promise.all(
-      pending.map(async (p) => {
+      needsReview.map(async (p) => {
         let screenshotUrl: string | null = null;
         let mediaId = p.screenshotMediaId;
         if (!mediaId && p.screenshotConvexId) {
@@ -408,13 +501,15 @@ export class EvcPaymentsService {
 
   async approveProof(actorUserId: string, proofId: string) {
     await this.requireStaff(actorUserId);
-    const proof = await this.prisma.evcPaymentProof.findUnique({
-      where: { id: proofId },
+
+    // M7: claim pending → approved atomically before payment/grant side effects.
+    const claim = await claimEvcProofReview(this.prisma, {
+      proofId,
+      actorUserId,
+      status: "approved",
     });
-    if (!proof) throw new NotFoundException("Payment proof not found");
-    if (proof.status !== "pending") {
-      throw new BadRequestException("This payment was already reviewed.");
-    }
+    assertEvcClaimed(claim);
+    const proof = claim.proof;
 
     const profile = await this.prisma.profile.findUnique({
       where: { id: proof.profileId },
@@ -434,34 +529,43 @@ export class EvcPaymentsService {
       where: { id: proof.userId },
     });
 
-    const payment = await this.prisma.payment.create({
-      data: {
-        convexId: `local_evc_pay_${randomUUID()}`,
-        userId: proof.userId,
-        convexUserId: user.convexId,
-        stripeSessionId: `evc:${proof.id}`,
-        amount: proof.amountCents,
-        paymentType,
-        registrationTier: proof.tier,
-        status: "pending",
-        paymentCreatedAt: new Date(),
-      },
+    const sessionKey = `evc:${proof.id}`;
+    let payment = await this.prisma.payment.findUnique({
+      where: { stripeSessionId: sessionKey },
     });
+    if (!payment) {
+      try {
+        payment = await this.prisma.payment.create({
+          data: {
+            convexId: `local_evc_pay_${randomUUID()}`,
+            userId: proof.userId,
+            convexUserId: user.convexId,
+            stripeSessionId: sessionKey,
+            amount: proof.amountCents,
+            paymentType,
+            registrationTier: proof.tier,
+            status: "pending",
+            paymentCreatedAt: new Date(),
+          },
+        });
+      } catch (err: unknown) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? (err as { code?: string }).code
+            : undefined;
+        if (code !== "P2002") throw err;
+        payment = await this.prisma.payment.findUniqueOrThrow({
+          where: { stripeSessionId: sessionKey },
+        });
+      }
+    }
 
+    // Idempotent on fulfillmentKey / completed payment (safe if retried).
     await this.grant.applyPaymentCompletion({
       paymentId: payment.id,
       source: "evc",
-      fulfillmentKey: `evc:${proof.id}`,
+      fulfillmentKey: sessionKey,
       forceProfileApproval: true,
-    });
-
-    await this.prisma.evcPaymentProof.update({
-      where: { id: proof.id },
-      data: {
-        status: "approved",
-        reviewedAt: new Date(),
-        reviewedById: actorUserId,
-      },
     });
 
     await this.prisma.auditLog.create({
@@ -494,25 +598,18 @@ export class EvcPaymentsService {
     reason?: string
   ) {
     await this.requireStaff(actorUserId);
-    const proof = await this.prisma.evcPaymentProof.findUnique({
-      where: { id: proofId },
-    });
-    if (!proof) throw new NotFoundException("Payment proof not found");
-    if (proof.status !== "pending") {
-      throw new BadRequestException("This payment was already reviewed.");
-    }
 
     const rejectionReason = (reason ?? "").trim().slice(0, 500) || null;
 
-    await this.prisma.evcPaymentProof.update({
-      where: { id: proof.id },
-      data: {
-        status: "rejected",
-        reviewedAt: new Date(),
-        reviewedById: actorUserId,
-        rejectionReason,
-      },
+    // M7: claim pending → rejected atomically (exclusive with approve).
+    const claim = await claimEvcProofReview(this.prisma, {
+      proofId,
+      actorUserId,
+      status: "rejected",
+      rejectionReason,
     });
+    assertEvcClaimed(claim);
+    const proof = claim.proof;
 
     const body = rejectionReason
       ? `Your EVC payment proof was not approved: ${rejectionReason}`

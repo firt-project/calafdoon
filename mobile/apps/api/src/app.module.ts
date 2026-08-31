@@ -10,6 +10,13 @@ import { HealthModule } from "./health/health.module";
 import { MediaModule } from "./media/media.module";
 import { MatchingModule } from "./matching/matching.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import {
+  PINO_REDACT_PATHS,
+  REDACTED,
+  serializeErrorForLog,
+  serializeRequestForLog,
+  serializeResponseForLog,
+} from "./observability/log-redact";
 import { ObservabilityModule } from "./observability/observability.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -30,26 +37,16 @@ import { RedisModule } from "./redis/redis.module";
           process.env.NODE_ENV !== "production"
             ? { target: "pino-pretty", options: { singleLine: true } }
             : undefined,
+        // Serializers sanitize copies; redact paths are defense-in-depth.
+        // Live req/res objects used by auth are never mutated.
+        serializers: {
+          req: serializeRequestForLog,
+          res: serializeResponseForLog,
+          err: serializeErrorForLog,
+        },
         redact: {
-          paths: [
-            "req.headers.authorization",
-            "req.headers.cookie",
-            "password",
-            "passwordHash",
-            "currentPassword",
-            "newPassword",
-            "token",
-            "secret",
-            "req.body.password",
-            "req.body.currentPassword",
-            "req.body.newPassword",
-            "req.body.token",
-            "req.body.email",
-            "email",
-            "signedUrl",
-            "url",
-          ],
-          remove: true,
+          paths: PINO_REDACT_PATHS,
+          censor: REDACTED,
         },
       },
     }),

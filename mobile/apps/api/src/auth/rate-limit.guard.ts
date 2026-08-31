@@ -28,6 +28,7 @@ export class AuthRateLimitGuard implements CanActivate {
     const path = req.path || "";
     if (
       !path.includes("/auth/login") &&
+      !path.includes("/auth/mfa/verify-login") &&
       !path.includes("/auth/forgot-password") &&
       !path.includes("/auth/reset-password")
     ) {

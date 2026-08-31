@@ -28,6 +28,32 @@ enum ReviewStatus {
   approved
   rejected
   suspended
+  paused
+  changes_requested
+}
+
+enum AccountStatusEventType {
+  registered
+  submitted
+  approved
+  rejected
+  paused
+  resumed
+  suspended
+  unsuspended
+  banned
+  unbanned
+  deleted
+  restored
+  appeal_submitted
+  appeal_reviewed
+  verification_submitted
+  verification_approved
+  verification_rejected
+  changes_requested
+  resubmitted
+  reviewer_assigned
+  other
 }
 
 enum PhotoVisibility {
@@ -187,12 +213,28 @@ model User {
   isAnonymous            Boolean?  @map("is_anonymous")
   gender                 Gender?
   mustResetPassword      Boolean   @default(false) @map("must_reset_password")
+  /// L4: TOTP MFA for staff (admin/owner). Secret stored encrypted at rest.
+  mfaEnabled             Boolean   @default(false) @map("mfa_enabled")
+  mfaSecretEncrypted     String?   @map("mfa_secret_encrypted")
+  /// Pending secret during enrollment (cleared on confirm or cancel).
+  mfaPendingSecretEncrypted String? @map("mfa_pending_secret_encrypted")
+  mfaEnabledAt           DateTime? @map("mfa_enabled_at")
+  /// Last accepted TOTP time-step (replay protection).
+  mfaLastStep            BigInt?   @map("mfa_last_step")
   convexCreatedAt        DateTime? @map("convex_created_at")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
+  lastLoginAt            DateTime? @map("last_login_at")
+  lastActiveAt           DateTime? @map("last_active_at")
+  deletedAt              DateTime? @map("deleted_at")
+  restoredAt             DateTime? @map("restored_at")
 
   authAccounts       AuthAccount[]
   profile            Profile?
+  accountStatusEvents AccountStatusHistory[] @relation("AccountStatusSubject")
+  accountStatusPerformed AccountStatusHistory[] @relation("AccountStatusActor")
+  accountAppeals     AccountAppeal[] @relation("AppealSubject")
+  accountAppealsReviewed AccountAppeal[] @relation("AppealReviewer")
   preferences        Preference?
   uploads            UserUpload[]
   likesSent          Like[]            @relation("LikesSent")
@@ -223,10 +265,13 @@ model User {
   scoresAsB          CompatibilityScore[] @relation("ScoreUserB")
   sessions           Session[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   authAuditEvents    AuthAuditEvent[]
   photoRevealsViewed PhotoReveal[] @relation("PhotoRevealViewer")
   photoRevealsOwned  PhotoReveal[] @relation("PhotoRevealOwner")
   profileAuditEvents ProfileAuditEvent[]
+  mfaRecoveryCodes   MfaRecoveryCode[]
+  mfaLoginChallenges MfaLoginChallenge[]
 
   @@map("users")
 }
@@ -315,6 +360,8 @@ model Profile {
   lastSavedAt                DateTime?        @map("last_saved_at")
   registrationComplete       Boolean?         @map("registration_complete")
   hasPaid                    Boolean          @map("has_paid")
+  /// When set, paid access ends at this time (Waafi/EVC 30-day periods). Null = no period lock (e.g. Stripe subscription / legacy).
+  paidUntil                  DateTime?        @map("paid_until")
   genderLocked               Boolean?         @map("gender_locked")
   trialEndsAt                DateTime?        @map("trial_ends_at")
   hasPersonalSupport         Boolean?         @map("has_personal_support")
@@ -329,6 +376,32 @@ model Profile {
   banned                     Boolean
   approved                   Boolean
   reviewStatus               ReviewStatus?    @map("review_status")
+  /// Status to restore after unban (saved before ban).
+  statusBeforeBan            ReviewStatus?    @map("status_before_ban")
+  /// Status to restore after resume (saved before pause).
+  statusBeforePause          ReviewStatus?    @map("status_before_pause")
+  /// Status to restore after unsuspend (saved before timed suspension).
+  statusBeforeSuspend        ReviewStatus?    @map("status_before_suspend")
+  approvedAt                 DateTime?        @map("approved_at")
+  rejectedAt                 DateTime?        @map("rejected_at")
+  pausedAt                   DateTime?        @map("paused_at")
+  resumedAt                  DateTime?        @map("resumed_at")
+  suspendedAt                DateTime?        @map("suspended_at")
+  suspensionExpiresAt        DateTime?        @map("suspension_expires_at")
+  bannedAt                   DateTime?        @map("banned_at")
+  unbannedAt                 DateTime?        @map("unbanned_at")
+  submittedAt                DateTime?        @map("submitted_at")
+  statusChangedAt            DateTime?        @map("status_changed_at")
+  verificationSubmittedAt    DateTime?        @map("verification_submitted_at")
+  verificationReviewedAt     DateTime?        @map("verification_reviewed_at")
+  assignedReviewerId         String?          @map("assigned_reviewer_id") @db.Uuid
+  assignedReviewerAt         DateTime?        @map("assigned_reviewer_at")
+  reviewStartedAt            DateTime?        @map("review_started_at")
+  reviewCompletedAt          DateTime?        @map("review_completed_at")
+  changesRequestedAt         DateTime?        @map("changes_requested_at")
+  changesDeadlineAt          DateTime?        @map("changes_deadline_at")
+  resubmittedAt              DateTime?        @map("resubmitted_at")
+  allowResubmission          Boolean?         @map("allow_resubmission")
   photoVisibility            PhotoVisibility? @map("photo_visibility")
   convexCreatedAt            DateTime?        @map("convex_created_at")
   createdAt                  DateTime         @default(now()) @map("created_at")
@@ -338,6 +411,8 @@ model Profile {
   auditTargets   AuditLog[]        @relation("AuditTargetProfile")
   evcProofs      EvcPaymentProof[]
   profileAudits  ProfileAuditEvent[]
+  accountStatusEvents AccountStatusHistory[]
+  accountAppeals AccountAppeal[]
 
   @@index([gender])
   @@index([country])
@@ -345,7 +420,63 @@ model Profile {
   @@index([reviewStatus])
   @@index([role])
   @@index([convexUserId])
+  @@index([approvedAt])
+  @@index([bannedAt])
+  @@index([statusChangedAt])
+  @@index([submittedAt])
+  @@index([assignedReviewerId])
+  @@index([changesRequestedAt])
   @@map("profiles")
+}
+
+/// Append-only account status history. Never update or delete rows in app code.
+model AccountStatusHistory {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  userId              String                  @map("user_id") @db.Uuid
+  profileId           String?                 @map("profile_id") @db.Uuid
+  eventType           AccountStatusEventType  @map("event_type")
+  previousStatus      ReviewStatus?           @map("previous_status")
+  newStatus           ReviewStatus?           @map("new_status")
+  reason              String?
+  internalAdminNote   String?                 @map("internal_admin_note")
+  publicUserMessage   String?                 @map("public_user_message")
+  performedByAdminId  String?                 @map("performed_by_admin_id") @db.Uuid
+  performedByAdminName String?                @map("performed_by_admin_name")
+  metadata            Json?
+  /// Always UTC.
+  createdAt           DateTime                @default(now()) @map("created_at")
+
+  user    User     @relation("AccountStatusSubject", fields: [userId], references: [id], onDelete: Restrict)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  admin   User?    @relation("AccountStatusActor", fields: [performedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([createdAt])
+  @@map("account_status_history")
+}
+
+model AccountAppeal {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  profileId       String    @map("profile_id") @db.Uuid
+  status          String    @default("pending") // pending | approved | rejected
+  message         String
+  adminResponse   String?   @map("admin_response")
+  reviewedById    String?   @map("reviewed_by_id") @db.Uuid
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user     User    @relation("AppealSubject", fields: [userId], references: [id], onDelete: Restrict)
+  profile  Profile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  reviewer User?   @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, submittedAt])
+  @@index([status, submittedAt])
+  @@map("account_appeals")
 }
 
 model Preference {
@@ -1004,6 +1135,21 @@ enum AuthAuditAction {
   rehash_failure
   register_success
   register_failed
+  email_verification_sent
+  email_verification_send_failed
+  email_verification_success
+  email_verification_failure
+  email_verification_resend
+  mfa_enroll_start
+  mfa_enroll_confirm
+  mfa_enroll_cancel
+  mfa_disable
+  mfa_login_challenge
+  mfa_login_success
+  mfa_login_failure
+  mfa_recovery_used
+  mfa_recovery_regen
+  mfa_admin_reset
 }
 
 model Session {
@@ -1044,6 +1190,58 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+/// M3: single-use email ownership proof. Store only tokenHash — never the raw token.
+model EmailVerificationToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  /// Email address this token proves ownership of (snapshot at issue time).
+  email      String
+  /// SHA-256 hex of raw verification token.
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  /// Set on successful verify or when replaced by a newer token.
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  ipHash     String?   @map("ip_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+/// L4: hashed single-use MFA recovery codes (never store plaintext).
+model MfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+}
+
+/// L4: short-lived post-password MFA challenge (no session until verified).
+model MfaLoginChallenge {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  ipHash     String?   @map("ip_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("mfa_login_challenges")
 }
 
 model AuthAuditEvent {

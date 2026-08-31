@@ -8,6 +8,8 @@ export const REVIEW_STATUSES = [
   "approved",
   "rejected",
   "suspended",
+  "paused",
+  "changes_requested",
 ] as const;
 
 export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
@@ -44,12 +46,18 @@ export function resolveReviewStatus(profile: ReviewProfile): ReviewStatus {
   if (isStaffRole(profile.role)) return "approved";
 
   if (profile.reviewStatus === "approved" || profile.approved === true) {
+    // Paused/suspended take precedence over the approved boolean.
+    if (profile.reviewStatus === "paused") return "paused";
+    if (profile.reviewStatus === "suspended") return "suspended";
+    if (profile.reviewStatus === "changes_requested") return "changes_requested";
     return "approved";
   }
 
   if (
     profile.reviewStatus === "rejected" ||
-    profile.reviewStatus === "suspended"
+    profile.reviewStatus === "suspended" ||
+    profile.reviewStatus === "paused" ||
+    profile.reviewStatus === "changes_requested"
   ) {
     return profile.reviewStatus;
   }
@@ -91,14 +99,11 @@ export function isDiscoverable(profile: ReviewProfile): boolean {
   // Staff accounts are never shown to members in Discover / matching.
   if (isStaffRole(profile.role)) return false;
   if (!profile.questionnaireComplete) return false;
-  // Paid (Stripe) or manually admin-approved — then must be approved for discovery.
-  if (
-    profile.hasPaid !== true &&
-    profile.approved !== true &&
-    profile.reviewStatus !== "approved"
-  ) {
+  if (profile.hasPaid !== true) return false;
+  if (profile.reviewStatus === "paused" || profile.reviewStatus === "suspended") {
     return false;
   }
+  if (profile.reviewStatus === "changes_requested") return false;
   return resolveReviewStatus(profile) === "approved";
 }
 
@@ -107,5 +112,30 @@ export function needsApprovalGate(
 ): boolean {
   if (!requiresAdminProfileApproval(profile)) return false;
   const status = resolveReviewStatus(profile ?? {});
-  return status === "pending_review" || status === "rejected";
+  return (
+    status === "pending_review" ||
+    status === "rejected" ||
+    status === "changes_requested"
+  );
+}
+
+/** Banned, paused, or timed-suspension — no matches/messaging. */
+export function isInteractionLocked(
+  profile: ReviewProfile | null | undefined
+): boolean {
+  if (!profile) return false;
+  if (profile.banned) return true;
+  const status = resolveReviewStatus(profile);
+  return status === "paused" || status === "suspended";
+}
+
+export function interactionLockMessage(
+  profile: ReviewProfile | null | undefined
+): string {
+  if (!profile) return "Account unavailable";
+  if (profile.banned) return "Account suspended";
+  const status = resolveReviewStatus(profile);
+  if (status === "paused") return "Account paused";
+  if (status === "suspended") return "Account suspended";
+  return "Account unavailable";
 }

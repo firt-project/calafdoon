@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Inject } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeEmail } from "../auth/crypto-util";
 import {
@@ -14,6 +16,7 @@ import {
 } from "../common/access";
 import { MAIL_ADAPTER } from "../auth/auth.service";
 import type { MailAdapter } from "../auth/mail.adapter";
+import { escapeHtml } from "../mail/html-escape";
 import { AuditLogService } from "./audit-log.service";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,8 +45,40 @@ export class StaffInvitesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditLogService,
+    private readonly config: ConfigService,
     @Inject(MAIL_ADAPTER) private readonly mail: MailAdapter
   ) {}
+
+  private appUrl(): string {
+    return (
+      this.config.get<string>("APP_URL") ?? "https://www.helcalafkaaga.com"
+    ).replace(/\/$/, "");
+  }
+
+  private acceptUrl(token: string): string {
+    return `${this.appUrl()}/admin/invite?token=${token}`;
+  }
+
+  private async sendInviteEmail(email: string, token: string) {
+    const url = this.acceptUrl(token);
+    const safeUrl = escapeHtml(url);
+    try {
+      await this.mail.send({
+        to: email,
+        subject: "You're invited to Hel Calafkaaga staff",
+        text: `You have been invited as an admin on Hel Calafkaaga.\n\nAccept this invite (expires in 7 days):\n${url}\n\nIf you did not expect this, ignore this email.`,
+        html: `<p>You have been invited as an admin on Hel Calafkaaga.</p>
+<p><a href="${safeUrl}">Accept staff invite</a></p>
+<p style="word-break:break-all;color:#666;font-size:12px">${safeUrl}</p>
+<p>This invite expires in 7 days. If you did not expect this, ignore this email.</p>`,
+      });
+    } catch {
+      // Never fall back to returning the token; operator can resend later.
+      throw new ServiceUnavailableException(
+        "Could not send invite email. Try resending from the invites list."
+      );
+    }
+  }
 
   private async findByToken(token: string) {
     const tokenHash = hashToken(token);
@@ -148,11 +183,7 @@ export class StaffInvitesService {
       },
     });
 
-    await this.mail.send({
-      to: email,
-      subject: "You're invited to Hel Calafkaaga staff",
-      text: `You have been invited as admin.\n\nAccept: /admin/invite?token=${token}\n\nThis invite expires in 7 days.`,
-    });
+    await this.sendInviteEmail(email, token);
 
     await this.audit.write({
       actorUserId: ownerUserId,
@@ -160,7 +191,65 @@ export class StaffInvitesService {
       metadata: { email, inviteId: invite.id },
     });
 
-    return { inviteId: invite.id, email };
+    // M1: never return the raw token or token-bearing acceptUrl.
+    // Delivery is email-only; operators use resend if mail fails.
+    return {
+      inviteId: invite.id,
+      email,
+      role: invite.role,
+      status: invite.status,
+      createdAt: invite.inviteCreatedAt.toISOString(),
+      expiresAt: invite.expiresAt.toISOString(),
+      deliveryStatus: "sent" as const,
+    };
+  }
+
+  async resend(ownerUserId: string, inviteId: string) {
+    const invite = await this.prisma.staffInvite.findUnique({
+      where: { id: inviteId },
+    });
+    if (!invite) throw new NotFoundException("Invite not found.");
+    if (invite.status !== "pending") {
+      throw new BadRequestException("Only pending invites can be resent.");
+    }
+    if (invite.expiresAt.getTime() <= Date.now()) {
+      await this.prisma.staffInvite.update({
+        where: { id: invite.id },
+        data: { status: "expired" },
+      });
+      throw new BadRequestException(
+        "This invite has expired. Create a new invite."
+      );
+    }
+
+    const token = generateInviteToken();
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
+    await this.prisma.staffInvite.update({
+      where: { id: invite.id },
+      data: {
+        token: `hash:${tokenHash}`,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    await this.sendInviteEmail(invite.email, token);
+
+    await this.audit.write({
+      actorUserId: ownerUserId,
+      action: "resend_staff_invite",
+      metadata: { email: invite.email, inviteId: invite.id },
+    });
+
+    return {
+      inviteId: invite.id,
+      email: invite.email,
+      role: invite.role,
+      status: "pending" as const,
+      expiresAt: expiresAt.toISOString(),
+      deliveryStatus: "sent" as const,
+    };
   }
 
   async revoke(ownerUserId: string, inviteId: string) {
@@ -217,6 +306,19 @@ export class StaffInvitesService {
       throw new BadRequestException(
         "Sign in with the invited email address to accept."
       );
+    }
+
+    // M3: accepting a staff invite delivered to this address proves ownership
+    // of the invited email. Only mark verified when the current address matches.
+    if (user.emailVerificationTime == null) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { emailVerificationTime: new Date() },
+      });
+      await this.prisma.authAccount.updateMany({
+        where: { userId, provider: "password" },
+        data: { emailVerified: true },
+      });
     }
 
     const profile = await this.prisma.profile.findUnique({

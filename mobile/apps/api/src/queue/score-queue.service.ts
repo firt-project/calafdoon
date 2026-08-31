@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { resolveRedisUrl } from "../redis/redis-url";
 import { Queue, Worker, type Job, type ConnectionOptions } from "bullmq";
 import { ScoreService } from "../matching/score.service";
 
@@ -22,7 +23,10 @@ export class ScoreQueueService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly scores: ScoreService
   ) {
-    const url = this.config.get<string>("REDIS_URL") ?? "redis://127.0.0.1:6379";
+    const url = resolveRedisUrl({
+      redisUrl: this.config.get<string>("REDIS_URL"),
+      redisPassword: this.config.get<string>("REDIS_PASSWORD"),
+    });
     // Pass URL string so BullMQ uses its bundled ioredis (avoids type mismatch).
     this.connectionOpts = { url } as ConnectionOptions;
   }

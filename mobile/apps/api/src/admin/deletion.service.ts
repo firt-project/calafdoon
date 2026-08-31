@@ -32,6 +32,11 @@ type DeletionPlan = {
   supportContactsNulled: number;
   supportMessagesNulled: number;
   evcProofs: number;
+  accountStatusHistory: number;
+  accountAppeals: number;
+  emailVerificationTokens: number;
+  photoReveals: number;
+  auditLogsAsActor: number;
   profile: number;
   authAccounts: number;
   user: number;
@@ -71,6 +76,12 @@ export class DeletionService {
       supportContacts,
       supportMessages,
       evcProofs,
+      accountStatusHistory,
+      accountAppeals,
+      emailVerificationTokens,
+      photoRevealsViewed,
+      photoRevealsOwned,
+      auditLogsAsActor,
       authAccounts,
     ] = await Promise.all([
       this.prisma.session.count({ where: { userId } }),
@@ -97,6 +108,12 @@ export class DeletionService {
       this.prisma.supportContact.count({ where: { userId } }),
       this.prisma.supportMessage.count({ where: { authorUserId: userId } }),
       this.prisma.evcPaymentProof.count({ where: { userId } }),
+      this.prisma.accountStatusHistory.count({ where: { userId } }),
+      this.prisma.accountAppeal.count({ where: { userId } }),
+      this.prisma.emailVerificationToken.count({ where: { userId } }),
+      this.prisma.photoReveal.count({ where: { viewerUserId: userId } }),
+      this.prisma.photoReveal.count({ where: { ownerUserId: userId } }),
+      this.prisma.auditLog.count({ where: { actorUserId: userId } }),
       this.prisma.authAccount.count({ where: { userId } }),
     ]);
 
@@ -149,6 +166,11 @@ export class DeletionService {
       supportContactsNulled: supportContacts,
       supportMessagesNulled: supportMessages,
       evcProofs,
+      accountStatusHistory,
+      accountAppeals,
+      emailVerificationTokens,
+      photoReveals: photoRevealsViewed + photoRevealsOwned,
+      auditLogsAsActor,
       profile: 1,
       authAccounts,
       user: 1,
@@ -181,10 +203,28 @@ export class DeletionService {
     return { jobId: job.id, plan, mode: "dry_run" as const };
   }
 
+  async executeSelfDelete(
+    userId: string,
+    opts?: { correlationId?: string; requestId?: string }
+  ) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+    });
+    if (!profile) {
+      return { success: true, alreadyGone: true as const };
+    }
+    if (isStaffRole(profile.role)) {
+      throw new ForbiddenException(
+        "Staff accounts cannot be deleted here. Contact support."
+      );
+    }
+    return this.execute(userId, profile.id, { ...opts, self: true });
+  }
+
   async execute(
     actorUserId: string,
     profileId: string,
-    opts?: { correlationId?: string; requestId?: string }
+    opts?: { correlationId?: string; requestId?: string; self?: boolean }
   ) {
     const profile = await this.prisma.profile.findUnique({
       where: { id: profileId },
@@ -197,41 +237,14 @@ export class DeletionService {
         "Cannot delete an admin or owner account. Remove their role first."
       );
     }
-    assertCanDeleteTarget(actorUserId, profile);
-
-    return this.runDeletion(actorUserId, profile, opts);
-  }
-
-  /**
-   * Member self-service account deletion (not admin panel).
-   * Requires the caller to delete only their own non-staff account.
-   */
-  async executeSelf(
-    userId: string,
-    opts?: { correlationId?: string; requestId?: string }
-  ) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
-    });
-    if (!profile) {
-      return { success: true, alreadyGone: true as const };
+    if (opts?.self) {
+      if (profile.userId !== actorUserId) {
+        throw new ForbiddenException("You can only delete your own account.");
+      }
+    } else {
+      assertCanDeleteTarget(actorUserId, profile);
     }
-    if (isStaffRole(profile.role)) {
-      throw new ForbiddenException(
-        "Staff accounts cannot self-delete. Contact the owner."
-      );
-    }
-    if (profile.userId !== userId) {
-      throw new ForbiddenException("You can only delete your own account.");
-    }
-    return this.runDeletion(userId, profile, opts);
-  }
 
-  private async runDeletion(
-    actorUserId: string,
-    profile: { id: string; userId: string; role: string; name?: string | null },
-    opts?: { correlationId?: string; requestId?: string }
-  ) {
     const plan = await this.buildPlan(profile.userId);
     const job = await this.prisma.deletionJob.create({
       data: {
@@ -245,25 +258,41 @@ export class DeletionService {
       },
     });
 
-    await this.audit.write({
-      actorUserId,
-      action: "delete_user",
-      targetUserId: profile.userId,
-      targetProfileId: profile.id,
-      metadata: { name: profile.name },
-      correlationId: opts?.correlationId,
-      requestId: opts?.requestId,
-    });
+    // Do not write audit_logs before the hard-delete transaction:
+    // target_user_id / actor_user_id Restrict FKs blocked deletes in production.
+    // Trail is kept on deletion_jobs; admin audit is written after success.
 
     const userId = profile.userId;
+    const deletedName = profile.name;
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        // 1. Sessions first
+        // 1. Sessions / auth tokens first
         await tx.session.deleteMany({ where: { userId } });
         await tx.passwordResetToken.deleteMany({ where: { userId } });
+        await tx.emailVerificationToken.deleteMany({ where: { userId } });
+        await tx.mfaRecoveryCode.deleteMany({ where: { userId } });
+        await tx.mfaLoginChallenge.deleteMany({ where: { userId } });
         await tx.authAuditEvent.deleteMany({ where: { userId } });
         await tx.profileAuditEvent.deleteMany({ where: { userId } });
+        // Restrict FKs added after the original cascade plan
+        await tx.accountAppeal.deleteMany({ where: { userId } });
+        await tx.accountStatusHistory.deleteMany({ where: { userId } });
+        await tx.photoReveal.deleteMany({
+          where: { OR: [{ viewerUserId: userId }, { ownerUserId: userId }] },
+        });
+        // Clear any audit rows that still point at this user (actor or target)
+        await tx.auditLog.deleteMany({ where: { actorUserId: userId } });
+        await tx.auditLog.updateMany({
+          where: {
+            OR: [{ targetUserId: userId }, { targetProfileId: profile.id }],
+          },
+          data: { targetUserId: null, targetProfileId: null },
+        });
+        await tx.notification.updateMany({
+          where: { relatedUserId: userId },
+          data: { relatedUserId: null, convexRelatedUserId: null },
+        });
 
         // 2. Orphan media (no physical purge)
         const media = await tx.mediaObject.findMany({
@@ -359,11 +388,12 @@ export class DeletionService {
           data: { reviewedById: null },
         });
 
-        // Staff invite accepter null
+        // Staff invite accepter null; sender invites must go (Restrict)
         await tx.staffInvite.updateMany({
           where: { acceptedByUserId: userId },
           data: { acceptedByUserId: null },
         });
+        await tx.staffInvite.deleteMany({ where: { invitedById: userId } });
 
         // Audit targets SetNull via FK; also clear report reviewedBy
         await tx.report.updateMany({
@@ -381,12 +411,47 @@ export class DeletionService {
         data: {
           status: "completed",
           completedAt: new Date(),
-          resultJson: { deleted: true, userId },
+          resultJson: {
+            deleted: true,
+            userId,
+            self: opts?.self ?? false,
+            action: opts?.self ? "delete_user_self" : "delete_user",
+          },
         },
       });
 
+      if (!opts?.self) {
+        try {
+          await this.audit.write({
+            actorUserId,
+            action: "delete_user",
+            // User/profile rows are gone — keep IDs only in metadata.
+            targetUserId: null,
+            targetProfileId: null,
+            metadata: {
+              name: deletedName,
+              deletedUserId: userId,
+              deletedProfileId: profile.id,
+              self: false,
+            },
+            correlationId: opts?.correlationId,
+            requestId: opts?.requestId,
+          });
+        } catch {
+          // Deletion already succeeded; audit is best-effort.
+        }
+      }
+
       return { success: true, deleted: true as const, jobId: job.id, plan };
     } catch (err) {
+      const prismaCode =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: string }).code ?? "")
+          : "";
+      const prismaMeta =
+        err && typeof err === "object" && "meta" in err
+          ? (err as { meta?: unknown }).meta
+          : undefined;
       await this.prisma.deletionJob.update({
         where: { id: job.id },
         data: {
@@ -394,9 +459,16 @@ export class DeletionService {
           completedAt: new Date(),
           resultJson: {
             error: err instanceof Error ? err.message : "unknown",
+            prismaCode: prismaCode || undefined,
+            prismaMeta: prismaMeta ?? undefined,
           },
         },
       });
+      if (prismaCode === "P2003") {
+        throw new BadRequestException(
+          "Could not delete this member because related records are still linked. Try again or contact support."
+        );
+      }
       throw err;
     }
   }

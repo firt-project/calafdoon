@@ -3,14 +3,18 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { AuthAuditAction, Gender, PasswordAlgo } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { isStaffRole, hasPaidAccess } from "../common/access";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   AUTH_FAILED_MESSAGE,
+  INCORRECT_PASSWORD_MESSAGE,
   REGISTER_FAILED_MESSAGE,
   RESET_GENERIC_MESSAGE,
   generateToken,
@@ -25,6 +29,8 @@ import {
   type EmailIdentityCandidate,
 } from "./email-identity";
 import type { MailAdapter } from "./mail.adapter";
+import { escapeHtml } from "../mail/html-escape";
+import { MfaService } from "./mfa.service";
 import {
   hashPasswordPreferred,
   shouldRehashOnLogin,
@@ -33,6 +39,7 @@ import {
 import { SessionService } from "./session.service";
 import { computeAccessState } from "../common/access-state";
 import { PROFILE_DEFAULTS } from "../profile/questionnaire";
+import { isStaffMfaRequired } from "./staff-mfa-policy";
 
 export const MAIL_ADAPTER = "MAIL_ADAPTER";
 
@@ -45,11 +52,21 @@ export type AuthUserView = {
   hasProfile: boolean;
   hasPaid: boolean;
   mustResetPassword: boolean;
+  /** True when User.emailVerificationTime is set (M3). */
+  emailVerified: boolean;
+  /** Live MFA enrollment flag (L4). */
+  mfaEnabled: boolean;
+  /**
+   * True when REQUIRE_STAFF_MFA is on for staff without MFA.
+   * Session is restricted to enrollment allowlist routes.
+   */
+  mfaEnrollmentRequired: boolean;
   /** Member flags the app shell needs (nav, dashboard routing, greeting). */
   profile?: {
     role: "user" | "admin" | "owner";
     banned: boolean;
     hasPaid: boolean;
+    paidUntil?: string | null;
     name: string | null;
     gender: string | null;
     questionnaireComplete: boolean;
@@ -66,7 +83,9 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
     private readonly config: ConfigService,
-    @Inject(MAIL_ADAPTER) private readonly mail: MailAdapter
+    @Inject(MAIL_ADAPTER) private readonly mail: MailAdapter,
+    /** Optional so existing unit tests keep constructing AuthService with 4 args. */
+    @Optional() private readonly mfa?: MfaService
   ) {}
 
   private ipHash(ip?: string): string | null {
@@ -96,22 +115,114 @@ export class AuthService {
     email: string | null;
     emailNormalized: string | null;
     mustResetPassword: boolean;
+    emailVerificationTime?: Date | null;
+    mfaEnabled?: boolean;
     profile: {
       role: "user" | "admin" | "owner";
       banned: boolean;
       hasPaid: boolean;
+      paidUntil?: Date | null;
     } | null;
   }): AuthUserView {
+    const role = user.profile?.role ?? "user";
+    const mfaEnabled = user.mfaEnabled === true;
+    const mfaEnrollmentRequired =
+      isStaffMfaRequired(this.config) && isStaffRole(role) && !mfaEnabled;
     return {
       id: user.id,
       email: user.email,
       emailNormalized: user.emailNormalized,
-      role: user.profile?.role ?? "user",
+      role,
       banned: user.profile?.banned ?? false,
       hasProfile: !!user.profile,
-      hasPaid: user.profile?.hasPaid ?? false,
+      hasPaid: hasPaidAccess(user.profile),
       mustResetPassword: user.mustResetPassword,
+      emailVerified: user.emailVerificationTime != null,
+      mfaEnabled,
+      mfaEnrollmentRequired,
     };
+  }
+
+  /** Trusted frontend origin for verification / reset links (no user-controlled host). */
+  private appOrigin(): string {
+    return (
+      this.config.get<string>("APP_URL") ?? "http://127.0.0.1:3001"
+    ).replace(/\/$/, "");
+  }
+
+  /**
+   * Issue a fresh email-verification token (invalidates prior unused ones),
+   * store only the hash, and deliver the raw token via email only.
+   */
+  private async issueEmailVerification(opts: {
+    userId: string;
+    email: string;
+    ip?: string;
+    reason: "register" | "resend";
+  }): Promise<{ sent: boolean }> {
+    const emailNormalized = normalizeEmail(opts.email);
+    if (!emailNormalized) {
+      return { sent: false };
+    }
+
+    const raw = generateToken(32);
+    const tokenHash = hashToken(raw);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const now = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: opts.userId, usedAt: null },
+        data: { usedAt: now },
+      });
+      await tx.emailVerificationToken.create({
+        data: {
+          userId: opts.userId,
+          email: emailNormalized,
+          tokenHash,
+          expiresAt,
+          ipHash: this.ipHash(opts.ip),
+        },
+      });
+    });
+
+    const verifyUrl = `${this.appOrigin()}/verify-email?token=${encodeURIComponent(raw)}`;
+    const safeVerifyUrl = escapeHtml(verifyUrl);
+    const text = `Confirm your Hel Calafkaaga email address within 24 hours:\n\n${verifyUrl}\n\nIf you did not create an account, ignore this email.`;
+    const html = `<p>Confirm your Hel Calafkaaga email address within 24 hours:</p>
+<p><a href="${safeVerifyUrl}">Verify your email</a></p>
+<p style="word-break:break-all;color:#666;font-size:12px">${safeVerifyUrl}</p>
+<p>If you did not create an account, ignore this email.</p>`;
+
+    try {
+      await this.mail.send({
+        to: emailNormalized,
+        subject: "Verify your Hel Calafkaaga email",
+        text,
+        html,
+      });
+      await this.audit(
+        opts.reason === "resend"
+          ? "email_verification_resend"
+          : "email_verification_sent",
+        {
+          userId: opts.userId,
+          metadata: { outcome: "sent" },
+          ip: opts.ip,
+        }
+      );
+      return { sent: true };
+    } catch (err) {
+      await this.audit("email_verification_send_failed", {
+        userId: opts.userId,
+        metadata: {
+          reason: "mail_send_failed",
+          detail: err instanceof Error ? err.message.slice(0, 200) : "unknown",
+        },
+        ip: opts.ip,
+      });
+      return { sent: false };
+    }
   }
 
   /**
@@ -156,6 +267,7 @@ export class AuthService {
           role: true,
           banned: true,
           hasPaid: true,
+          paidUntil: true,
           questionnaireComplete: true,
           registrationComplete: true,
         },
@@ -206,7 +318,7 @@ export class AuthService {
   /**
    * Local registration matching Convex signup defaults.
    * Creates User + password AuthAccount + Profile + Preferences, then a session.
-   * Does NOT grant hasPaid. Does NOT require email verification.
+   * Does NOT grant hasPaid. Leaves email unverified and sends a verification email (M3).
    */
   async register(opts: {
     email: string;
@@ -245,6 +357,8 @@ export class AuthService {
             emailNormalized,
             name: "User",
             gender,
+            // M3: new registrations start unverified.
+            emailVerificationTime: null,
           },
         });
 
@@ -257,6 +371,7 @@ export class AuthService {
             providerAccountId: emailNormalized,
             passwordHash: preferred.hash,
             passwordAlgo: preferred.algo as PasswordAlgo,
+            emailVerified: false,
           },
         });
 
@@ -353,11 +468,20 @@ export class AuthService {
       ip: opts.ip,
     });
 
+    // M3: send verification after account exists. Mail failure does not roll back
+    // registration; user can resend from the restricted session.
+    await this.issueEmailVerification({
+      userId,
+      email: emailNormalized,
+      ip: opts.ip,
+      reason: "register",
+    });
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         profile: {
-          select: { role: true, banned: true, hasPaid: true },
+          select: { role: true, banned: true, hasPaid: true, paidUntil: true },
         },
       },
     });
@@ -375,7 +499,19 @@ export class AuthService {
     password: string;
     ip?: string;
     userAgent?: string;
-  }): Promise<{ user: AuthUserView; rawToken: string; expiresAt: Date }> {
+  }): Promise<
+    | {
+        kind: "session";
+        user: AuthUserView;
+        rawToken: string;
+        expiresAt: Date;
+      }
+    | {
+        kind: "mfa_required";
+        mfaToken: string;
+        expiresAt: Date;
+      }
+  > {
     const emailNormalized = normalizeEmail(opts.email);
     const matches = emailNormalized
       ? await this.findUsersMatchingEmail(emailNormalized)
@@ -478,10 +614,30 @@ export class AuthService {
       }
     }
 
+    // L4: staff with MFA enabled must verify TOTP before any session is issued.
+    if (isStaffRole(user.profile?.role) && user.mfaEnabled) {
+      if (!this.mfa) {
+        throw new ServiceUnavailableException(
+          "MFA is required but unavailable. Try again later."
+        );
+      }
+      const challenge = await this.mfa.createLoginChallenge(user.id, opts.ip);
+      return {
+        kind: "mfa_required",
+        mfaToken: challenge.mfaToken,
+        expiresAt: challenge.expiresAt,
+      };
+    }
+
     const session = await this.sessions.createSession({
       userId: user.id,
       ip: opts.ip,
       userAgent: opts.userAgent,
+    });
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date(), lastActiveAt: new Date() },
     });
 
     await this.audit("login_success", {
@@ -496,9 +652,30 @@ export class AuthService {
     });
 
     return {
+      kind: "session",
       user: this.toView(user),
       rawToken: session.rawToken,
       expiresAt: session.expiresAt,
+    };
+  }
+
+  /** Complete staff MFA challenge and issue the normal session cookie path. */
+  async completeMfaLogin(opts: {
+    mfaToken: string;
+    code: string;
+    ip?: string;
+    userAgent?: string;
+  }): Promise<{ user: AuthUserView; rawToken: string; expiresAt: Date }> {
+    if (!this.mfa) {
+      throw new ServiceUnavailableException(
+        "MFA is required but unavailable. Try again later."
+      );
+    }
+    const result = await this.mfa.completeLoginChallenge(opts);
+    return {
+      user: this.toView(result.user),
+      rawToken: result.rawToken,
+      expiresAt: result.expiresAt,
     };
   }
 
@@ -511,6 +688,7 @@ export class AuthService {
             role: true,
             banned: true,
             hasPaid: true,
+            paidUntil: true,
             name: true,
             gender: true,
             questionnaireComplete: true,
@@ -533,7 +711,8 @@ export class AuthService {
         ? {
             role: p.role,
             banned: p.banned,
-            hasPaid: p.hasPaid,
+            hasPaid: hasPaidAccess(p),
+            paidUntil: p.paidUntil?.toISOString() ?? null,
             name: p.name ?? null,
             gender: p.gender ?? null,
             questionnaireComplete: p.questionnaireComplete ?? false,
@@ -566,11 +745,40 @@ export class AuthService {
     await this.audit("logout_all", { userId, ip });
   }
 
-  async forgotPassword(email: string, ip?: string): Promise<{ message: string }> {
+  /**
+   * M2: anti-enumeration forgot-password.
+   * Always returns the same HTTP body whether the email exists or not.
+   * Tokens/mail are only created for known accounts; missing accounts burn
+   * equivalent token crypto work so the cheap path is not an instant return.
+   */
+  async forgotPassword(
+    email: string,
+    ip?: string
+  ): Promise<{ message: string }> {
     const emailNormalized = normalizeEmail(email);
-    const matches = emailNormalized
-      ? await this.findUsersMatchingEmail(emailNormalized)
-      : [];
+    if (!emailNormalized || !emailNormalized.includes("@")) {
+      throw new BadRequestException("Enter a valid email address");
+    }
+
+    let matches = await this.findUsersMatchingEmail(emailNormalized);
+
+    // Also resolve password AuthAccount rows (same identity signup checks).
+    if (matches.length === 0) {
+      const account = await this.prisma.authAccount.findFirst({
+        where: {
+          provider: "password",
+          providerAccountId: {
+            equals: emailNormalized,
+            mode: "insensitive",
+          },
+        },
+        select: { userId: true },
+      });
+      if (account) {
+        matches = await this.findUsersMatchingEmailByUserId(account.userId);
+      }
+    }
+
     const user = pickCanonicalEmailUser(
       matches.map((u) => this.toIdentityCandidate(u))
     );
@@ -578,36 +786,83 @@ export class AuthService {
       ? matches.find((m) => m.id === user.id) ?? null
       : null;
 
+    // Identical audit shape for found and missing (no existence flags / userId).
     await this.audit("password_reset_request", {
-      userId: fullUser?.id,
-      metadata: { requested: true, duplicateCount: matches.length },
+      metadata: { requested: true },
       ip,
     });
 
-    if (fullUser) {
-      const raw = generateToken(32);
-      const tokenHash = hashToken(raw);
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-      await this.prisma.passwordResetToken.create({
-        data: {
-          userId: fullUser.id,
-          tokenHash,
-          expiresAt,
-          ipHash: this.ipHash(ip),
-        },
-      });
+    if (!fullUser) {
+      // Normalize cheap-path timing: same token generate+hash as the found path.
+      hashToken(generateToken(32));
+      return { message: RESET_GENERIC_MESSAGE };
+    }
 
-      const appUrl =
-        this.config.get<string>("APP_URL") ?? "http://127.0.0.1:3001";
-      const resetUrl = `${appUrl}/reset-password?token=${raw}`;
+    const raw = generateToken(32);
+    const tokenHash = hashToken(raw);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: fullUser.id,
+        tokenHash,
+        expiresAt,
+        ipHash: this.ipHash(ip),
+      },
+    });
+
+    const appUrl = this.appOrigin();
+    const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(raw)}`;
+    const safeResetUrl = escapeHtml(resetUrl);
+    const to = fullUser.email ?? emailNormalized;
+    const text = `Use this link within 15 minutes to reset your Hel Calafkaaga password:\n\n${resetUrl}\n\nIf you did not request this, ignore this email.`;
+    const html = `<p>Use this link within 15 minutes to reset your Hel Calafkaaga password:</p>
+<p><a href="${safeResetUrl}">Reset your password</a></p>
+<p style="word-break:break-all;color:#666;font-size:12px">${safeResetUrl}</p>
+<p>If you did not request this, ignore this email.</p>`;
+
+    try {
       await this.mail.send({
-        to: fullUser.email ?? emailNormalized,
+        to,
         subject: "Reset your Hel Calafkaaga password",
-        text: `Use this link within 15 minutes to reset your password:\n${resetUrl}\n\nIf you did not request this, ignore this email.`,
+        text,
+        html,
+      });
+    } catch (err) {
+      // Do not surface mail failure to the client — 503 vs 200 would enumerate.
+      await this.audit("password_reset_failure", {
+        metadata: {
+          reason: "mail_send_failed",
+          detail: err instanceof Error ? err.message.slice(0, 200) : "unknown",
+        },
+        ip,
       });
     }
 
     return { message: RESET_GENERIC_MESSAGE };
+  }
+
+  private async findUsersMatchingEmailByUserId(userId: string) {
+    const include = {
+      profile: {
+        select: {
+          id: true,
+          role: true,
+          banned: true,
+          hasPaid: true,
+          paidUntil: true,
+          questionnaireComplete: true,
+          registrationComplete: true,
+        },
+      },
+      authAccounts: {
+        where: { provider: "password" as const },
+      },
+    };
+    const one = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include,
+    });
+    return one ? [one] : [];
   }
 
   async resetPassword(opts: {
@@ -696,14 +951,24 @@ export class AuthService {
       throw new UnauthorizedException("Password must be at least 8 characters");
     }
     const preferred = await hashPasswordPreferred(opts.newPassword);
-    await this.prisma.authAccount.update({
-      where: { id: account.id },
-      data: {
-        passwordHash: preferred.hash,
-        passwordAlgo: preferred.algo as PasswordAlgo,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.authAccount.update({
+        where: { id: account.id },
+        data: {
+          passwordHash: preferred.hash,
+          passwordAlgo: preferred.algo as PasswordAlgo,
+        },
+      });
+      // Clear forced-reset only after the password write succeeds.
+      await tx.user.update({
+        where: { id: opts.userId },
+        data: { mustResetPassword: false },
+      });
+      await tx.session.updateMany({
+        where: { userId: opts.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
     });
-    await this.sessions.revokeAllForUser(opts.userId);
     await this.audit("password_change", { userId: opts.userId, ip: opts.ip });
     await this.audit("logout_all", {
       userId: opts.userId,
@@ -713,12 +978,12 @@ export class AuthService {
     return { message: "Password changed" };
   }
 
-  async assertPassword(userId: string, password: string): Promise<void> {
+  async verifyCurrentPassword(userId: string, password: string) {
     const account = await this.prisma.authAccount.findFirst({
       where: { userId, provider: "password" },
     });
     if (!account?.passwordHash) {
-      throw new UnauthorizedException(AUTH_FAILED_MESSAGE);
+      throw new UnauthorizedException(INCORRECT_PASSWORD_MESSAGE);
     }
     const verified = await verifyPassword(
       password,
@@ -726,7 +991,128 @@ export class AuthService {
       account.passwordAlgo
     );
     if (!verified.ok) {
+      throw new UnauthorizedException(INCORRECT_PASSWORD_MESSAGE);
+    }
+  }
+
+  /**
+   * M3: consume a verification token and mark the user's email verified.
+   * Generic failures avoid account enumeration for the public endpoint.
+   */
+  async verifyEmailToken(
+    rawToken: string,
+    ip?: string
+  ): Promise<{ ok: true; emailVerified: true }> {
+    const fail = async (reason: string, userId?: string) => {
+      await this.audit("email_verification_failure", {
+        userId,
+        metadata: { reason },
+        ip,
+      });
+      throw new BadRequestException("Invalid or expired verification link");
+    };
+
+    if (!rawToken || rawToken.length < 10 || rawToken.length > 512) {
+      await fail("malformed");
+      // unreachable
+      throw new BadRequestException("Invalid or expired verification link");
+    }
+
+    const tokenHash = hashToken(rawToken);
+    const row = await this.prisma.emailVerificationToken.findUnique({
+      where: { tokenHash },
+    });
+    if (!row || row.usedAt) await fail("missing_or_used", row?.userId);
+    if (row!.expiresAt.getTime() <= Date.now()) {
+      await fail("expired", row!.userId);
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: row!.userId },
+    });
+    if (!user?.email) await fail("user_missing", row!.userId);
+
+    const currentEmail = normalizeEmail(user!.email!);
+    if (!currentEmail || currentEmail !== normalizeEmail(row!.email)) {
+      await fail("email_mismatch", row!.userId);
+    }
+
+    const now = new Date();
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.emailVerificationToken.updateMany({
+          where: { id: row!.id, usedAt: null },
+          data: { usedAt: now },
+        });
+        if (claimed.count !== 1) {
+          throw new BadRequestException("Invalid or expired verification link");
+        }
+        await tx.user.update({
+          where: { id: row!.userId },
+          data: { emailVerificationTime: now },
+        });
+        await tx.authAccount.updateMany({
+          where: { userId: row!.userId, provider: "password" },
+          data: { emailVerified: true },
+        });
+        // Invalidate any other outstanding verification tokens for this user.
+        await tx.emailVerificationToken.updateMany({
+          where: { userId: row!.userId, usedAt: null },
+          data: { usedAt: now },
+        });
+      });
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        await this.audit("email_verification_failure", {
+          userId: row!.userId,
+          metadata: { reason: "concurrent_or_replaced" },
+          ip,
+        });
+        throw err;
+      }
+      throw err;
+    }
+
+    await this.audit("email_verification_success", {
+      userId: row!.userId,
+      metadata: { outcome: "verified" },
+      ip,
+    });
+
+    return { ok: true, emailVerified: true };
+  }
+
+  /**
+   * M3: authenticated resend. Safe when already verified; rotates prior tokens.
+   */
+  async resendEmailVerification(
+    userId: string,
+    ip?: string
+  ): Promise<{ ok: true; sent: boolean; alreadyVerified: boolean }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
       throw new UnauthorizedException(AUTH_FAILED_MESSAGE);
     }
+    if (user.emailVerificationTime != null) {
+      return { ok: true, sent: false, alreadyVerified: true };
+    }
+    if (!user.email) {
+      throw new BadRequestException("No email address on this account");
+    }
+
+    const { sent } = await this.issueEmailVerification({
+      userId,
+      email: user.email,
+      ip,
+      reason: "resend",
+    });
+
+    if (!sent) {
+      throw new ServiceUnavailableException(
+        "Could not send the verification email. Please try again later."
+      );
+    }
+
+    return { ok: true, sent: true, alreadyVerified: false };
   }
 }

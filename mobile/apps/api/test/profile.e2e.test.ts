@@ -127,8 +127,6 @@ describe("Phase 5 profile HTTP e2e", () => {
             maxAge: 35,
             minHeight: 150,
             maxHeight: 180,
-            minWeight: 50,
-            maxWeight: 120,
             preferredCountries: ["Somalia"],
             acceptChildren: "Depends",
             educationLevel: "Bachelor",
@@ -253,5 +251,16 @@ describe("Phase 5 profile HTTP e2e", () => {
       .set("X-CSRF-Token", csrf)
       .send({ contentType: "application/pdf", slot: "main" })
       .expect(400);
+  });
+
+  it("DELETE /profile/account removes the signed-in user", async () => {
+    const res = await agent
+      .delete("/profile/account")
+      .set("X-CSRF-Token", csrf)
+      .send({ password })
+      .expect(200);
+    assert.equal(res.body.ok, true);
+    userId = "";
+    await agent.get("/auth/me").expect(401);
   });
 });

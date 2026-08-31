@@ -1,6 +1,8 @@
 import { Global, Injectable, Logger, Module, OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
+import { sanitizeLogMessage } from "../observability/log-redact";
+import { resolveRedisUrl } from "./redis-url";
 
 export const REDIS_CLIENT = "REDIS_CLIENT";
 
@@ -11,7 +13,10 @@ export class RedisService implements OnModuleDestroy {
   readonly available: boolean;
 
   constructor(config: ConfigService) {
-    const url = config.get<string>("REDIS_URL") ?? "redis://127.0.0.1:6379";
+    const url = resolveRedisUrl({
+      redisUrl: config.get<string>("REDIS_URL"),
+      redisPassword: config.get<string>("REDIS_PASSWORD"),
+    });
     let client: Redis | null = null;
     let available = false;
     try {
@@ -21,12 +26,14 @@ export class RedisService implements OnModuleDestroy {
         lazyConnect: true,
       });
       client.on("error", (err) => {
-        this.logger.warn(`Redis error: ${err.message}`);
+        this.logger.warn(`Redis error: ${sanitizeLogMessage(err.message)}`);
       });
       available = true;
     } catch (err) {
       this.logger.error(
-        `Redis init failed: ${err instanceof Error ? err.message : "unknown"}`
+        `Redis init failed: ${
+          err instanceof Error ? sanitizeLogMessage(err.message) : "unknown"
+        }`
       );
     }
     this.client = client;
@@ -43,7 +50,9 @@ export class RedisService implements OnModuleDestroy {
       return pong === "PONG";
     } catch (err) {
       this.logger.warn(
-        `Redis unavailable: ${err instanceof Error ? err.message : "unknown"}`
+        `Redis unavailable: ${
+          err instanceof Error ? sanitizeLogMessage(err.message) : "unknown"
+        }`
       );
       return false;
     }

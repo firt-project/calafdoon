@@ -37,4 +37,9 @@ export class ChatRealtimeService {
       this.emitToUser(id, event, payload);
     }
   }
+
+  /** Fan-out to every connected client (used for public presence). */
+  emitToAll(event: string, payload: unknown) {
+    this.server?.emit(event, payload);
+  }
 }

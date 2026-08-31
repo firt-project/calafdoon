@@ -8,11 +8,18 @@ import {
 } from "@nestjs/common";
 import type { Request } from "express";
 import { normalizeEmail } from "../auth/crypto-util";
+import {
+  stripeWebhookGlobalRateLimit,
+  stripeWebhookIpRateLimit,
+} from "../payments/stripe-webhook-limits";
 import { RedisService } from "../redis/redis.module";
 
 type LimitSpec = { windowSec: number; max: number };
 
-const LIMITS: Record<string, { ip?: LimitSpec; email?: LimitSpec; user?: LimitSpec }> = {
+const LIMITS: Record<
+  string,
+  { ip?: LimitSpec; email?: LimitSpec; user?: LimitSpec; global?: LimitSpec }
+> = {
   "auth.login": {
     ip: { windowSec: 15 * 60, max: 40 },
     email: { windowSec: 15 * 60, max: 15 },
@@ -31,6 +38,22 @@ const LIMITS: Record<string, { ip?: LimitSpec; email?: LimitSpec; user?: LimitSp
   },
   "auth.reset": {
     ip: { windowSec: 15 * 60, max: 20 },
+  },
+  "auth.verify": {
+    ip: { windowSec: 15 * 60, max: 40 },
+  },
+  "auth.verifyResend": {
+    user: { windowSec: 15 * 60, max: 5 },
+    ip: { windowSec: 15 * 60, max: 20 },
+  },
+  /** L4: TOTP / recovery code guesses during login challenge. */
+  "auth.mfaLogin": {
+    ip: { windowSec: 15 * 60, max: 30 },
+  },
+  /** L4: enroll confirm / disable / recovery regen (authenticated). */
+  "auth.mfa": {
+    user: { windowSec: 15 * 60, max: 20 },
+    ip: { windowSec: 15 * 60, max: 40 },
   },
   "profile.write": {
     user: { windowSec: 60, max: 60 },
@@ -71,8 +94,17 @@ const LIMITS: Record<string, { ip?: LimitSpec; email?: LimitSpec; user?: LimitSp
   "payments.evc": {
     user: { windowSec: 60, max: 20 },
   },
+  /** Waafi PIN prompts — keep tight to limit wallet harassment. */
+  "payments.waafi": {
+    user: { windowSec: 60, max: 5 },
+    ip: { windowSec: 60, max: 20 },
+  },
+  "media.upload": {
+    user: { windowSec: 60, max: 20 },
+  },
   "payments.webhook": {
-    ip: { windowSec: 60, max: 120 },
+    // Defaults overridden at runtime from STRIPE_WEBHOOK_RATE_* env (see hitWebhook).
+    ip: { windowSec: 60, max: 300 },
   },
   "admin.list": {
     user: { windowSec: 60, max: 120 },
@@ -98,6 +130,15 @@ const LIMITS: Record<string, { ip?: LimitSpec; email?: LimitSpec; user?: LimitSp
   },
   "admin.delete": {
     user: { windowSec: 60, max: 10 },
+  },
+  /** Bulk member-email export (Play testers) — owner-only PII dump. */
+  "admin.exportEmails": {
+    user: { windowSec: 60 * 60, max: 5 },
+    ip: { windowSec: 60 * 60, max: 10 },
+  },
+  "profile.delete_account": {
+    user: { windowSec: 60 * 60, max: 3 },
+    ip: { windowSec: 60 * 60, max: 10 },
   },
 };
 
@@ -125,9 +166,12 @@ export class RateLimitGuard implements CanActivate {
       bucket === "matches.action" ||
       bucket === "profile.write" ||
       bucket.startsWith("chat.") ||
-      bucket.startsWith("payments.") ||
+      // Stripe webhook: fail-open on Redis outage so signed deliveries can still
+      // reach handleWebhook (which may return retryable 5xx on its own).
+      (bucket.startsWith("payments.") && bucket !== "payments.webhook") ||
       bucket.startsWith("admin.") ||
-      bucket.startsWith("support.");
+      bucket.startsWith("support.") ||
+      bucket === "profile.delete_account";
 
     const online = await this.redis.connect();
     if (!online || !this.redis.client) {
@@ -149,9 +193,19 @@ export class RateLimitGuard implements CanActivate {
         : null;
     const userId = req.user?.id;
 
+    if (bucket === "payments.webhook") {
+      const ipSpec = stripeWebhookIpRateLimit();
+      const globalSpec = stripeWebhookGlobalRateLimit();
+      // Keys use route + IP / shared global only — never secrets or signatures.
+      await this.hit(`rl:payments.webhook:ip:${ip}`, ipSpec);
+      await this.hit(`rl:payments.webhook:global`, globalSpec);
+      return true;
+    }
+
     if (spec.ip) await this.hit(`rl:${bucket}:ip:${ip}`, spec.ip);
     if (spec.email && email) await this.hit(`rl:${bucket}:email:${email}`, spec.email);
     if (spec.user && userId) await this.hit(`rl:${bucket}:user:${userId}`, spec.user);
+    if (spec.global) await this.hit(`rl:${bucket}:global`, spec.global);
 
     return true;
   }
@@ -159,13 +213,33 @@ export class RateLimitGuard implements CanActivate {
   private resolveBucket(req: Request): string | null {
     const path = req.path || "";
     const method = req.method.toUpperCase();
+    if (path.includes("/auth/mfa/verify-login")) return "auth.mfaLogin";
+    if (path.includes("/auth/mfa/")) return "auth.mfa";
     if (path.includes("/auth/login")) return "auth.login";
     if (path.includes("/auth/register/check-email")) return "auth.registerCheck";
     if (path.includes("/auth/register")) return "auth.register";
     if (path.includes("/auth/forgot-password")) return "auth.forgot";
     if (path.includes("/auth/reset-password")) return "auth.reset";
+    if (path.includes("/auth/resend-verification")) return "auth.verifyResend";
+    if (path.includes("/auth/verify-email")) return "auth.verify";
+    if (
+      (method === "DELETE" && path === "/profile/account") ||
+      (method === "POST" && path === "/auth/delete-account")
+    ) {
+      return "profile.delete_account";
+    }
     if (method === "POST" && path.includes("/profile/geolocation/verify")) {
       return "profile.geocode";
+    }
+    if (
+      method === "POST" &&
+      (path.includes("/photos/sign-upload") ||
+        path.includes("/photos/confirm-upload") ||
+        path.includes("/images/sign-upload") ||
+        path.includes("/payments/evc/proof/sign-upload") ||
+        path.includes("/payments/evc/proof/upload"))
+    ) {
+      return "media.upload";
     }
     if (
       method !== "GET" &&
@@ -210,10 +284,12 @@ export class RateLimitGuard implements CanActivate {
     if (
       method === "POST" &&
       (path.includes("/payments/evc/proof/sign-upload") ||
-        path.includes("/payments/evc/proof/upload") ||
         path.includes("/payments/evc/proof/submit"))
-      ) {
+    ) {
       return "payments.evc";
+    }
+    if (method === "POST" && path.includes("/payments/waafi/purchase")) {
+      return "payments.waafi";
     }
     if (method === "POST" && path.includes("/webhooks/stripe")) {
       return "payments.webhook";
@@ -224,6 +300,9 @@ export class RateLimitGuard implements CanActivate {
     if (path.startsWith("/admin") || path.startsWith("/staff-invites") || path.startsWith("/support") || path.startsWith("/moderation")) {
       if (method === "DELETE" || path.includes("/delete") || /\/admin\/users\/[^/]+$/.test(path) && method === "DELETE") {
         return "admin.delete";
+      }
+      if (path.includes("/admin/users/emails") || path.includes("/admin/users/purge-typo-emails")) {
+        return "admin.exportEmails";
       }
       if (path.includes("/staff-invites")) return "admin.invite";
       if (path.includes("/announcements")) return "admin.announce";

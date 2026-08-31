@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CHECKOUT_MODE,
+  MONTHLY_AMOUNT_CENTS,
   PERSONAL_SUPPORT_AMOUNT_CENTS,
   PREMIUM_UPGRADE_AMOUNT_CENTS,
   REGISTRATION_AMOUNT_CENTS,
@@ -14,7 +15,10 @@ import { RateLimitGuard } from "../redis/rate-limit.guard";
 import { HttpException, HttpStatus } from "@nestjs/common";
 
 describe("registration checkout pricing by gender/tier", () => {
-  it("men basic $5, women basic $2.50", () => {
+  it("men and women basic are both $4.99 first, then $1/month", () => {
+    assert.equal(REGISTRATION_AMOUNT_CENTS, 499);
+    assert.equal(WOMEN_BASIC_AMOUNT_CENTS, 499);
+    assert.equal(MONTHLY_AMOUNT_CENTS, 100);
     assert.equal(
       getRegistrationCheckoutDetails("basic", "male").amount,
       REGISTRATION_AMOUNT_CENTS
@@ -22,6 +26,10 @@ describe("registration checkout pricing by gender/tier", () => {
     assert.equal(
       getRegistrationCheckoutDetails("basic", "female").amount,
       WOMEN_BASIC_AMOUNT_CENTS
+    );
+    assert.equal(
+      getRegistrationCheckoutDetails("basic", "male").monthlyAmountCents,
+      100
     );
   });
 
@@ -40,7 +48,7 @@ describe("registration checkout pricing by gender/tier", () => {
     assert.equal(PREMIUM_UPGRADE_AMOUNT_CENTS, 1500);
   });
 
-  it("checkout mode is one-time payment", () => {
+  it("one-time checkout mode remains for premium upgrade", () => {
     assert.equal(CHECKOUT_MODE, "payment");
   });
 });

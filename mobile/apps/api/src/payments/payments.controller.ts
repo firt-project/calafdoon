@@ -6,6 +6,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  PayloadTooLargeException,
   Post,
   Req,
   UseGuards,
@@ -22,8 +23,10 @@ import {
 } from "../auth/auth.guards";
 import { CsrfGuard } from "../auth/csrf";
 import { RateLimitGuard } from "../redis/rate-limit.guard";
-import { EvcPaymentsService } from "./evc-payments.service";
 import { PaymentsService } from "./payments.service";
+import { EvcPaymentsService } from "./evc-payments.service";
+import { WaafiPaymentsService } from "./waafi-payments.service";
+import { stripeWebhookMaxBodyBytes } from "./stripe-webhook-limits";
 
 function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
@@ -39,7 +42,8 @@ function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
 export class PaymentsController {
   constructor(
     private readonly payments: PaymentsService,
-    private readonly evc: EvcPaymentsService
+    private readonly evc: EvcPaymentsService,
+    private readonly waafi: WaafiPaymentsService
   ) {}
 
   @Post("payments/stripe/registration-checkout")
@@ -51,35 +55,18 @@ export class PaymentsController {
     @Body() body: unknown
   ) {
     const parsed = parseBody(
-      z.object({
-        tier: z.enum(["basic", "premium"]),
-        client: z.enum(["web", "mobile"]).optional(),
-      }),
+      z.object({ tier: z.enum(["basic", "premium"]) }),
       body
     );
-    return this.payments.createRegistrationCheckout(
-      user.id,
-      parsed.tier,
-      parsed.client ?? "web"
-    );
+    return this.payments.createRegistrationCheckout(user.id, parsed.tier);
   }
 
   @Post("payments/stripe/premium-upgrade-checkout")
   @HttpCode(200)
   @UseGuards(CsrfGuard, RateLimitGuard)
   @RequireProfile()
-  async premiumUpgrade(
-    @CurrentUser() user: RequestUser,
-    @Body() body: unknown
-  ) {
-    const parsed = parseBody(
-      z.object({ client: z.enum(["web", "mobile"]).optional() }),
-      body && typeof body === "object" ? body : {}
-    );
-    return this.payments.createPremiumUpgradeCheckout(
-      user.id,
-      parsed.client ?? "web"
-    );
+  async premiumUpgrade(@CurrentUser() user: RequestUser) {
+    return this.payments.createPremiumUpgradeCheckout(user.id);
   }
 
   @Get("payments/status")
@@ -104,6 +91,7 @@ export class PaymentsController {
   @Public()
   @Post("webhooks/stripe")
   @HttpCode(200)
+  @UseGuards(RateLimitGuard)
   async stripeWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers("stripe-signature") signature?: string
@@ -113,7 +101,42 @@ export class PaymentsController {
       (typeof req.body === "string" || Buffer.isBuffer(req.body)
         ? req.body
         : Buffer.from(JSON.stringify(req.body ?? {})));
+    const size = Buffer.isBuffer(raw) ? raw.length : Buffer.byteLength(raw);
+    if (size > stripeWebhookMaxBodyBytes()) {
+      throw new PayloadTooLargeException("Payload Too Large");
+    }
+    // Pass through original raw bytes + signature unchanged for HMAC verify.
     return this.payments.handleWebhook(raw, signature);
+  }
+
+  @Post("payments/waafi/purchase")
+  @HttpCode(200)
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  @RequireProfile()
+  async waafiPurchase(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown
+  ) {
+    const parsed = parseBody(
+      z.object({
+        /** Optional — when omitted, charges the profile phone. Must match profile when set. */
+        accountNo: z.string().min(8).max(32).optional(),
+        tier: z.enum(["basic", "premium"]).optional(),
+      }),
+      body
+    );
+    return this.waafi.purchaseRegistration({
+      userId: user.id,
+      accountNo: parsed.accountNo,
+      tier: parsed.tier,
+    });
+  }
+
+  @Get("payments/waafi/status")
+  @Public()
+  @UseGuards(RateLimitGuard)
+  async waafiStatus() {
+    return this.waafi.status();
   }
 
   @Post("payments/evc/proof/sign-upload")
@@ -124,7 +147,7 @@ export class PaymentsController {
     const parsed = parseBody(
       z.object({
         contentType: z.string().min(3).max(100),
-        sizeBytes: z.number().int().positive().optional(),
+        sizeBytes: z.number().int().positive(),
       }),
       body
     );
@@ -138,15 +161,13 @@ export class PaymentsController {
   async evcUpload(@CurrentUser() user: RequestUser, @Body() body: unknown) {
     const parsed = parseBody(
       z.object({
-        contentType: z.string().min(3).max(100).optional(),
-        dataBase64: z.string().min(32).max(12_000_000),
+        contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+        dataBase64: z.string().min(8).max(16_000_000),
+        sizeBytes: z.number().int().positive().optional(),
       }),
       body
     );
-    return this.evc.uploadProofImage(user.id, {
-      contentType: parsed.contentType || "image/jpeg",
-      dataBase64: parsed.dataBase64,
-    });
+    return this.evc.uploadProofImage(user.id, parsed);
   }
 
   @Post("payments/evc/proof/submit")

@@ -8,15 +8,23 @@ import {
   Param,
   Patch,
   Post,
+  Req,
+  Res,
   UseGuards,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import {
+  AllowDuringPasswordReset,
+  AllowWhileMfaEnrollment,
+  AllowWhileUnverified,
   CurrentUser,
   RequireProfile,
   type RequestUser,
 } from "../auth/auth.guards";
-import { CsrfGuard } from "../auth/csrf";
+import { CsrfGuard, clearAuthCookies } from "../auth/csrf";
+import { RateLimitGuard } from "../redis/rate-limit.guard";
 import { ProfileService } from "./profile.service";
 import { ProfilePhotosService } from "./photos.service";
 import { GeolocationService } from "./geolocation.service";
@@ -58,7 +66,7 @@ const waliSchema = z.object({
 const signUploadSchema = z.object({
   contentType: z.string().min(3).max(100),
   slot: z.enum(["main", "additional", "private"]).default("additional"),
-  sizeBytes: z.number().int().positive().optional(),
+  sizeBytes: z.number().int().positive(),
 });
 
 const confirmUploadSchema = z.object({
@@ -76,14 +84,27 @@ const geolocationVerifySchema = z.object({
   accuracy: z.number().nonnegative().optional(),
 });
 
+const deleteAccountSchema = z.object({
+  password: z.string().min(1).max(256),
+});
+
 @Controller("profile")
 @UseGuards(CsrfGuard)
 export class ProfileController {
   constructor(
     private readonly profiles: ProfileService,
     private readonly photos: ProfilePhotosService,
-    private readonly geolocation: GeolocationService
+    private readonly geolocation: GeolocationService,
+    private readonly config: ConfigService
   ) {}
+
+  private cookieOpts() {
+    const secure =
+      this.config.get<string>("COOKIE_SECURE") === "true" ||
+      this.config.get<string>("NODE_ENV") === "production";
+    const domain = this.config.get<string>("COOKIE_DOMAIN") || undefined;
+    return { secure, domain };
+  }
 
   @Get("me")
   async me(@CurrentUser() user: RequestUser) {
@@ -227,6 +248,7 @@ export class ProfileController {
   @Post("photos/sign-upload")
   @HttpCode(200)
   @RequireProfile()
+  @UseGuards(RateLimitGuard)
   async signUpload(
     @CurrentUser() user: RequestUser,
     @Body() body: unknown
@@ -242,6 +264,7 @@ export class ProfileController {
   @Post("photos/confirm-upload")
   @HttpCode(200)
   @RequireProfile()
+  @UseGuards(RateLimitGuard)
   async confirmUpload(
     @CurrentUser() user: RequestUser,
     @Body() body: unknown
@@ -259,6 +282,24 @@ export class ProfileController {
     return this.photos.deletePhoto(user.id, id);
   }
 
+  @Delete("account")
+  @HttpCode(200)
+  @AllowDuringPasswordReset()
+  @AllowWhileUnverified()
+  @AllowWhileMfaEnrollment()
+  @UseGuards(RateLimitGuard)
+  async deleteAccount(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const parsed = parseBody(deleteAccountSchema, body);
+    await this.profiles.deleteMyAccount(user.id, parsed.password, req.ip);
+    clearAuthCookies(res, this.cookieOpts());
+    return { ok: true };
+  }
+
   @Patch("photos/order")
   @RequireProfile()
   async reorder(
@@ -267,15 +308,6 @@ export class ProfileController {
   ) {
     const parsed = parseBody(reorderSchema, body);
     return this.photos.reorder(user.id, parsed.orderedMediaIds);
-  }
-
-  /** Authenticated share card by opaque publicId (profile.convexId). */
-  @Get("shareable/:publicId")
-  async shareableCard(
-    @CurrentUser() user: RequestUser,
-    @Param("publicId") publicId: string
-  ) {
-    return this.profiles.getShareableCard(user.id, publicId);
   }
 
   @Get(":id/photo-access/:mediaId")

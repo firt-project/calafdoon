@@ -7,6 +7,7 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { resolveRedisUrl } from "../redis/redis-url";
 import { Queue, Worker, type Job, type ConnectionOptions } from "bullmq";
 import { MetricsService } from "../admin/metrics.service";
 
@@ -24,7 +25,10 @@ export class MetricsQueueService implements OnModuleInit, OnModuleDestroy {
     @Inject(forwardRef(() => MetricsService))
     private readonly metrics: MetricsService
   ) {
-    const url = this.config.get<string>("REDIS_URL") ?? "redis://127.0.0.1:6379";
+    const url = resolveRedisUrl({
+      redisUrl: this.config.get<string>("REDIS_URL"),
+      redisPassword: this.config.get<string>("REDIS_PASSWORD"),
+    });
     this.connectionOpts = { url } as ConnectionOptions;
   }
 

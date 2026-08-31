@@ -1,11 +1,13 @@
 /**
  * Browser / WebView origins allowed to call this API with credentials.
- * Merges CORS_ORIGINS, APP_URL, known Hel production frontends, and Capacitor schemes.
  *
- * Capacitor Android (`server.androidScheme: "https"`) typically sends Origin:
- *   https://localhost
- * Other shells may use capacitor://localhost or http://localhost — allowlist only those,
- * never `*` with credentials.
+ * L5: Production / Render trust only explicitly configured origins
+ * (CORS_ORIGINS, APP_URL, CORS_ORIGIN). No hardcoded Vercel preview hosts.
+ *
+ * Capacitor WebView origins are always included so phone builds keep working
+ * when CORS_ORIGINS lists only the website frontend.
+ *
+ * Development falls back to localhost / Capacitor defaults when unset.
  */
 export function resolveCorsOrigins(
   env: NodeJS.ProcessEnv = process.env
@@ -16,25 +18,21 @@ export function resolveCorsOrigins(
       .map((s) => s.trim().replace(/\/$/, ""))
       .filter(Boolean);
 
-  const defaults = [
+  const localDefaults = [
     "http://127.0.0.1:3001",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://localhost:3000",
-  ];
-
-  const productionFrontends = [
-    "https://www.helcalafkaaga.com",
-    "https://helcalafkaaga.com",
-    "https://tel-calafkaaga-1-api-one.vercel.app",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
   ];
 
   /** Required for Capacitor WebView → Nest API credentialed fetch / Socket.IO */
   const capacitorOrigins = [
-    "https://localhost",
     "capacitor://localhost",
-    "http://localhost",
     "ionic://localhost",
+    "http://localhost",
+    "https://localhost",
   ];
 
   const configured = [
@@ -48,13 +46,11 @@ export function resolveCorsOrigins(
     Boolean(env.RENDER) ||
     Boolean(env.RENDER_SERVICE_ID);
 
-  return [
-    ...new Set([
-      ...(configured.length > 0 ? configured : defaults),
-      ...(isProd ? productionFrontends : []),
-      // Always allow Capacitor origins so phone builds work even if CORS_ORIGINS
-      // was configured for web-only frontends.
-      ...capacitorOrigins,
-    ]),
-  ];
+  if (isProd) {
+    // Explicit env + Capacitor schemes (phone builds).
+    return [...new Set([...configured, ...capacitorOrigins])];
+  }
+
+  const base = configured.length > 0 ? configured : localDefaults;
+  return [...new Set([...base, ...capacitorOrigins])];
 }

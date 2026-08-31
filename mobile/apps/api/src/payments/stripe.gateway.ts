@@ -15,6 +15,16 @@ export type CheckoutCreateInput = {
   successUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
+  /**
+   * Registration Basic: Stripe subscription ($1/mo) + one-time setup so the
+   * first invoice is $4.99, then $1/month.
+   */
+  subscription?: {
+    monthlyCents: number;
+    setupCents: number;
+    monthlyProductName: string;
+    setupProductName: string;
+  };
 };
 
 export type CheckoutSessionView = {
@@ -43,10 +53,8 @@ export type FakeStripeEvent = {
 };
 
 /**
- * Real Stripe client.
- * - Test keys (`sk_test_`) always allowed.
- * - Live keys (`sk_live_`) allowed when STRIPE_GATEWAY=live, NODE_ENV=production,
- *   or STRIPE_ALLOW_LIVE=true (required for production card checkout).
+ * Real Stripe client — test-mode keys only in local env.
+ * Rejects live keys unless STRIPE_ALLOW_LIVE=true (never set in Phase 8).
  */
 @Injectable()
 export class StripeService implements StripeGateway {
@@ -58,33 +66,18 @@ export class StripeService implements StripeGateway {
     const key = this.config.get<string>("STRIPE_SECRET_KEY") ?? "";
     this.webhookSecret =
       this.config.get<string>("STRIPE_WEBHOOK_SECRET") ?? "";
-    const allowLive =
-      this.config.get<string>("STRIPE_ALLOW_LIVE") === "true" ||
-      this.config.get<string>("STRIPE_GATEWAY") === "live" ||
-      this.config.get<string>("NODE_ENV") === "production";
-
-    if (key.startsWith("sk_live_") && !allowLive) {
-      this.logger.error(
-        "Live Stripe key blocked — set STRIPE_GATEWAY=live or STRIPE_ALLOW_LIVE=true"
-      );
+    if (key.startsWith("sk_live_") && this.config.get("STRIPE_ALLOW_LIVE") !== "true") {
+      this.logger.error("Live Stripe key blocked — use sk_test_ only");
       this.stripe = null;
       return;
     }
-    if (!key) {
-      this.logger.warn("STRIPE_SECRET_KEY is empty — checkout disabled");
-      this.stripe = null;
-      return;
-    }
-    this.stripe = new Stripe(key);
-    this.logger.log(
-      `Stripe client ready (${key.startsWith("sk_live_") ? "live" : "test"} mode)`
-    );
+    this.stripe = key ? new Stripe(key) : null;
   }
 
   private requireClient(): Stripe {
     if (!this.stripe) {
       throw new Error(
-        "Stripe is not configured. Set STRIPE_SECRET_KEY (and STRIPE_GATEWAY=live for production)."
+        "Stripe is not configured. Set STRIPE_SECRET_KEY to a sk_test_ key."
       );
     }
     return this.stripe;
@@ -94,26 +87,60 @@ export class StripeService implements StripeGateway {
     input: CheckoutCreateInput
   ): Promise<CheckoutSessionView> {
     const stripe = this.requireClient();
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: input.productName,
-              description: input.productDescription,
+    const sub = input.subscription;
+    const session = sub
+      ? await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "subscription",
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                unit_amount: sub.monthlyCents,
+                recurring: { interval: "month" },
+                product_data: {
+                  name: sub.monthlyProductName,
+                  description: input.productDescription,
+                },
+              },
+              quantity: 1,
             },
-            unit_amount: input.amountCents,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: CHECKOUT_MODE,
-      success_url: input.successUrl,
-      cancel_url: input.cancelUrl,
-      metadata: input.metadata,
-    });
+            {
+              price_data: {
+                currency: "usd",
+                unit_amount: sub.setupCents,
+                product_data: {
+                  name: sub.setupProductName,
+                  description: "First-month membership unlock",
+                },
+              },
+              quantity: 1,
+            },
+          ],
+          success_url: input.successUrl,
+          cancel_url: input.cancelUrl,
+          metadata: input.metadata,
+        })
+      : await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: input.productName,
+                  description: input.productDescription,
+                },
+                unit_amount: input.amountCents,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: CHECKOUT_MODE,
+          success_url: input.successUrl,
+          cancel_url: input.cancelUrl,
+          metadata: input.metadata,
+        });
     return {
       id: session.id,
       url: session.url,

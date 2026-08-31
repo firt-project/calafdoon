@@ -1,7 +1,17 @@
-/** Exact Convex pricing from convex/payments.ts + stripeActions.ts */
+/** Current registration / premium pricing (cents). */
 
-export const REGISTRATION_AMOUNT_CENTS = 500;
-export const WOMEN_BASIC_AMOUNT_CENTS = 250;
+/** First charge to unlock the app (Basic). */
+export const REGISTRATION_AMOUNT_CENTS = 499;
+/** Same as REGISTRATION_AMOUNT_CENTS — men and women Basic are both $4.99. */
+export const WOMEN_BASIC_AMOUNT_CENTS = 499;
+/** Recurring membership after the first payment. */
+export const MONTHLY_AMOUNT_CENTS = 100;
+/**
+ * One-time setup added on Stripe subscription checkout so the first invoice is
+ * $4.99 ($3.99 setup + $1.00 first month), then $1/month.
+ */
+export const REGISTRATION_SETUP_AMOUNT_CENTS =
+  REGISTRATION_AMOUNT_CENTS - MONTHLY_AMOUNT_CENTS;
 export const PERSONAL_SUPPORT_AMOUNT_CENTS = 2000;
 export const PREMIUM_UPGRADE_AMOUNT_CENTS = 1500;
 export const PENDING_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -35,14 +45,16 @@ export function getRegistrationCheckoutDetails(
 
   const womenBasic = gender === "female";
   return {
-    amount: womenBasic ? WOMEN_BASIC_AMOUNT_CENTS : REGISTRATION_AMOUNT_CENTS,
+    amount: REGISTRATION_AMOUNT_CENTS,
+    monthlyAmountCents: MONTHLY_AMOUNT_CENTS,
+    setupAmountCents: REGISTRATION_SETUP_AMOUNT_CENTS,
     paymentType: "registration" as const,
     registrationTier: "basic" as const,
     productName: womenBasic
-      ? "Hel Calafkaaga Basic Registration (Women)"
-      : "Hel Calafkaaga Basic Registration",
+      ? "Hel Calafkaaga Membership (Women)"
+      : "Hel Calafkaaga Membership",
     productDescription:
-      "One-time registration — full access to matches and messaging",
+      "First payment $4.99, then $1 every month — full access to matches and messaging",
     metadataType: "registration" as const,
   };
 }
@@ -56,9 +68,7 @@ export function amountForEvcTier(
       ? PREMIUM_UPGRADE_AMOUNT_CENTS
       : PERSONAL_SUPPORT_AMOUNT_CENTS;
   }
-  return gender === "female"
-    ? WOMEN_BASIC_AMOUNT_CENTS
-    : REGISTRATION_AMOUNT_CENTS;
+  return REGISTRATION_AMOUNT_CENTS;
 }
 
 export function isPremiumPayment(opts: {
@@ -72,4 +82,30 @@ export function isPremiumPayment(opts: {
   );
 }
 
+/** One-time Checkout (premium upgrade). Registration Basic uses subscription. */
 export const CHECKOUT_MODE = "payment" as const;
+export const REGISTRATION_CHECKOUT_MODE = "subscription" as const;
+
+/** Recurring membership period for Waafi / EVC (re-pay $4.99 after expiry). */
+export const MEMBERSHIP_PERIOD_DAYS = 30;
+
+export function membershipPaidUntilFrom(now = new Date()): Date {
+  const d = new Date(now);
+  d.setUTCDate(d.getUTCDate() + MEMBERSHIP_PERIOD_DAYS);
+  return d;
+}
+
+/**
+ * Next period end: if still active, extend from current paidUntil; otherwise from now.
+ * Stripe leaves paidUntil null (subscription manages access).
+ */
+export function nextMembershipPaidUntil(
+  currentPaidUntil: Date | null | undefined,
+  now = new Date()
+): Date {
+  const base =
+    currentPaidUntil && currentPaidUntil.getTime() > now.getTime()
+      ? currentPaidUntil
+      : now;
+  return membershipPaidUntilFrom(base);
+}

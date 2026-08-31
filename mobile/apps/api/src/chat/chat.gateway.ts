@@ -9,8 +9,13 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { Server, Socket } from "socket.io";
 import { SessionService } from "../auth/session.service";
+import { isStaffMfaRequired } from "../auth/staff-mfa-policy";
+import { isStaffRole } from "../common/access";
+import { isInteractionLocked } from "../common/review-status";
+import { PresenceService } from "../presence/presence.service";
 import { ConversationService } from "./conversation.service";
 import { ChatRealtimeService } from "./chat-realtime.service";
 import { RedisService } from "../redis/redis.module";
@@ -57,7 +62,9 @@ export class ChatGateway
     private readonly sessions: SessionService,
     private readonly conversations: ConversationService,
     private readonly realtime: ChatRealtimeService,
-    private readonly redis: RedisService
+    private readonly redis: RedisService,
+    private readonly presence: PresenceService,
+    private readonly config: ConfigService
   ) {}
 
   afterInit(server: Server) {
@@ -106,39 +113,94 @@ export class ChatGateway
     }
 
     const cookies = parseCookieHeader(client.handshake.headers.cookie);
-    const raw =
-      cookies["hel_session"] ||
-      (typeof client.handshake.auth?.token === "string"
+    const cookieToken = cookies["hel_session"];
+    const authToken =
+      typeof client.handshake.auth?.token === "string"
         ? client.handshake.auth.token
-        : undefined) ||
-      (typeof client.handshake.headers["x-session-token"] === "string"
+        : undefined;
+    const headerToken =
+      typeof client.handshake.headers["x-session-token"] === "string"
         ? client.handshake.headers["x-session-token"]
-        : undefined);
+        : undefined;
+    if (
+      cookieToken &&
+      ((authToken && authToken !== cookieToken) ||
+        (headerToken && headerToken !== cookieToken))
+    ) {
+      throw new Error("ambiguous_session");
+    }
+    const raw = cookieToken || authToken || headerToken;
 
     if (!raw) throw new Error("unauthenticated");
 
     const session = await this.sessions.findValidSession(raw);
     if (!session) throw new Error("invalid_session");
 
+    if (session.user.mustResetPassword) {
+      throw new Error("password_reset_required");
+    }
+
+    if (session.user.emailVerificationTime == null) {
+      throw new Error("email_verification_required");
+    }
+
     const profile = session.user.profile;
-    if (profile?.banned) throw new Error("banned");
+    const role = profile?.role ?? "user";
+    if (
+      isStaffMfaRequired(this.config) &&
+      isStaffRole(role) &&
+      session.user.mfaEnabled !== true
+    ) {
+      throw new Error("mfa_enrollment_required");
+    }
+
+    if (profile && isInteractionLocked(profile)) {
+      throw new Error(profile.banned ? "banned" : "paused");
+    }
 
     client.data.userId = session.user.id;
     client.data.sessionId = session.id;
-    client.data.role = profile?.role ?? "user";
+    client.data.role = role;
     client.data.banned = false;
     await client.join(`user:${session.user.id}`);
+  }
+
+  /** Notify everyone connected that this user's online status changed. */
+  private async broadcastPresence(userId: string, isOnline: boolean) {
+    try {
+      this.realtime.emitToAll("presence:update", {
+        userId,
+        isOnline,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `presence broadcast failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
   }
 
   async handleConnection(client: AuthedSocket) {
     if (!client.data.userId) {
       client.emit("session:revoked", { reason: "unauthenticated" });
       client.disconnect(true);
+      return;
+    }
+    const newlyOnline = await this.presence.markConnected(
+      client.data.userId,
+      client.id
+    );
+    if (newlyOnline) {
+      await this.broadcastPresence(client.data.userId, true);
     }
   }
 
-  handleDisconnect(_client: AuthedSocket) {
-    // Rooms leave automatically
+  async handleDisconnect(client: AuthedSocket) {
+    const userId = client.data.userId;
+    if (!userId) return;
+    const wentOffline = await this.presence.markDisconnected(userId, client.id);
+    if (wentOffline) {
+      await this.broadcastPresence(userId, false);
+    }
   }
 
   private requireUser(client: AuthedSocket): string {
@@ -148,6 +210,17 @@ export class ChatGateway
       throw new Error("unauthenticated");
     }
     return client.data.userId;
+  }
+
+  @SubscribeMessage("presence:ping")
+  async onPresencePing(@ConnectedSocket() client: AuthedSocket) {
+    try {
+      const userId = this.requireUser(client);
+      await this.presence.heartbeat(userId);
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
   }
 
   @SubscribeMessage("conversation:join")

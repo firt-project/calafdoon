@@ -15,7 +15,7 @@ export class MediaController {
 
   /**
    * Authenticated media proxy for admin/member UIs.
-   * Call via apiClient (sends X-Session-Token) and display as a blob URL.
+   * Call via apiClient (credentials: include + CSRF) and display as a blob URL.
    */
   @Get(":id")
   async get(

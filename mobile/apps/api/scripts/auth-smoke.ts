@@ -95,9 +95,13 @@ async function main() {
       userAgent: "auth-smoke",
     });
 
-    // Immediately revoke the smoke session so we do not leave live cookies.
-    // Session row existence still proves create succeeded.
-    const sessionOk = !!result.rawToken && result.rawToken.length > 0;
+    const sessionOk =
+      result.kind === "session" &&
+      !!result.rawToken &&
+      result.rawToken.length > 0;
+    if (result.kind !== "session") {
+      throw new Error("Unexpected MFA challenge in smoke (enable MFA after smoke)");
+    }
     await auth.logoutAll(result.user.id);
 
     console.log(
