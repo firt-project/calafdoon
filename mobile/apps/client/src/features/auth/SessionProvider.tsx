@@ -90,17 +90,14 @@ function homeRouteFromAccess(access: AccessStateLike | null): string {
     if (access.questionnaireComplete === false) {
       return "/onboarding/questionnaire";
     }
-    // Prefer server hasPaidAccess (respects Waafi/EVC paidUntil expiry).
+    // Prefer server hasPaidAccess (respects Waafi paidUntil expiry).
+    // Approval alone must NOT unlock — matches Nest hasPaidAccess().
     if (access.hasPaidAccess === true) {
       // continue to home below
     } else if (access.hasPaidAccess === false) {
       return "/plans";
-    } else {
-      const granted =
-        access.hasPaid === true ||
-        access.approved === true ||
-        String(access.reviewStatus ?? "") === "approved";
-      if (!granted) return "/plans";
+    } else if (access.hasPaid !== true) {
+      return "/plans";
     }
   }
 

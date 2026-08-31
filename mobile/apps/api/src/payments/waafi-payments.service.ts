@@ -80,7 +80,7 @@ export class WaafiPaymentsService {
   }) {
     if (!this.waafi.isConfigured()) {
       throw new ServiceUnavailableException(
-        "WaafiPay is temporarily unavailable. Please try card or EVC, or try again shortly."
+        "WaafiPay is temporarily unavailable. Please try again shortly."
       );
     }
 

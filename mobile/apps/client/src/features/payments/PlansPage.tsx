@@ -36,11 +36,8 @@ export function PlansPage() {
 
   const priceLabel = formatMoney(REGISTRATION_PRICE);
 
-  const alreadyGranted =
-    accessState?.hasPaidAccess === true ||
-    (accessState?.hasPaidAccess !== false &&
-      (accessState?.approved === true ||
-        String(accessState?.reviewStatus ?? "") === "approved"));
+  // Match Nest hasPaidAccess — approval alone does not unlock.
+  const alreadyGranted = accessState?.hasPaidAccess === true;
 
   const membershipExpired =
     accessState?.hasPaidAccess === false &&
