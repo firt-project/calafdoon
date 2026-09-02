@@ -48,16 +48,21 @@ Set on the **API host (Render)** — never Vercel, never committed.
 | `PAYSTACK_SECRET_KEY` | `sk_live_…` | `sk_test_…` in staging. Also used to verify webhook signatures. |
 | `PAYSTACK_PUBLIC_KEY` | `pk_live_…` | Returned by `/payments/paystack/status` for the browser. |
 | `PAYSTACK_CURRENCY` | `USD` | **Must match your Paystack account's settlement currency.** Default `USD`. |
+| `PAYSTACK_USD_RATE` | `130` | Units of `PAYSTACK_CURRENCY` per 1 USD. **Required when `PAYSTACK_CURRENCY` ≠ USD** — the client throws rather than charge the wrong amount. |
 
 `mode()` is derived from the key prefix (`sk_live_` → live, `sk_test_` → test).
 `/payments/paystack/status` reports `enabled`, `mode`, and `currency` so the
 frontend only shows the Paystack option when a key is present.
 
-> **Currency:** `Payment.amount` is stored in USD cents. Paystack is called with
-> that same integer as the subunit amount (cents / kobo). If your account
-> settles in a currency other than USD, set `PAYSTACK_CURRENCY` **and** add a
-> conversion step in `paystack-payments.service.ts` before `initializeTransaction`
-> — otherwise a `$4.99` charge is sent as `499` units of the other currency.
+> **Currency:** `Payment.amount` is always stored in **USD cents** (canonical —
+> keeps admin revenue reporting in one currency). When `PAYSTACK_CURRENCY` is
+> USD, that integer is sent to Paystack unchanged. Otherwise
+> `PaystackClient.chargeAmount()` converts it with `PAYSTACK_USD_RATE`
+> (e.g. `$4.99 → 499 → 499 × 130 = 64 870` KES subunit). `verify` / webhook
+> re-derive the same expected charge and reject an underpayment or a currency
+> mismatch. Update `PAYSTACK_USD_RATE` when the FX rate drifts.
+>
+> This is what mobile M-Pesa uses: `PAYSTACK_CURRENCY=KES` + `PAYSTACK_USD_RATE`.
 
 ---
 
@@ -159,5 +164,5 @@ column and the `?gateway=paystack` filter works.
   returned by the client but not yet persisted or charged. To auto-renew,
   store it on the member and add a scheduled job that calls
   `/transaction/charge_authorization` for `$1.00` before `paidUntil`.
-- **Non-USD settlement conversion** (see the currency note above).
+- **Live FX** — `PAYSTACK_USD_RATE` is a static env value; there is no rate feed.
 - **Refund / dispute handling** via `charge.dispute.*` webhook events.

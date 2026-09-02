@@ -140,7 +140,9 @@ export class PaystackPaymentsService {
 
     const init = await this.paystack.initializeTransaction({
       email,
-      amount: amountCents,
+      // Payment.amount stays in USD cents (canonical); Paystack is charged in
+      // the settlement currency (USD unchanged, else via PAYSTACK_USD_RATE).
+      amount: this.paystack.chargeAmount(amountCents),
       currency: this.paystack.currency(),
       reference,
       callbackUrl: `${this.appUrl()}/payment/success?paystack_reference=${encodeURIComponent(reference)}`,
@@ -331,9 +333,10 @@ export class PaystackPaymentsService {
       };
     }
 
-    if (verified.amount < payment.amount) {
+    const expectedCharge = this.paystack.chargeAmount(payment.amount);
+    if (verified.amount < expectedCharge) {
       this.logger.warn(
-        `Paystack underpayment ref=${reference} paid=${verified.amount} expected=${payment.amount}`
+        `Paystack underpayment ref=${reference} paid=${verified.amount} expected=${expectedCharge}`
       );
       return {
         fulfilled: false,

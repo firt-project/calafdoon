@@ -92,6 +92,29 @@ export class PaystackClient implements OnModuleInit {
     );
   }
 
+  /** Units of PAYSTACK_CURRENCY per 1 USD. 0 when unset / invalid. */
+  usdRate(): number {
+    const raw = Number(firstEnv(this.config, ["PAYSTACK_USD_RATE"]));
+    return Number.isFinite(raw) && raw > 0 ? raw : 0;
+  }
+
+  /**
+   * Convert a USD-cent plan price into the smallest unit of the settlement
+   * currency to send to Paystack. USD: unchanged. Otherwise applies
+   * PAYSTACK_USD_RATE (throws if that is missing, so we never silently
+   * charge the wrong amount).
+   */
+  chargeAmount(usdCents: number): number {
+    if (this.currency() === "USD") return usdCents;
+    const rate = this.usdRate();
+    if (!rate) {
+      throw new Error(
+        `PAYSTACK_USD_RATE is required when PAYSTACK_CURRENCY=${this.currency()}`
+      );
+    }
+    return Math.round(usdCents * rate);
+  }
+
   /** live | test | unset — derived from the secret key prefix. */
   mode(): "live" | "test" | "unset" {
     const key = this.secretKey();

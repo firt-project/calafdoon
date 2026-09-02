@@ -49,6 +49,8 @@ export const envSchema = z.object({
   PAYSTACK_PUBLIC_KEY: z.string().optional(),
   /** Settlement currency on your Paystack account (default USD). */
   PAYSTACK_CURRENCY: z.string().optional(),
+  /** Units of PAYSTACK_CURRENCY per 1 USD — required when currency is not USD. */
+  PAYSTACK_USD_RATE: z.coerce.number().positive().optional(),
   /** Comma-separated admin emails for payment alerts; defaults to staff accounts. */
   ADMIN_ALERT_EMAILS: z.string().optional(),
   /** Stripe webhook abuse controls (M5) — optional; safe defaults apply. */

@@ -33,6 +33,30 @@ describe("PaystackClient config", () => {
     );
   });
 
+  it("charges USD cents unchanged when currency is USD", () => {
+    const c = makeClient({ PAYSTACK_SECRET_KEY: SECRET });
+    assert.equal(c.chargeAmount(499), 499);
+    assert.equal(c.chargeAmount(2000), 2000);
+  });
+
+  it("converts to the settlement currency via PAYSTACK_USD_RATE", () => {
+    const c = makeClient({
+      PAYSTACK_SECRET_KEY: SECRET,
+      PAYSTACK_CURRENCY: "KES",
+      PAYSTACK_USD_RATE: "130",
+    });
+    // $4.99 -> 499 cents * 130 = 64870 (KES subunit)
+    assert.equal(c.chargeAmount(499), 64870);
+  });
+
+  it("refuses to charge a non-USD currency with no rate", () => {
+    const c = makeClient({
+      PAYSTACK_SECRET_KEY: SECRET,
+      PAYSTACK_CURRENCY: "KES",
+    });
+    assert.throws(() => c.chargeAmount(499), /PAYSTACK_USD_RATE is required/);
+  });
+
   it("never leaks secret values in configPresence", () => {
     const presence = makeClient({
       PAYSTACK_SECRET_KEY: SECRET,
