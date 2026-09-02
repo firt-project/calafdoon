@@ -9,7 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { matchCountry, normalizeCity } from "./location-match";
 
 const NOMINATIM_USER_AGENT =
-  "HelCalafkaaga/1.0 (https://helcalafkaaga.com; support@helcalafkaaga.com)";
+  "Web/1.0 (https://web.example.com; support@web.example.com)";
 
 export interface ReverseGeocodeResult {
   country: string;

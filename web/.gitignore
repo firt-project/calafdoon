@@ -119,7 +119,7 @@ apps/client/ios/DerivedData/
 
 # Android APK binaries (keep public download APKs so Render/Vercel can serve them)
 *.apk
-!apps/api/public/download/hel-calafkaaga.apk
+!apps/api/public/download/web.apk
 !apps/api/public/download/.gitkeep
-!public/download/hel-calafkaaga.apk
+!public/download/web.apk
 !public/download/.gitkeep

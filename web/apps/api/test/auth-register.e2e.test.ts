@@ -1,6 +1,6 @@
 /**
  * Phase 11 auth registration HTTP e2e — PostgreSQL only.
- * Requires compiled Nest app: `npm run build -w @hel/api`.
+ * Requires compiled Nest app: `npm run build -w @web/api`.
  */
 import "reflect-metadata";
 import assert from "node:assert/strict";
@@ -47,7 +47,7 @@ describe("Phase 11 auth register HTTP e2e", () => {
       AppModule = require(distAppModule).AppModule;
     } catch {
       throw new Error(
-        `Missing ${distAppModule}. Run: npm run build -w @hel/api`
+        `Missing ${distAppModule}. Run: npm run build -w @web/api`
       );
     }
 

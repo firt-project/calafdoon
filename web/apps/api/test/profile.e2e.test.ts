@@ -50,7 +50,7 @@ describe("Phase 5 profile HTTP e2e", () => {
       AppModule = require(distAppModule).AppModule;
     } catch {
       throw new Error(
-        `Missing ${distAppModule}. Run: npm run build -w @hel/api`
+        `Missing ${distAppModule}. Run: npm run build -w @web/api`
       );
     }
 

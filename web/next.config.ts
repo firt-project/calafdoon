@@ -11,7 +11,7 @@ import { buildContentSecurityPolicy } from "./src/lib/security/content-security-
 const apiUpstream = (
   process.env.API_UPSTREAM_URL ??
   process.env.NEST_API_UPSTREAM_URL ??
-  "https://tel-calafkaaga-1.onrender.com"
+  "https://api.example.com"
 ).replace(/\/$/, "");
 
 const securityHeaders = [

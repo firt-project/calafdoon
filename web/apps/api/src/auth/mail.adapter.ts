@@ -102,7 +102,7 @@ export function createMailAdapter(opts: {
     }
     return new ResendMailAdapter(
       opts.resendApiKey,
-      opts.resendFrom ?? "Hel Calafkaaga <noreply@helcalafkaaga.com>"
+      opts.resendFrom ?? "Web <noreply@web.example.com>"
     );
   }
   if (isProductionRuntime() && opts.driver !== "resend") {

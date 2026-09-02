@@ -5,8 +5,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC_DEBUG="$ROOT/apps/client/android/app/build/outputs/apk/debug/app-debug.apk"
 SRC_RELEASE="$ROOT/apps/client/android/app/build/outputs/apk/release/app-release.apk"
 DEST_DIR="$ROOT/apps/api/public/download"
-DEST_APK="$DEST_DIR/hel-calafkaaga.apk"
-STORE_COPY="$ROOT/store/android/hel-calafkaaga.apk"
+DEST_APK="$DEST_DIR/web.apk"
+STORE_COPY="$ROOT/store/android/web.apk"
 
 mkdir -p "$DEST_DIR" "$ROOT/store/android"
 
@@ -27,5 +27,5 @@ cp -f "$SRC" "$STORE_COPY"
 ls -lh "$DEST_APK"
 echo
 echo "After API redeploy, share:"
-echo "  Install page:  https://tel-calafkaaga-1.onrender.com/download"
-echo "  Direct APK:    https://tel-calafkaaga-1.onrender.com/download/hel-calafkaaga.apk"
+echo "  Install page:  https://api.example.com/download"
+echo "  Direct APK:    https://api.example.com/download/web.apk"

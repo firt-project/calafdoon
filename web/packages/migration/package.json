@@ -1,8 +1,8 @@
 {
-  "name": "@hel/migration",
+  "name": "@web/migration",
   "version": "0.1.0",
   "private": true,
-  "description": "Hel Calafkaaga Convex→Postgres migration tooling (Phase 1)",
+  "description": "Web Convex→Postgres migration tooling (Phase 1)",
   "type": "module",
   "bin": {
     "hel-migration": "./dist/cli.js"

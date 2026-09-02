@@ -51,7 +51,7 @@ export class StaffInvitesService {
 
   private appUrl(): string {
     return (
-      this.config.get<string>("APP_URL") ?? "https://www.helcalafkaaga.com"
+      this.config.get<string>("APP_URL") ?? "https://web.example.com"
     ).replace(/\/$/, "");
   }
 
@@ -65,9 +65,9 @@ export class StaffInvitesService {
     try {
       await this.mail.send({
         to: email,
-        subject: "You're invited to Hel Calafkaaga staff",
-        text: `You have been invited as an admin on Hel Calafkaaga.\n\nAccept this invite (expires in 7 days):\n${url}\n\nIf you did not expect this, ignore this email.`,
-        html: `<p>You have been invited as an admin on Hel Calafkaaga.</p>
+        subject: "You're invited to Web staff",
+        text: `You have been invited as an admin on Web.\n\nAccept this invite (expires in 7 days):\n${url}\n\nIf you did not expect this, ignore this email.`,
+        html: `<p>You have been invited as an admin on Web.</p>
 <p><a href="${safeUrl}">Accept staff invite</a></p>
 <p style="word-break:break-all;color:#666;font-size:12px">${safeUrl}</p>
 <p>This invite expires in 7 days. If you did not expect this, ignore this email.</p>`,

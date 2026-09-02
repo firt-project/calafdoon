@@ -4,7 +4,7 @@
  *
  * Usage:
  *   set -a && source apps/api/.env && set +a
- *   npm run auth:smoke -w @hel/api -- --email=user@example.com
+ *   npm run auth:smoke -w @web/api -- --email=user@example.com
  *
  * Optional (non-interactive): AUTH_SMOKE_PASSWORD=…
  * Optional: AUTH_SMOKE_WRITE_SESSION=1 to persist a session row (default: yes)

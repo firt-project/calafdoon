@@ -9,7 +9,7 @@ import {
 } from "./lib/args.js";
 
 function printHelp() {
-  console.log(`Hel Calafkaaga migration CLI (Phase 1–3)
+  console.log(`Web migration CLI (Phase 1–3)
 
 Usage:
   hel-migration <command> --input=/absolute/path/to/copied-export [options]

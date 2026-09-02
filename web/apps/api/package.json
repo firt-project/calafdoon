@@ -1,8 +1,8 @@
 {
-  "name": "@hel/api",
+  "name": "@web/api",
   "version": "0.1.0",
   "private": true,
-  "description": "Hel Calafkaaga NestJS API (Phase 4 auth)",
+  "description": "Web NestJS API (Phase 4 auth)",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

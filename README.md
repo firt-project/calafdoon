@@ -1,13 +1,16 @@
-# Calafdoon (Hel Calafkaaga)
+# Web
 
 Halal marriage matchmaking — **one product**, website + mobile + API.
+
+> New project, forked from an earlier codebase. Brand identity still needs to be
+> filled in — see `web/src/lib/constants.ts` (`TODO(rebrand)`) and the `*.env.example`
+> files. Placeholder domains use `web.example.com` / `api.example.com`.
 
 ## Structure
 
 ```
-calafdoon/
-  web/       Next.js website + NestJS API (`apps/api`)
-  mobile/    Capacitor Android/iOS client + NestJS API (`apps/api`)
+web/       Next.js website + NestJS API (`apps/api`)  — deploys to Vercel
+mobile/    Capacitor Android/iOS client + NestJS API (`apps/api`)
 ```
 
 | Folder | What it is | Main commands |
@@ -15,11 +18,9 @@ calafdoon/
 | `web/` | Website (Next.js) + backend | `npm install` → `npm run dev:api` + `npm run dev` |
 | `mobile/` | Mobile app (Capacitor) + backend | `npm install` → `npm run infra:up` → `npm run dev:api` + `npm run dev:client` |
 
-Each folder is its own npm workspace so you can change **web** or **mobile** independently without breaking the other.
+Each folder is its own npm workspace so you can change **web** or **mobile** independently.
 
-## Quick start
-
-### Website
+## Quick start (website)
 
 ```bash
 cd web
@@ -29,7 +30,26 @@ npm run dev:api   # terminal 1
 npm run dev       # terminal 2
 ```
 
-### Mobile
+## Deploy the website to Vercel
+
+The `web/` folder is a standalone Next.js app with its own `vercel.json`.
+
+1. Push this repo to a new GitHub repository.
+2. In Vercel, **Add New → Project**, import that repo.
+3. Set **Root Directory** to `web`.
+4. Add environment variables (see `web/.env.example` and
+   `web/infra/staging/vercel-api-mode.env.example`).
+5. Deploy.
+
+Or from the CLI:
+
+```bash
+cd web
+npx vercel        # first run links/creates the project
+npx vercel --prod
+```
+
+## Mobile
 
 ```bash
 cd mobile
@@ -43,11 +63,11 @@ npm run dev:api      # terminal 1
 npm run dev:client   # terminal 2
 ```
 
-**iOS / App Store:** give the Apple developer [`mobile/IOS_DEVELOPER_HANDOFF.md`](mobile/IOS_DEVELOPER_HANDOFF.md) (macOS + Xcode required).
+The `mobile/` folder still carries the previous app identifiers (Android/iOS
+bundle IDs, signing config) — update those separately when you take the app to
+the stores.
 
-## Why this layout?
+## Notes
 
-- **One GitHub repo** for the whole product
-- **Clear folders** — edit website in `web/`, app in `mobile/`
-- **Separate installs/deploys** — change one side without touching the other
 - Secrets stay local (`.env*` is gitignored; only `*.example` files are committed)
+- Internal npm workspaces are scoped `@web/*` (`@web/api`, `@web/migration`)

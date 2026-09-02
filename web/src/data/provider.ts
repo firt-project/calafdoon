@@ -21,7 +21,7 @@ export function isRelativeApiBase(url: string): boolean {
   return url.startsWith("/");
 }
 
-/** Crude eTLD+1: `www.helcalafkaaga.com` and `api.helcalafkaaga.com` share a site. */
+/** Crude eTLD+1: `web.example.com` and `api.web.example.com` share a site. */
 export function registrableSite(hostname: string): string {
   const host = hostname.trim().toLowerCase().replace(/\.$/, "");
   const parts = host.split(".").filter(Boolean);
@@ -47,7 +47,7 @@ function isLocalHost(hostname: string): boolean {
 }
 
 /**
- * iPhone Safari blocks third-party cookies. If the page is on helcalafkaaga.com
+ * iPhone Safari blocks third-party cookies. If the page is on web.example.com
  * but NEXT_PUBLIC_API_URL still points at *.onrender.com, force the /backend
  * rewrite so hel_session is first-party. Android Chrome often still works
  * cross-site — this path keeps both devices on the same first-party cookies.

@@ -86,7 +86,7 @@ export class PaymentMailService {
     }
 
     const appUrl = (
-      this.config.get<string>("APP_URL") ?? "https://www.helcalafkaaga.com"
+      this.config.get<string>("APP_URL") ?? "https://web.example.com"
     ).replace(/\/$/, "");
     const reviewUrl = `${appUrl}/admin?tab=payments`;
     const amount = (opts.amountCents / 100).toFixed(2);

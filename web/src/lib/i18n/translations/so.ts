@@ -140,10 +140,10 @@ export const so: Translations = {
     heroCta: "Is Diiwaangeli Hadda — laga bilaabo ${{price}}",
     seeHowItWorks: "Eeg sida uu u shaqeeyo",
     watchHowToUse: "Daawo sida loo isticmaalo",
-    videoTitle: "Eeg sida xubnuhu u isticmaalaan Hel Calafkaaga",
+    videoTitle: "Eeg sida xubnuhu u isticmaalaan Web",
     videoDesc:
       "Daawo tillin gaaban: samee akoon, dhammaystir profile-kaaga, ka dib bilow raadinta isbarbardhigyada.",
-    videoIframeTitle: "Sida loo isticmaalo Hel Calafkaaga",
+    videoIframeTitle: "Sida loo isticmaalo Web",
     findMatchTitle: "Hel Lammaanahaaga",
     findMatchIam: "Waxaan ahay",
     findMatchLookingFor: "Waxaan raadinayaa",
@@ -156,7 +156,7 @@ export const so: Translations = {
     findMatchSearch: "Raadi",
     quote:
       "Lammaanaha saxda ah ma aha oo kaliya jacayl, waa in la dhiso mustaqbal qurux badan oo wadajir ah.",
-    quoteAuthor: "Xubin HEL CALAFKAAGA",
+    quoteAuthor: "Xubin WEB",
     pricingTitle: "Qiimo Fudud",
     pricingSubtitle:
       "Ragga: Basic ${{basic}} ama Premium ${{premium}}. Haweenka: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Isla app-ka; Premium waxay ku daraa WhatsApp iyo raadinta lammaane.",
@@ -201,7 +201,7 @@ export const so: Translations = {
     previewProfile: "Dhammaystir su'aalaha profile-kaaga",
     previewMatches: "Hel isbarbardhigyo iswaafajin leh oo dhibco leh",
     previewChat: "U dir lammaanayaashaada fariimo ammaan ah",
-    howWorks: "Sida HEL CALAFKAAGA U Shaqeyso",
+    howWorks: "Sida WEB U Shaqeyso",
     step1Title: "Is Diiwaangeli & Dhammaystir Profile-ka",
     step1Desc: "Abuur akoonkaaga oo dhammaystir profile-kaaga guurka oo leh sawir iyo doorbidyo.",
     step2Title: "Dooro Qorshahaaga",
@@ -225,9 +225,9 @@ export const so: Translations = {
     story2Location: "London, UK",
     story3Location: "Minneapolis, USA",
     story1Quote:
-      "Alhamdulillah, waxaan ku helay lammaanaha noloshayda HEL CALAFKAAGA. Su'aaluhu waxay naga caawiyeen inaan iswaafajinno diinta iyo qiyamka qoyska.",
+      "Alhamdulillah, waxaan ku helay lammaanaha noloshayda WEB. Su'aaluhu waxay naga caawiyeen inaan iswaafajinno diinta iyo qiyamka qoyska.",
     story2Quote:
-      "HEL CALAFKAAGA waxay naga caawisay inaan helno qof ku habboon diinta iyo dhaqankeena. Hawshu waxay dareemaysay ixtiraam leh bilow ilaa dhammaad.",
+      "WEB waxay naga caawisay inaan helno qof ku habboon diinta iyo dhaqankeena. Hawshu waxay dareemaysay ixtiraam leh bilow ilaa dhammaad.",
     story3Quote:
       "Adeeg xirfad leh oo sharaf leh. Waxaan ku talin lahaa qof kasta oo dhab ah oo doonaya guur.",
     faqTitle: "Su'aalaha Caadiga ah",
@@ -277,12 +277,12 @@ export const so: Translations = {
     feature2: "Profile-yo Muslim ah oo la xaqiijiyay",
     feature3: "Isbarbardhig ku salaysan iswaafajin",
     testimonialQuote:
-      "Waxaan ku kulanay Hel Calafkaaga waxaanan is guursanay isla sanadkaas, alxamdulillah. Habka wuxuu ahaa mid ixtiraam iyo dhab ah maalintii ugu horreysay.",
+      "Waxaan ku kulanay Web waxaanan is guursanay isla sanadkaas, alxamdulillah. Habka wuxuu ahaa mid ixtiraam iyo dhab ah maalintii ugu horreysay.",
     testimonialAuthor: "Aisha & Yusuf — lammaane is guursaday",
     joinNowPrice: "Is Diiwaangeli Hadda – ${{price}}",
     registerTitle: "Iska diiwaangeli {{name}}",
     registerHeading: "Abuur akoonkaaga",
-    registerEyebrow: "Ku biir Hel Calafkaaga",
+    registerEyebrow: "Ku biir Web",
     registerStep1Desc: "Geli emailkaaga iyo furaha ammaan ah si aad u bilowdo",
     stepAccount: "Akoon",
     stepProfile: "Profile",
@@ -424,7 +424,7 @@ export const so: Translations = {
   aboutPage: {
     title: "Ku saabsan {{name}}",
     subtitle: "Dhisidda xiriir macno leh bulshada Muslimka ah.",
-    p1: "Hel Calafkaaga waxaa la aasaasay ujeeddo fudud: in Muslimiinta lagu caawiyo helitaanka lammaanaha nolosha ee xalaal ah jawi casri ah, ixtiraam leh, oo ammaan ah. Waxaan fahamsanahay in guurku yahay mid ka mid ah go'aamada ugu muhiimsan nolosha, waxaana ka go'an inaan safarkaas ka dhigno mid fudud oo macno leh.",
+    p1: "Web waxaa la aasaasay ujeeddo fudud: in Muslimiinta lagu caawiyo helitaanka lammaanaha nolosha ee xalaal ah jawi casri ah, ixtiraam leh, oo ammaan ah. Waxaan fahamsanahay in guurku yahay mid ka mid ah go'aamada ugu muhiimsan nolosha, waxaana ka go'an inaan safarkaas ka dhigno mid fudud oo macno leh.",
     p2: "Platform-kayagu wuxuu isku daraa tiknoolajiyad taxaddar leh iyo qiyamka Islaamka. Muuqaal kasta — laga bilaabo algorithm-kayaga iswaafajinta ilaa kontaroolada qarsoodiga — waxaa loogu talagalay bulshada Muslimka ah. Waxaan aaminsanahay in helitaanka lammaane ay tahay inay ahaato mid sharaf leh, ujeeddo leh, oo diintu hagto.",
     valuesTitle: "Qiyamkayaga",
     valueHalalTitle: "Xalaal:",
@@ -460,15 +460,15 @@ export const so: Translations = {
   deleteAccountPage: {
     title: "Tirtir akoonkaaga",
     subtitle:
-      "Sida loo tirtiro si joogto ah akoonkaaga Hel Calafkaaga website-ka ama app-ka.",
+      "Sida loo tirtiro si joogto ah akoonkaaga Web website-ka ama app-ka.",
     intro:
-      "Waad tirtiri kartaa akoonkaaga Hel Calafkaaga wakhti kasta. Tirtiriddu waxay ka saartaa profile-kaaga iyo xogta akoonka nidaamyada firfircoon. Qaar ka mid ah diiwaannada waa la hayn karaa marka sharcigu u baahan yahay (tusaale lacag-bixinta ama baaritaanka amniga).",
+      "Waad tirtiri kartaa akoonkaaga Web wakhti kasta. Tirtiriddu waxay ka saartaa profile-kaaga iyo xogta akoonka nidaamyada firfircoon. Qaar ka mid ah diiwaannada waa la hayn karaa marka sharcigu u baahan yahay (tusaale lacag-bixinta ama baaritaanka amniga).",
     webTitle: "Ka tirtir website-ka",
     webSteps:
-      "1. Gal helcalafkaaga.com\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
+      "1. Gal web.example.com\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
     appTitle: "Ka tirtir app-ka Android / iOS",
     appSteps:
-      "1. Fur app-ka Hel Calafkaaga\n2. Tag Settings\n3. Taabo Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
+      "1. Fur app-ka Web\n2. Tag Settings\n3. Taabo Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
     whatDeletedTitle: "Waxa la tirtirayo",
     whatDeletedBody:
       "Profile-kaaga, sawirrada ku xiran akoonkaaga, likes, matches, sessions, iyo fariimaha in-app ee la xiriira akoonkaaga waa la tirtiraa ama waa laga xiraa marka akoonka la tirtirayo.",
@@ -532,7 +532,7 @@ export const so: Translations = {
   },
   downloadPage: {
     title: "Rakib App-ka Android",
-    subtitle: "Ka hel Hel Calafkaaga Google Play telefoonkaaga Android.",
+    subtitle: "Ka hel Web Google Play telefoonkaaga Android.",
     intro:
       "Habka ugu fudud waa Google Play. Taabo badhanka hoose si aad u furtid liiska Play Store telefoonkaaga.",
     openPlayStore: "Fur Google Play",
@@ -541,13 +541,13 @@ export const so: Translations = {
     stepsTitle: "Telefoonkaaga:",
     step1: "Fur boggan Chrome ama app-ka Play Store",
     step2: "Taabo Fur Google Play",
-    step3: "Taabo Install liiska Hel Calafkaaga",
+    step3: "Taabo Install liiska Web",
     step4: "Fur app-ka oo gal ama samee akoon",
     packageLabel: "Xirmada",
   },
   payment: {
     completeRegistration: "Dhammaystir Diiwaangelintaada",
-    welcome: "Ku soo dhawoow Hel Calafkaaga!",
+    welcome: "Ku soo dhawoow Web!",
     welcomeDesc:
       "Akoonkaaga waa la abuuray. Marka hore dhammaystir su'aalaha profile-kaaga, ka dibna dooro qorshe si aad u bilowdo isbarbardhigga.",
     choosePlan:
@@ -610,7 +610,7 @@ export const so: Translations = {
     paymentCanceled: "Lacag bixintii waa la joojiyay. Dhammaystir lacag bixinta si aad u furto isbarbardhigga.",
     trialEndedTitle: "Lacag bixin ayaa loo baahan yahay",
     trialEndedDesc:
-      "Bixi ${{basic}} marka hore, kadib ${{monthly}}/bishii (ama Premium ${{premium}}) si aad u furto isbarbardhigga iyo sheekaysiga Hel Calafkaaga.",
+      "Bixi ${{basic}} marka hore, kadib ${{monthly}}/bishii (ama Premium ${{premium}}) si aad u furto isbarbardhigga iyo sheekaysiga Web.",
     profileNotFound: "Profile lama helin.",
     confirmingDesc: "Fadlan sug inta aan lacagtaada Stripe ku xaqiijinayno.",
     success: "Lacag bixintu waa guulaysatay",
@@ -702,17 +702,17 @@ export const so: Translations = {
   },
   faq: {
     title: "Su'aalaha Inta Badan La Isweydiiyo",
-    subtitle: "Wax kasta oo aad u baahan tahay inaad ka ogaato Hel Calafkaaga.",
-    q1: "Hel Calafkaaga ma xalaal baa?",
-    a1: "Haa. Hel Calafkaaga waxaa loogu talagalay Muslimiinta doonaya guur si ixtiraam leh oo xalaal ah. Waxaan mudnaanta siinaa qarsoodiga, qiyamka qoyska, iyo mabaadi'da Islaamka.",
+    subtitle: "Wax kasta oo aad u baahan tahay inaad ka ogaato Web.",
+    q1: "Web ma xalaal baa?",
+    a1: "Haa. Web waxaa loogu talagalay Muslimiinta doonaya guur si ixtiraam leh oo xalaal ah. Waxaan mudnaanta siinaa qarsoodiga, qiyamka qoyska, iyo mabaadi'da Islaamka.",
     q2: "Isbarbardhiggu sidee u shaqeeyaa?",
     a2: "Algorithm-kayagu wuxuu falanqeeyaa diinta, da'da, goobta, waxbarashada, qaab nololeedka, iyo astaamaha shakhsiyadda si uu kuu helo isbarbardhigyada ugu fiican.",
-    q3: "Hel Calafkaaga intee bay ku kacaysaa?",
+    q3: "Web intee bay ku kacaysaa?",
     a3: "Xubnaha cusub waxay bixiyaan $4.99 marka hore, kadib $1 bishiiba Basic. Premium waa $20 ragga cusub ama $15 haweenka / kor u qaadis (WhatsApp iyo raadinta lammaane).",
     q4: "Xogtayda sidee loo ilaaliyaa?",
     a4: "Waxaan isticmaalnaa sir-qarin heer caalami ah oo aanan waligaa la wadaagin xogtaada shakhsi ahaaneed dhinacyada saddexaad. Qarsoodigaaga waa mudnaantayada.",
     q5: "Ma tirtiri karaa akoonkayga?",
-    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama raac https://www.helcalafkaaga.com/delete-account. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
+    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama raac https://web.example.com/delete-account. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
     q6: "Taageerada shakhsi ahaan waa maxay?",
     a6: "Premium waxay ku jirtaa wax kasta oo Basic ah, oo lagu daray taageero WhatsApp iyo raadinta lammaane. Diiwaangelin Premium cusub $20; kor u qaadis Basic $15.",
     stillHaveQuestions: "Weli su'aalo ma haysataa?",
@@ -751,7 +751,7 @@ export const so: Translations = {
   },
   howItWorks: {
     title: "Sida Uu U Shaqeeyo",
-    subtitle: "Safarkaaga helitaanka lammaanaha noloshaada Hel Calafkaaga.",
+    subtitle: "Safarkaaga helitaanka lammaanaha noloshaada Web.",
     step1: "Is Diiwaangeli & Dhammaystir Profile-ka",
     step1Desc:
       "Abuur akoonkaaga, buuxi faahfaahintaada, oo dhammaystir su'aalaha guurka oo leh sawir iyo doorbidyo.",

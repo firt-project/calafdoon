@@ -188,8 +188,8 @@ export class AuthService {
 
     const verifyUrl = `${this.appOrigin()}/verify-email?token=${encodeURIComponent(raw)}`;
     const safeVerifyUrl = escapeHtml(verifyUrl);
-    const text = `Confirm your Hel Calafkaaga email address within 24 hours:\n\n${verifyUrl}\n\nIf you did not create an account, ignore this email.`;
-    const html = `<p>Confirm your Hel Calafkaaga email address within 24 hours:</p>
+    const text = `Confirm your Web email address within 24 hours:\n\n${verifyUrl}\n\nIf you did not create an account, ignore this email.`;
+    const html = `<p>Confirm your Web email address within 24 hours:</p>
 <p><a href="${safeVerifyUrl}">Verify your email</a></p>
 <p style="word-break:break-all;color:#666;font-size:12px">${safeVerifyUrl}</p>
 <p>If you did not create an account, ignore this email.</p>`;
@@ -197,7 +197,7 @@ export class AuthService {
     try {
       await this.mail.send({
         to: emailNormalized,
-        subject: "Verify your Hel Calafkaaga email",
+        subject: "Verify your Web email",
         text,
         html,
       });
@@ -814,8 +814,8 @@ export class AuthService {
     const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(raw)}`;
     const safeResetUrl = escapeHtml(resetUrl);
     const to = fullUser.email ?? emailNormalized;
-    const text = `Use this link within 15 minutes to reset your Hel Calafkaaga password:\n\n${resetUrl}\n\nIf you did not request this, ignore this email.`;
-    const html = `<p>Use this link within 15 minutes to reset your Hel Calafkaaga password:</p>
+    const text = `Use this link within 15 minutes to reset your Web password:\n\n${resetUrl}\n\nIf you did not request this, ignore this email.`;
+    const html = `<p>Use this link within 15 minutes to reset your Web password:</p>
 <p><a href="${safeResetUrl}">Reset your password</a></p>
 <p style="word-break:break-all;color:#666;font-size:12px">${safeResetUrl}</p>
 <p>If you did not request this, ignore this email.</p>`;
@@ -823,7 +823,7 @@ export class AuthService {
     try {
       await this.mail.send({
         to,
-        subject: "Reset your Hel Calafkaaga password",
+        subject: "Reset your Web password",
         text,
         html,
       });

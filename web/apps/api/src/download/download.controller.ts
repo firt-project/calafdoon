@@ -4,8 +4,8 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Public } from "../auth/auth.guards";
 
-const APK_NAME = "hel-calafkaaga.apk";
-const WEBSITE_INSTALL_URL = "https://www.helcalafkaaga.com/download";
+const APK_NAME = "web.apk";
+const WEBSITE_INSTALL_URL = "https://web.example.com/download";
 
 function resolveDownloadDir(): string {
   const candidates = [
@@ -42,7 +42,7 @@ export class DownloadController {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store" />
-  <title>Install Hel Calafkaaga</title>
+  <title>Install Web</title>
   <style>
     :root { color-scheme: light; --brand:#a61b2b; --ink:#1a1214; --paper:#faf7f6; }
     * { box-sizing: border-box; }
@@ -71,7 +71,7 @@ export class DownloadController {
 </head>
 <body>
   <main>
-    <h1>Install Hel Calafkaaga</h1>
+    <h1>Install Web</h1>
     <p>Download the Android app, then open the file to install.</p>
     <a class="btn" href="/download/${APK_NAME}" ${ready ? "" : 'aria-disabled="true"'}>
       ${ready ? `Download APK${sizeMb ? ` (${sizeMb} MB)` : ""}` : "APK unavailable"}
@@ -83,7 +83,7 @@ export class DownloadController {
       <li>Allow install from this browser if asked</li>
       <li>Open the downloaded file and install</li>
     </ol>
-    <p class="meta">Also available at <a class="alt" href="${WEBSITE_INSTALL_URL}">helcalafkaaga.com/download</a></p>
+    <p class="meta">Also available at <a class="alt" href="${WEBSITE_INSTALL_URL}">web.example.com/download</a></p>
   </main>
 </body>
 </html>`);

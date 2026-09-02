@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Purge @hel.local / synthetic test users from the Render Postgres used in production.
-# Reads DATABASE_URL from TEL-CALAFKAAGA-1.env (repo root) — never pass passwords on the CLI.
+# Reads DATABASE_URL from WEB-API.env (repo root) — never pass passwords on the CLI.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-ENV_FILE="${ENV_FILE:-$ROOT/TEL-CALAFKAAGA-1.env}"
+ENV_FILE="${ENV_FILE:-$ROOT/WEB-API.env}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Missing $ENV_FILE — set ENV_FILE or create TEL-CALAFKAAGA-1.env with DATABASE_URL." >&2
+  echo "Missing $ENV_FILE — set ENV_FILE or create WEB-API.env with DATABASE_URL." >&2
   exit 1
 fi
 

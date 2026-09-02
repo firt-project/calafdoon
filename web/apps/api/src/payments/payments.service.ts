@@ -119,8 +119,8 @@ export class PaymentsService implements OnModuleInit {
             subscription: {
               monthlyCents: checkout.monthlyAmountCents!,
               setupCents: checkout.setupAmountCents!,
-              monthlyProductName: "Hel Calafkaaga Monthly Membership",
-              setupProductName: "Hel Calafkaaga First Payment",
+              monthlyProductName: "Web Monthly Membership",
+              setupProductName: "Web First Payment",
             },
           }
         : {}),
@@ -158,7 +158,7 @@ export class PaymentsService implements OnModuleInit {
     const amount = PREMIUM_UPGRADE_AMOUNT_CENTS;
     const session = await this.stripe.createCheckoutSession({
       amountCents: amount,
-      productName: "Hel Calafkaaga Premium",
+      productName: "Web Premium",
       productDescription:
         "WhatsApp personal support and help finding your match — same app features as Basic",
       successUrl: `${this.appUrl()}/payment/success?session_id={CHECKOUT_SESSION_ID}`,

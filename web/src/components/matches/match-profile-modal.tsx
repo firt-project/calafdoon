@@ -165,7 +165,7 @@ function MatchProfileModalBody({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <p className="font-display text-lg font-semibold text-primary tracking-tight">
-            Hel Calafkaaga
+            Web
           </p>
           <ReportBlockMenu
             userId={match.userId}

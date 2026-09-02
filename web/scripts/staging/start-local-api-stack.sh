@@ -16,7 +16,7 @@ API_PORT="${API_PORT:-4001}"
 NEXT_PORT="${NEXT_PORT:-3020}"
 COMPOSE=(docker compose -f infra/docker-compose.yml)
 
-echo "==> Hel Calafkaaga local API stack"
+echo "==> Web local API stack"
 echo "    API_PORT=$API_PORT NEXT_PORT=$NEXT_PORT"
 
 if docker info >/dev/null 2>&1; then

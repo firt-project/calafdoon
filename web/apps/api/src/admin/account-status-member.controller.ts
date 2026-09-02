@@ -71,7 +71,7 @@ export class AccountStatusMemberController {
       profile.updatedAt.toISOString();
 
     let nextStep =
-      "Continue using Hel Calafkaaga. Contact support if you need help.";
+      "Continue using Web. Contact support if you need help.";
     if (profile.banned) {
       nextStep =
         "Your account is banned. You may submit an appeal if you believe this was a mistake.";

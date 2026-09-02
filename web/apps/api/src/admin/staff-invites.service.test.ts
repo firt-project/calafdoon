@@ -169,7 +169,7 @@ function makeService() {
     },
   };
 
-  const config = { get: () => "https://www.helcalafkaaga.com" };
+  const config = { get: () => "https://web.example.com" };
 
   function service(adapter: MailAdapter = mail) {
     return new StaffInvitesService(
@@ -221,7 +221,7 @@ describe("StaffInvitesService M1 token exposure", () => {
     const ctx = makeService();
     await ctx.service().create("owner-1", "mail.check@example.com");
     const msg = ctx.mailSent[0]!;
-    assert.match(msg.text, /https:\/\/www\.helcalafkaaga\.com\/admin\/invite\?token=/);
+    assert.match(msg.text, /https:\/\/web\.example\.com\/admin\/invite\?token=/);
     assert.ok(extractTokenFromMail(msg).length >= 40);
   });
 

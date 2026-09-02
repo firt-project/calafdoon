@@ -58,10 +58,10 @@ jobs:
         run: npm run prisma:validate
 
       - name: API TypeScript (tsc --noEmit)
-        run: npm run lint -w @hel/api
+        run: npm run lint -w @web/api
 
       - name: API build
-        run: npm run build -w @hel/api
+        run: npm run build -w @web/api
 
       - name: Frontend ESLint
         id: eslint
@@ -111,7 +111,7 @@ jobs:
         # (no Postgres in CI). Do not silently skip — surface the log; soft-fail
         # until those mocks are fixed. New regressions still appear in the log.
         continue-on-error: true
-        run: npm test -w @hel/api
+        run: npm test -w @web/api
 
       - name: Note API test baseline
         if: steps.api_tests.outcome == 'failure'

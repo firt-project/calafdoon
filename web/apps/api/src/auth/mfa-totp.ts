@@ -1,7 +1,7 @@
 import { Secret, TOTP } from "otpauth";
 import { randomBytes } from "node:crypto";
 
-export const MFA_ISSUER = "Hel Calafkaaga";
+export const MFA_ISSUER = "Web";
 export const MFA_PERIOD_SEC = 30;
 export const MFA_DIGITS = 6;
 /** Accept previous/current/next step (±1) for clock skew. */

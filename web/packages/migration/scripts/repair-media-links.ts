@@ -2,7 +2,7 @@
  * Repair migrated media links after bucket layout changes.
  *
  * Usage:
- *   set -a && source ../../TEL-CALAFKAAGA-1.env && set +a
+ *   set -a && source ../../WEB-API.env && set +a
  *   DATABASE_URL='postgresql://...@dpg-....render.com/hel_calafkaaga?sslmode=require' \
  *     npx tsx scripts/repair-media-links.ts
  */
@@ -31,7 +31,7 @@ async function main() {
       WHEN purpose = 'support_attachment' THEN '${process.env.S3_BUCKET_SUPPORT ?? "hel-support"}'
       ELSE bucket
     END
-    WHERE bucket IS NULL OR bucket = 'helcalafkaaga'
+    WHERE bucket IS NULL OR bucket = 'web'
   `);
 
   const profiles = await prisma.profile.findMany({

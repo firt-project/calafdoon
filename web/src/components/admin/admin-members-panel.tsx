@@ -330,7 +330,7 @@ export function AdminMembersPanel({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "hel-calafkaaga-tester-emails.csv";
+      a.download = "web-tester-emails.csv";
       a.click();
       URL.revokeObjectURL(url);
       const extras = [
@@ -1019,7 +1019,7 @@ export function AdminMembersPanel({
                       <Button size="sm" variant="outline" className="h-9 rounded-lg" asChild>
                         <a
                           href={`${WHATSAPP_URL}?text=${encodeURIComponent(
-                            `Hi, I'm contacting you about Hel Calafkaaga — ${user.name}.`
+                            `Hi, I'm contacting you about Web — ${user.name}.`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
