@@ -7,11 +7,14 @@ import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import { PaymentMailService } from "../mail/payment-mail.service";
 import { isPremiumPayment, nextMembershipPaidUntil } from "./pricing";
 
-export type GrantSource = "stripe" | "evc" | "waafi";
+export type GrantSource = "stripe" | "evc" | "waafi" | "paystack";
 
-/** Waafi / EVC use a 30-day paidUntil lock; Stripe subscriptions leave it null. */
+/**
+ * Waafi / Paystack / EVC use a 30-day paidUntil lock; Stripe subscriptions
+ * leave it null (Stripe manages recurring access itself).
+ */
 function isPeriodLockedSource(source: GrantSource): boolean {
-  return source === "waafi" || source === "evc";
+  return source === "waafi" || source === "evc" || source === "paystack";
 }
 
 /**
@@ -233,13 +236,21 @@ export class GrantPaidAccessService {
       await this.supersedeOtherPendingPayments(tx, payment.userId, payment.id);
 
       // Instant gateways never need a screenshot. Clear any pending EVC proofs.
-      if (args.source === "stripe" || args.source === "waafi") {
+      if (
+        args.source === "stripe" ||
+        args.source === "waafi" ||
+        args.source === "paystack"
+      ) {
+        const proofClearedReason =
+          args.source === "waafi"
+            ? "Paid via WaafiPay — payment proof not required."
+            : args.source === "paystack"
+              ? "Paid via Paystack — payment proof not required."
+              : "Paid via Stripe — payment proof not required.";
         await this.supersedePendingEvcProofs(
           tx,
           payment.userId,
-          args.source === "waafi"
-            ? "Paid via WaafiPay — payment proof not required."
-            : "Paid via Stripe — payment proof not required."
+          proofClearedReason
         );
       }
 
@@ -253,11 +264,13 @@ export class GrantPaidAccessService {
           payment.paymentType === null ||
           payment.paymentType === undefined);
 
-      // Stripe / WaafiPay are verified by the gateway — no admin payment proof wait.
+      // Stripe / WaafiPay / Paystack are verified by the gateway — no admin
+      // payment proof wait.
       const forceProfileApproval =
         args.forceProfileApproval === true ||
         args.source === "stripe" ||
-        args.source === "waafi";
+        args.source === "waafi" ||
+        args.source === "paystack";
 
       const grant = await this.grantProfileAccess(tx, {
         userId: payment.userId,

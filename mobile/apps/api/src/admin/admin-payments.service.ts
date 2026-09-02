@@ -223,34 +223,26 @@ export class AdminPaymentsService {
       ? { paymentCreatedAt: dateRange }
       : {};
 
-    const gateways: PaymentGateway[] = ["stripe", "waafi", "manual"];
+    const gateways: PaymentGateway[] = [
+      "stripe",
+      "waafi",
+      "paystack",
+      "manual",
+    ];
+    const emptyGatewayBucket = () => ({
+      completedCount: 0,
+      completedRevenueCents: 0,
+      pendingCount: 0,
+      failedCount: 0,
+    });
     const byGateway: Record<
       PaymentGateway,
-      {
-        completedCount: number;
-        completedRevenueCents: number;
-        pendingCount: number;
-        failedCount: number;
-      }
+      ReturnType<typeof emptyGatewayBucket>
     > = {
-      stripe: {
-        completedCount: 0,
-        completedRevenueCents: 0,
-        pendingCount: 0,
-        failedCount: 0,
-      },
-      waafi: {
-        completedCount: 0,
-        completedRevenueCents: 0,
-        pendingCount: 0,
-        failedCount: 0,
-      },
-      manual: {
-        completedCount: 0,
-        completedRevenueCents: 0,
-        pendingCount: 0,
-        failedCount: 0,
-      },
+      stripe: emptyGatewayBucket(),
+      waafi: emptyGatewayBucket(),
+      paystack: emptyGatewayBucket(),
+      manual: emptyGatewayBucket(),
     };
 
     for (const gateway of gateways) {
@@ -494,18 +486,26 @@ export class AdminPaymentsService {
 
     const bucketMap = new Map<
       string,
-      { stripe: number; waafi: number; manual: number; total: number }
+      {
+        stripe: number;
+        waafi: number;
+        paystack: number;
+        manual: number;
+        total: number;
+      }
     >();
+    const emptyDayRow = () => ({
+      stripe: 0,
+      waafi: 0,
+      paystack: 0,
+      manual: 0,
+      total: 0,
+    });
 
     for (const p of payments) {
       const day = utcDayKey(p.paymentCreatedAt);
       const gateway = inferPaymentGateway(p);
-      const row = bucketMap.get(day) ?? {
-        stripe: 0,
-        waafi: 0,
-        manual: 0,
-        total: 0,
-      };
+      const row = bucketMap.get(day) ?? emptyDayRow();
       row[gateway] += p.amount;
       row.total += p.amount;
       bucketMap.set(day, row);
@@ -515,6 +515,7 @@ export class AdminPaymentsService {
       date: string;
       stripeCents: number;
       waafiCents: number;
+      paystackCents: number;
       manualCents: number;
       totalCents: number;
     }> = [];
@@ -526,16 +527,12 @@ export class AdminPaymentsService {
 
     while (cursor.getTime() <= endDay.getTime()) {
       const key = utcDayKey(cursor);
-      const row = bucketMap.get(key) ?? {
-        stripe: 0,
-        waafi: 0,
-        manual: 0,
-        total: 0,
-      };
+      const row = bucketMap.get(key) ?? emptyDayRow();
       series.push({
         date: key,
         stripeCents: row.stripe,
         waafiCents: row.waafi,
+        paystackCents: row.paystack,
         manualCents: row.manual,
         totalCents: row.total,
       });

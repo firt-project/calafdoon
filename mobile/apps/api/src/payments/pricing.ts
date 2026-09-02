@@ -86,8 +86,39 @@ export function isPremiumPayment(opts: {
 export const CHECKOUT_MODE = "payment" as const;
 export const REGISTRATION_CHECKOUT_MODE = "subscription" as const;
 
-/** Recurring membership period for Waafi / EVC (re-pay $4.99 after expiry). */
+/** Recurring membership period for Waafi / Paystack / EVC. */
 export const MEMBERSHIP_PERIOD_DAYS = 30;
+
+/**
+ * Period gateways (Waafi / Paystack) mirror the Stripe pricing curve:
+ * $4.99 the first time, then $1.00 for every 30-day renewal after that.
+ * Only Basic renews at the reduced price — Premium / personal-support tiers
+ * stay full price each time.
+ */
+export const MEMBERSHIP_RENEWAL_AMOUNT_CENTS = MONTHLY_AMOUNT_CENTS;
+
+/** A member is renewing when they have already completed a paid registration. */
+export function isMembershipRenewal(
+  profile: { hasPaid?: boolean | null } | null | undefined
+): boolean {
+  return profile?.hasPaid === true;
+}
+
+/**
+ * Charge for a Waafi / Paystack registration purchase.
+ * Basic: $4.99 first time, $1.00 on renewal. Premium: full tier price always.
+ */
+export function periodicRegistrationChargeCents(opts: {
+  tier: RegistrationTier;
+  gender?: string | null;
+  isRenewal: boolean;
+}): number {
+  const details = getRegistrationCheckoutDetails(opts.tier, opts.gender);
+  if (opts.tier === "premium") return details.amount;
+  return opts.isRenewal
+    ? MEMBERSHIP_RENEWAL_AMOUNT_CENTS
+    : REGISTRATION_AMOUNT_CENTS;
+}
 
 export function membershipPaidUntilFrom(now = new Date()): Date {
   const d = new Date(now);

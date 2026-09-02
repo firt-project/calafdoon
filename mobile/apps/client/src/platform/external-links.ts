@@ -5,6 +5,8 @@ const ALLOWED_HOST_SUFFIXES = [
   "stripe.com",
   "checkout.stripe.com",
   "billing.stripe.com",
+  "paystack.com",
+  "checkout.paystack.com",
   "helcalafkaaga.com",
   "www.helcalafkaaga.com",
 ];

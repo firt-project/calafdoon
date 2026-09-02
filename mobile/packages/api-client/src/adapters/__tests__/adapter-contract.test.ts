@@ -8,7 +8,12 @@ import { PHOTOS_METHOD_NAMES } from "../photos/types";
 import { MATCHING_METHOD_NAMES } from "../matching/types";
 import { CHAT_METHOD_NAMES } from "../chat/types";
 import { NOTIFICATIONS_METHOD_NAMES } from "../notifications/types";
-import { PAYMENTS_METHOD_NAMES, EVC_METHOD_NAMES, WAAFI_METHOD_NAMES } from "../payments/types";
+import {
+  PAYMENTS_METHOD_NAMES,
+  EVC_METHOD_NAMES,
+  WAAFI_METHOD_NAMES,
+  PAYSTACK_METHOD_NAMES,
+} from "../payments/types";
 import { SUPPORT_METHOD_NAMES } from "../support/types";
 import { MODERATION_METHOD_NAMES } from "../moderation/types";
 import { apiAuth } from "../auth/api";
@@ -79,6 +84,9 @@ describe("adapter contract", () => {
     }
     for (const name of WAAFI_METHOD_NAMES) {
       assert.equal(typeof apiPayments.waafi[name], "function");
+    }
+    for (const name of PAYSTACK_METHOD_NAMES) {
+      assert.equal(typeof apiPayments.paystack[name], "function");
     }
   });
   it("support exposes method names", () => {

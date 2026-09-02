@@ -9,7 +9,7 @@ import { AppModule } from "./app.module";
 import { RedisIoAdapter } from "./chat/redis-io.adapter";
 import { resolveCorsOrigins } from "./config/cors-origins";
 import {
-  isStripeWebhookPath,
+  isPaymentWebhookPath,
   stripeWebhookMaxBodyBytes,
 } from "./payments/stripe-webhook-limits";
 import { resolveRedisUrl } from "./redis/redis-url";
@@ -22,10 +22,10 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  // M5: reject oversized Stripe webhooks before JSON/raw-body parsing work.
+  // M5: reject oversized payment webhooks before JSON/raw-body parsing work.
   app.use((req: Request, res: Response, next: NextFunction) => {
     const path = req.path || req.url?.split("?")[0] || "";
-    if (req.method === "POST" && isStripeWebhookPath(path)) {
+    if (req.method === "POST" && isPaymentWebhookPath(path)) {
       const max = stripeWebhookMaxBodyBytes();
       const cl = req.headers["content-length"];
       if (cl !== undefined) {

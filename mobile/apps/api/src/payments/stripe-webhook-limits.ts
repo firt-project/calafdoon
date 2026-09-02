@@ -32,3 +32,8 @@ export function stripeWebhookGlobalRateLimit(): { windowSec: number; max: number
 export function isStripeWebhookPath(path: string): boolean {
   return path.endsWith("/webhooks/stripe");
 }
+
+/** Payment-provider webhook paths that share the M5 raw-body size guard. */
+export function isPaymentWebhookPath(path: string): boolean {
+  return isStripeWebhookPath(path) || path.endsWith("/webhooks/paystack");
+}

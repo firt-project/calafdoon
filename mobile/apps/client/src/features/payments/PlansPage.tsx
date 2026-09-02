@@ -7,6 +7,12 @@ import {
   WAAFI_ACCESS_DAYS,
 } from "@/lib/constants";
 import { useSession } from "@/features/auth/SessionProvider";
+import {
+  openPaystackCheckout,
+  rememberPendingPaystackReference,
+  subscribePaystackReturn,
+  verifyPendingPaystackReference,
+} from "@/platform/paystack-checkout";
 
 const WAAFI_COUNTRY_CODE = "252";
 
@@ -22,7 +28,8 @@ function toLocalMobileDigits(raw: string): string {
 }
 
 /**
- * Mobile plans / paywall — WaafiPay only (no Stripe card, no EVC proof upload).
+ * Mobile plans / paywall — WaafiPay (mobile wallet) and M-Pesa (via Paystack)
+ * only. No Stripe card, no EVC proof upload.
  */
 export function PlansPage() {
   const navigate = useNavigate();
@@ -30,9 +37,12 @@ export function PlansPage() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mpesaBusy, setMpesaBusy] = useState(false);
   const [waafiEnabled, setWaafiEnabled] = useState<boolean | null>(null);
+  const [paystackEnabled, setPaystackEnabled] = useState<boolean | null>(null);
   const [localMobile, setLocalMobile] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
+  const [mpesaStarted, setMpesaStarted] = useState(false);
 
   const priceLabel = formatMoney(REGISTRATION_PRICE);
 
@@ -57,6 +67,14 @@ export function PlansPage() {
       .catch(() => {
         if (!cancelled) setWaafiEnabled(false);
       });
+    void payments.paystack
+      .status()
+      .then((s) => {
+        if (!cancelled) setPaystackEnabled(Boolean(s?.enabled));
+      })
+      .catch(() => {
+        if (!cancelled) setPaystackEnabled(false);
+      });
     void profile
       .getProfile()
       .then((p) => {
@@ -77,6 +95,21 @@ export function PlansPage() {
       cancelled = true;
     };
   }, []);
+
+  // When the Paystack browser closes / deep-links back, verify and unlock.
+  useEffect(() => {
+    const unsubscribe = subscribePaystackReturn((result) => {
+      setMpesaBusy(false);
+      if (result.ok) {
+        setError(null);
+        setStatus("Payment successful. Unlocking your account…");
+        void refresh().then(() => navigate("/home", { replace: true }));
+      } else if (result.message) {
+        setError(result.message);
+      }
+    });
+    return unsubscribe;
+  }, [navigate, refresh]);
 
   async function payWithWaafi() {
     if (waafiEnabled === false) {
@@ -114,6 +147,50 @@ export function PlansPage() {
     }
   }
 
+  async function payWithMpesa() {
+    if (paystackEnabled === false) {
+      setError("M-Pesa is not available right now. Please try WaafiPay.");
+      return;
+    }
+    setMpesaBusy(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const result = await payments.paystack.startCheckout({ tier: "basic" });
+      if (!result?.authorizationUrl || !result?.reference) {
+        throw new Error("Could not start the M-Pesa payment.");
+      }
+      await rememberPendingPaystackReference(result.reference);
+      setMpesaStarted(true);
+      await openPaystackCheckout(result.authorizationUrl);
+      setMpesaBusy(false);
+      setStatus(
+        "Finish the M-Pesa payment in the browser, then come back to this screen."
+      );
+    } catch (e) {
+      setMpesaBusy(false);
+      setError(
+        e instanceof ApiClientError
+          ? e.message
+          : "Could not start the M-Pesa payment. Please try again."
+      );
+    }
+  }
+
+  async function checkMpesaPayment() {
+    setMpesaBusy(true);
+    setError(null);
+    const result = await verifyPendingPaystackReference();
+    setMpesaBusy(false);
+    if (result.ok) {
+      setStatus("Payment successful. Unlocking your account…");
+      await refresh();
+      navigate("/home", { replace: true });
+    } else if (result.message) {
+      setError(result.message);
+    }
+  }
+
   return (
     <div className="screen">
       <header className="screen-header">
@@ -132,7 +209,7 @@ export function PlansPage() {
               ? "Membership"
               : membershipExpired
                 ? "Renew membership"
-                : "Pay with WaafiPay"}
+                : "Pay to unlock"}
         </h1>
         <span />
       </header>
@@ -147,7 +224,7 @@ export function PlansPage() {
               <p className="muted small" style={{ margin: "0.35rem 0 0" }}>
                 {isPremium
                   ? "You have full access plus personal support. No further payment is needed."
-                  : `You can use Home and Discover. Membership renews every ${WAAFI_ACCESS_DAYS} days with WaafiPay ($${priceLabel}).`}
+                  : `You can use Home and Discover. Membership renews every ${WAAFI_ACCESS_DAYS} days.`}
               </p>
             </div>
             <button
@@ -167,15 +244,15 @@ export function PlansPage() {
               <div className="admin-pay-card" style={{ marginBottom: "0.75rem" }}>
                 <strong>Membership expired</strong>
                 <p className="muted small" style={{ margin: "0.35rem 0 0" }}>
-                  Your {WAAFI_ACCESS_DAYS}-day access ended. Pay ${priceLabel}{" "}
-                  with WaafiPay to unlock another {WAAFI_ACCESS_DAYS} days.
+                  Your {WAAFI_ACCESS_DAYS}-day access ended. Pay ${priceLabel} to
+                  unlock another {WAAFI_ACCESS_DAYS} days.
                 </p>
               </div>
             ) : (
               <p className="muted">
-                Pay ${priceLabel} with WaafiPay to unlock matches and messaging
-                for {WAAFI_ACCESS_DAYS} days. Use EVC Plus, WAAFI, ZAAD, SAHAL,
-                or M-Pesa — approve the PIN on your phone.
+                Pay ${priceLabel} to unlock matches and messaging for{" "}
+                {WAAFI_ACCESS_DAYS} days. Use WaafiPay (EVC Plus, WAAFI, ZAAD,
+                SAHAL) or M-Pesa.
               </p>
             )}
 
@@ -189,17 +266,17 @@ export function PlansPage() {
                 {status}
               </div>
             )}
-            {waafiEnabled === false && (
-              <div className="form-error" role="alert">
-                WaafiPay is temporarily unavailable. Please try again later.
-              </div>
-            )}
 
             <div
               className="admin-pay-card"
               style={{ display: "grid", gap: "0.75rem" }}
             >
               <strong>WaafiPay · mobile wallet</strong>
+              {waafiEnabled === false && (
+                <p className="form-error small" role="alert" style={{ margin: 0 }}>
+                  WaafiPay is temporarily unavailable.
+                </p>
+              )}
               <p className="muted small" style={{ margin: 0 }}>
                 Enter the wallet number that will receive the payment prompt.
               </p>
@@ -221,9 +298,7 @@ export function PlansPage() {
                 type="button"
                 className="btn btn-primary btn-block btn-lg"
                 disabled={
-                  busy ||
-                  waafiEnabled === false ||
-                  localMobile.length < 8
+                  busy || waafiEnabled === false || localMobile.length < 8
                 }
                 onClick={() => void payWithWaafi()}
               >
@@ -232,6 +307,37 @@ export function PlansPage() {
                   : `Pay $${priceLabel} with WaafiPay`}
               </button>
             </div>
+
+            {paystackEnabled !== false && (
+              <div
+                className="admin-pay-card"
+                style={{ display: "grid", gap: "0.75rem", marginTop: "0.75rem" }}
+              >
+                <strong>M-Pesa</strong>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Pay with M-Pesa on Paystack's secure page. You'll get an M-Pesa
+                  prompt on your phone, then come back here.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-block btn-lg"
+                  disabled={mpesaBusy || paystackEnabled === null}
+                  onClick={() => void payWithMpesa()}
+                >
+                  {mpesaBusy ? "Opening M-Pesa…" : `Pay $${priceLabel} with M-Pesa`}
+                </button>
+                {mpesaStarted && (
+                  <button
+                    type="button"
+                    className="btn btn-block"
+                    disabled={mpesaBusy}
+                    onClick={() => void checkMpesaPayment()}
+                  >
+                    I've paid — check payment
+                  </button>
+                )}
+              </div>
+            )}
 
             <p className="muted small center" style={{ marginTop: "1rem" }}>
               <Link to="/settings">Settings</Link>

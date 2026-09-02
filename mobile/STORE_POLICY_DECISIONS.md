@@ -8,8 +8,8 @@ The Nest backend gates Discover / matching / chat behind **server `hasPaidAccess
 
 | Surface | Payment today | Likely store implication | Status |
 |---------|---------------|--------------------------|--------|
-| Website (`web/`) | Stripe (+ optional EVC) | Web Stripe usually OK | Keep |
-| Mobile app | **WaafiPay only** (mobile wallet) | Apple often requires **StoreKit IAP** for digital unlocks; Play often requires Play Billing | **BLOCKER — Decision required** before production store listing |
+| Website (`web/`) | Stripe, WaafiPay, Paystack, EVC | Web Stripe usually OK | Keep |
+| Mobile app | **WaafiPay + M-Pesa** (M-Pesa via Paystack hosted checkout in an in-app browser) | Apple often requires **StoreKit IAP** for digital unlocks; Play often requires Play Billing. An external browser checkout for a digital unlock is *more* exposed than a native wallet prompt. | **BLOCKER — Decision required** before production store listing |
 
 ## Options
 

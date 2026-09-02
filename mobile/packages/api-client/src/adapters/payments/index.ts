@@ -2,7 +2,17 @@ import { apiPayments } from "./api";
 import type { PaymentsAdapter } from "./types";
 
 export type { PaymentsAdapter } from "./types";
-export { PAYMENTS_METHOD_NAMES, EVC_METHOD_NAMES, WAAFI_METHOD_NAMES } from "./types";
+export {
+  PAYMENTS_METHOD_NAMES,
+  EVC_METHOD_NAMES,
+  WAAFI_METHOD_NAMES,
+  PAYSTACK_METHOD_NAMES,
+} from "./types";
+export type {
+  PaystackStatus,
+  PaystackCheckoutResult,
+  PaystackVerifyResult,
+} from "./types";
 
 export function getPaymentsAdapter(): PaymentsAdapter {
   return apiPayments;

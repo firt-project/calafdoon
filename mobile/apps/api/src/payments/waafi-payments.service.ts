@@ -9,7 +9,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { GrantPaidAccessService } from "./grant-paid-access.service";
 import {
   getRegistrationCheckoutDetails,
-  REGISTRATION_AMOUNT_CENTS,
+  isMembershipRenewal,
+  periodicRegistrationChargeCents,
   type RegistrationTier,
 } from "./pricing";
 import {
@@ -119,8 +120,13 @@ export class WaafiPaymentsService {
 
     const tier: RegistrationTier = opts.tier === "premium" ? "premium" : "basic";
     const details = getRegistrationCheckoutDetails(tier, user.profile.gender);
-    const amountCents =
-      tier === "basic" ? REGISTRATION_AMOUNT_CENTS : details.amount;
+    const isRenewal = isMembershipRenewal(user.profile);
+    // Basic: $4.99 first time, $1.00 for each 30-day renewal (mirrors Stripe).
+    const amountCents = periodicRegistrationChargeCents({
+      tier,
+      gender: user.profile.gender,
+      isRenewal,
+    });
 
     const referenceId = `hel-${user.id.replace(/-/g, "").slice(0, 12)}-${Date.now()}`;
     const sessionKey = `waafi:${referenceId}`;
@@ -164,7 +170,9 @@ export class WaafiPaymentsService {
       invoiceId: referenceId,
       amount: amountCentsToWaafi(amountCents),
       currency: "USD",
-      description: details.productName,
+      description: isRenewal
+        ? `${details.productName} — monthly renewal`
+        : details.productName,
     });
 
     if (!result.ok) {
@@ -194,6 +202,7 @@ export class WaafiPaymentsService {
       transactionId: result.transactionId ?? null,
       amountCents,
       tier,
+      isRenewal,
     };
   }
 }
