@@ -8,7 +8,7 @@ import { Loader2, Lock, Phone, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { REGISTRATION_PRICE, formatMoney } from "@/lib/constants";
+import { MONTHLY_PRICE, REGISTRATION_PRICE, formatMoney } from "@/lib/constants";
 import { getSafeUserError } from "@/lib/safe-error";
 import { useTranslation } from "@/lib/i18n/context";
 import { useProfile } from "@/data/profile/hooks";
@@ -41,13 +41,20 @@ export function WaafiPaymentSection() {
   const { t } = useTranslation();
   const router = useRouter();
   const { profile: profileRaw, refresh: refreshProfile } = useProfile();
-  const profile = profileRaw as { phone?: string | null } | null | undefined;
+  const profile = profileRaw as
+    | { phone?: string | null; hasPaid?: boolean | null }
+    | null
+    | undefined;
   const profilePhone = (profile?.phone ?? "").trim();
   const purchase = useWaafiPurchase();
   const [localMobile, setLocalMobile] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [focused, setFocused] = useState(false);
-  const priceLabel = formatMoney(REGISTRATION_PRICE);
+  // Renewing members (already paid once) are charged $1/month, not $4.99.
+  const isRenewal = Boolean(profile?.hasPaid);
+  const price = isRenewal ? MONTHLY_PRICE : REGISTRATION_PRICE;
+  const priceLabel = formatMoney(price);
+  const monthlyLabel = formatMoney(MONTHLY_PRICE);
   const fullAccountNo = `${WAAFI_COUNTRY_CODE}${localMobile}`;
   const canPay =
     !submitting &&
@@ -102,7 +109,10 @@ export function WaafiPaymentSection() {
             {t("payment.waafiTitle")}
           </h2>
           <p className="max-w-md text-sm sm:text-[15px] leading-relaxed text-muted-foreground sm:mx-0 mx-auto">
-            {t("payment.waafiSubtitle", { price: priceLabel })}
+            {t("payment.waafiSubtitle", {
+              price: formatMoney(REGISTRATION_PRICE),
+              monthly: monthlyLabel,
+            })}
           </p>
         </header>
 
@@ -120,7 +130,10 @@ export function WaafiPaymentSection() {
               </span>
             </div>
             <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
-              {t("payment.waafiPeriodNote", { price: priceLabel })}
+              {t("payment.waafiPeriodNote", {
+              price: formatMoney(REGISTRATION_PRICE),
+              monthly: monthlyLabel,
+            })}
             </p>
           </div>
           <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">

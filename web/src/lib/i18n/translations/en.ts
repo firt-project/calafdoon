@@ -650,9 +650,9 @@ export const en = {
     waafiBadge: "WaafiPay",
     waafiTitle: "Pay with mobile wallet",
     waafiSubtitle:
-      "Pay ${{price}} for 30 days via PIN prompt — then renew with the same amount. No screenshot needed.",
+      "Pay ${{price}} for your first 30 days via PIN prompt, then just ${{monthly}} every month. No screenshot needed.",
     waafiPeriodNote:
-      "Mobile wallet access lasts 30 days. After that you pay ${{price}} again to unlock.",
+      "Mobile wallet access lasts 30 days. Your first payment is ${{price}}; every renewal after that is ${{monthly}}.",
     waafiWalletsTitle: "Supported wallets",
     waafiWalletEvc: "EVC Plus — Hormuud",
     waafiWalletWaafi: "WAAFI",

@@ -657,9 +657,9 @@ export const so: Translations = {
     waafiBadge: "WaafiPay",
     waafiTitle: "Ku bixi lacag mobile",
     waafiSubtitle:
-      "Bixi ${{price}} 30 maalmood PIN prompt — ka dib isla lacagta dib u bixi. Screenshot looma baahna.",
+      "Bixi ${{price}} 30-ka maalmood ee kowaad PIN prompt, ka dibna kaliya ${{monthly}} bil kasta. Screenshot looma baahna.",
     waafiPeriodNote:
-      "Helitaanka wallet-ka mobile waa 30 maalmood. Kadib waxaad bixisaa ${{price}} mar kale si aad u furto.",
+      "Helitaanka wallet-ka mobile waa 30 maalmood. Lacagta kowaad waa ${{price}}; cusbooneysiin kasta ka dib waa ${{monthly}}.",
     waafiWalletsTitle: "Wallets-ka la taageero",
     waafiWalletEvc: "EVC Plus — Hormuud",
     waafiWalletWaafi: "WAAFI",

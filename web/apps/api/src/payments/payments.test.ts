@@ -7,8 +7,11 @@ import {
   PREMIUM_UPGRADE_AMOUNT_CENTS,
   REGISTRATION_AMOUNT_CENTS,
   WOMEN_BASIC_AMOUNT_CENTS,
+  MEMBERSHIP_RENEWAL_AMOUNT_CENTS,
   getRegistrationCheckoutDetails,
+  isMembershipRenewal,
   isPremiumPayment,
+  periodicRegistrationChargeCents,
 } from "./pricing";
 import { FakeStripeGateway } from "./stripe.gateway";
 import { RateLimitGuard } from "../redis/rate-limit.guard";
@@ -50,6 +53,45 @@ describe("registration checkout pricing by gender/tier", () => {
 
   it("one-time checkout mode remains for premium upgrade", () => {
     assert.equal(CHECKOUT_MODE, "payment");
+  });
+});
+
+describe("Waafi / Paystack period pricing — $4.99 first, then $1/month", () => {
+  it("renewal is detected from a completed prior payment", () => {
+    assert.equal(isMembershipRenewal({ hasPaid: true }), true);
+    assert.equal(isMembershipRenewal({ hasPaid: false }), false);
+    assert.equal(isMembershipRenewal(null), false);
+    assert.equal(isMembershipRenewal(undefined), false);
+  });
+
+  it("basic charges $4.99 the first time", () => {
+    assert.equal(MEMBERSHIP_RENEWAL_AMOUNT_CENTS, 100);
+    for (const gender of ["male", "female"] as const) {
+      assert.equal(
+        periodicRegistrationChargeCents({ tier: "basic", gender, isRenewal: false }),
+        REGISTRATION_AMOUNT_CENTS
+      );
+    }
+  });
+
+  it("basic charges $1.00 on every renewal", () => {
+    for (const gender of ["male", "female"] as const) {
+      assert.equal(
+        periodicRegistrationChargeCents({ tier: "basic", gender, isRenewal: true }),
+        MEMBERSHIP_RENEWAL_AMOUNT_CENTS
+      );
+    }
+  });
+
+  it("premium tiers stay full price on renewal", () => {
+    assert.equal(
+      periodicRegistrationChargeCents({ tier: "premium", gender: "male", isRenewal: true }),
+      PERSONAL_SUPPORT_AMOUNT_CENTS
+    );
+    assert.equal(
+      periodicRegistrationChargeCents({ tier: "premium", gender: "female", isRenewal: true }),
+      PREMIUM_UPGRADE_AMOUNT_CENTS
+    );
   });
 });
 
