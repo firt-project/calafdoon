@@ -17,20 +17,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n/context";
 import { WHATSAPP_URL } from "@/lib/constants";
 import { clearPlanPreference } from "@/lib/plan-preference";
-import { useVerifyCheckoutSession } from "@/data/payments/hooks";
+import {
+  useVerifyCheckoutSession,
+  useVerifyPaystackReference,
+} from "@/data/payments/hooks";
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  // Paystack redirects back with ?paystack_reference= (also ?reference=/?trxref=).
+  const paystackReference =
+    searchParams.get("paystack_reference") ??
+    searchParams.get("reference") ??
+    searchParams.get("trxref");
   const verifyCheckout = useVerifyCheckoutSession();
+  const verifyPaystack = useVerifyPaystackReference();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [isPremium, setIsPremium] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!sessionId) {
+    if (!sessionId && !paystackReference) {
       setStatus("error");
       setError(t("payment.missingSession"));
       return;
@@ -40,9 +49,11 @@ export default function PaymentSuccessPage() {
 
     async function verify() {
       try {
-        const result = (await verifyCheckout({
-          sessionId: sessionId!,
-        })) as { isPremium?: boolean };
+        const result = (await (paystackReference
+          ? verifyPaystack({ reference: paystackReference })
+          : verifyCheckout({ sessionId: sessionId! }))) as {
+          isPremium?: boolean;
+        };
         if (!cancelled) {
           setIsPremium(Boolean(result?.isPremium));
           setStatus("success");
@@ -62,7 +73,7 @@ export default function PaymentSuccessPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, verifyCheckout, t]);
+  }, [sessionId, paystackReference, verifyCheckout, verifyPaystack, t]);
 
   return (
     <DashboardLayout>

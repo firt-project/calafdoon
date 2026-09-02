@@ -38,6 +38,25 @@ export const apiPayments: PaymentsAdapter = {
       return apiClient.post("/payments/waafi/purchase", body);
     },
   },
+  paystack: {
+    async status() {
+      return apiClient.get("/payments/paystack/status");
+    },
+    async startCheckout(body) {
+      try {
+        return await apiClient.post(
+          "/payments/paystack/registration-checkout",
+          body
+        );
+      } catch (e) {
+        track("checkout_failure");
+        throw e;
+      }
+    },
+    async verify(reference) {
+      return apiClient.post("/payments/paystack/verify", { reference });
+    },
+  },
   evc: {
     async myLatest() {
       return apiClient.get("/payments/evc/me/latest");

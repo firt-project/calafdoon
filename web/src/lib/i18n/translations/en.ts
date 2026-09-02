@@ -593,6 +593,7 @@ export const en = {
       "Card payments are verified by Stripe automatically. No screenshot or payment proof is required.",
     payWithCard: "Pay with card",
     payWithWaafi: "WaafiPay",
+    payWithPaystack: "Paystack",
     payWithMobileMoney: "EVC / M-PESA",
     stepAccount: "Account",
     stepDetails: "Details",
@@ -678,6 +679,18 @@ export const en = {
     waafiFailed: "WaafiPay payment failed. Check your number and try again.",
     waafiShowManual: "Prefer to send money manually? Upload a screenshot",
     waafiHideManual: "Hide manual payment form",
+    paystackBadge: "Paystack",
+    paystackTitle: "Pay with card or bank",
+    paystackSubtitle:
+      "Pay ${{price}} for your first 30 days on Paystack's secure checkout, then just ${{monthly}} every month.",
+    paystackPeriodNote:
+      "Access lasts 30 days. Your first payment is ${{price}}; every renewal after that is ${{monthly}}.",
+    paystackPay: "Pay ${{price}} with Paystack",
+    paystackRedirecting: "Opening Paystack checkout…",
+    paystackSecureNote: "Secure Paystack checkout.",
+    paystackCardsNote:
+      "Pay with a debit/credit card, bank transfer, or mobile money. No screenshot needed.",
+    paystackFailed: "Could not start the Paystack payment. Please try again.",
   },
   faq: {
     title: "Frequently Asked Questions",
@@ -1278,6 +1291,7 @@ export const en = {
     gatewayAll: "All gateways",
     gatewayStripe: "Stripe (card)",
     gatewayWaafi: "WaafiPay",
+    gatewayPaystack: "Paystack",
     gatewayManual: "Manual (EVC)",
     paymentsDateFrom: "From",
     paymentsDateTo: "To",
@@ -1308,6 +1322,7 @@ export const en = {
     paymentsNoMemberships: "No paid members yet.",
     membershipStripe: "Stripe $1/mo",
     membershipWaafi: "Waafi 30-day",
+    membershipPaystack: "Paystack 30-day",
     membershipEvc: "EVC 30-day",
     membershipLegacy: "Legacy paid",
     membershipActive: "Active",

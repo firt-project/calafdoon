@@ -31,7 +31,7 @@ type TranslateFn = (
   params?: Record<string, string | number>
 ) => string;
 
-type GatewayFilter = "all" | "stripe" | "waafi" | "manual";
+type GatewayFilter = "all" | "stripe" | "waafi" | "paystack" | "manual";
 type PanelView =
   | "overview"
   | "transactions"
@@ -44,6 +44,7 @@ type RevenueDay = {
   date: string;
   stripeCents: number;
   waafiCents: number;
+  paystackCents: number;
   manualCents: number;
   totalCents: number;
 };
@@ -130,6 +131,7 @@ function formatCents(cents: number): string {
 function gatewayLabel(gateway: string, t: TranslateFn): string {
   if (gateway === "stripe") return t("adminPage.gatewayStripe");
   if (gateway === "waafi") return t("adminPage.gatewayWaafi");
+  if (gateway === "paystack") return t("adminPage.gatewayPaystack");
   if (gateway === "manual") return t("adminPage.gatewayManual");
   return gateway;
 }
@@ -137,6 +139,7 @@ function gatewayLabel(gateway: string, t: TranslateFn): string {
 function membershipLabel(type: string, t: TranslateFn): string {
   if (type === "stripe_subscription") return t("adminPage.membershipStripe");
   if (type === "waafi_period") return t("adminPage.membershipWaafi");
+  if (type === "paystack_period") return t("adminPage.membershipPaystack");
   if (type === "evc_period") return t("adminPage.membershipEvc");
   if (type === "legacy") return t("adminPage.membershipLegacy");
   return type;
@@ -160,6 +163,9 @@ function RevenueChart({ series, t }: { series: RevenueDay[]; t: TranslateFn }) {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-emerald-500" /> WaafiPay
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-sky-500" /> Paystack
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-amber-500" /> EVC
@@ -194,6 +200,15 @@ function RevenueChart({ series, t }: { series: RevenueDay[]; t: TranslateFn }) {
                   }}
                 />
               )}
+              {day.paystackCents > 0 && (
+                <div
+                  className="w-full bg-sky-500"
+                  style={{
+                    flex: day.paystackCents,
+                    minHeight: day.paystackCents > 0 ? 2 : 0,
+                  }}
+                />
+              )}
               {day.manualCents > 0 && (
                 <div
                   className="w-full bg-amber-500"
@@ -217,6 +232,7 @@ function RevenueChart({ series, t }: { series: RevenueDay[]; t: TranslateFn }) {
 function gatewayIcon(gateway: string) {
   if (gateway === "stripe") return CreditCard;
   if (gateway === "waafi") return Smartphone;
+  if (gateway === "paystack") return CreditCard;
   return Wallet;
 }
 
@@ -394,6 +410,7 @@ export function AdminPaymentsDashboardPanel({
     { key: "all", label: t("adminPage.gatewayAll"), icon: Wallet },
     { key: "stripe", label: t("adminPage.gatewayStripe"), icon: CreditCard },
     { key: "waafi", label: t("adminPage.gatewayWaafi"), icon: Smartphone },
+    { key: "paystack", label: t("adminPage.gatewayPaystack"), icon: CreditCard },
     { key: "manual", label: t("adminPage.gatewayManual"), icon: Wallet },
   ];
 
@@ -519,7 +536,7 @@ export function AdminPaymentsDashboardPanel({
                 </p>
               </CardContent>
             </Card>
-            {(["stripe", "waafi", "manual"] as const).map((g) => {
+            {(["stripe", "waafi", "paystack", "manual"] as const).map((g) => {
               const stats = dashboard.byGateway[g];
               const Icon = gatewayIcon(g);
               return (

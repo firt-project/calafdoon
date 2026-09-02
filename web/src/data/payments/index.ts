@@ -6,6 +6,7 @@ export {
   PAYMENTS_METHOD_NAMES,
   EVC_METHOD_NAMES,
   WAAFI_METHOD_NAMES,
+  PAYSTACK_METHOD_NAMES,
 } from "./types";
 
 export function getPaymentsAdapter(): PaymentsAdapter {

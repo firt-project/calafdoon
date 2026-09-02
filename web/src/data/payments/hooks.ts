@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAbortError, toLoadErrorMessage } from "../query-error";
 import { apiPayments } from "./api";
-import type { WaafiPurchaseResult, WaafiStatus } from "./types";
+import type {
+  PaystackCheckoutResult,
+  PaystackStatus,
+  WaafiPurchaseResult,
+  WaafiStatus,
+} from "./types";
 
 export function useCreateRegistrationCheckout() {
   return useCallback(
@@ -65,6 +70,54 @@ export function useWaafiPurchase() {
       tier?: "basic" | "premium";
     }): Promise<WaafiPurchaseResult> =>
       apiPayments.waafi.purchase(body) as Promise<WaafiPurchaseResult>,
+    []
+  );
+}
+
+export function usePaystackEnabled() {
+  const [enabled, setEnabled] = useState(false);
+  const [status, setStatus] = useState<PaystackStatus>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    void apiPayments.paystack
+      .status()
+      .then((d) => {
+        if (!cancelled) {
+          setEnabled(Boolean(d?.enabled));
+          setStatus(d);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelled || isAbortError(err)) return;
+        setEnabled(false);
+        setStatus(undefined);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { enabled, status, loading };
+}
+
+export function usePaystackCheckout() {
+  return useCallback(
+    async (body: {
+      tier?: "basic" | "premium";
+    }): Promise<PaystackCheckoutResult> =>
+      apiPayments.paystack.startCheckout(body) as Promise<PaystackCheckoutResult>,
+    []
+  );
+}
+
+export function useVerifyPaystackReference() {
+  return useCallback(
+    async (args: { reference: string }) =>
+      apiPayments.paystack.verify(args.reference),
     []
   );
 }

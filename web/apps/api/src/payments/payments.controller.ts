@@ -26,6 +26,7 @@ import { RateLimitGuard } from "../redis/rate-limit.guard";
 import { PaymentsService } from "./payments.service";
 import { EvcPaymentsService } from "./evc-payments.service";
 import { WaafiPaymentsService } from "./waafi-payments.service";
+import { PaystackPaymentsService } from "./paystack-payments.service";
 import { stripeWebhookMaxBodyBytes } from "./stripe-webhook-limits";
 
 function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
@@ -43,7 +44,8 @@ export class PaymentsController {
   constructor(
     private readonly payments: PaymentsService,
     private readonly evc: EvcPaymentsService,
-    private readonly waafi: WaafiPaymentsService
+    private readonly waafi: WaafiPaymentsService,
+    private readonly paystack: PaystackPaymentsService
   ) {}
 
   @Post("payments/stripe/registration-checkout")
@@ -137,6 +139,66 @@ export class PaymentsController {
   @UseGuards(RateLimitGuard)
   async waafiStatus() {
     return this.waafi.status();
+  }
+
+  @Post("payments/paystack/registration-checkout")
+  @HttpCode(200)
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  @RequireProfile()
+  async paystackCheckout(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown
+  ) {
+    const parsed = parseBody(
+      z.object({ tier: z.enum(["basic", "premium"]).optional() }),
+      body ?? {}
+    );
+    return this.paystack.startRegistration({
+      userId: user.id,
+      tier: parsed.tier,
+    });
+  }
+
+  @Post("payments/paystack/verify")
+  @HttpCode(200)
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  @RequireProfile()
+  async paystackVerify(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown
+  ) {
+    const parsed = parseBody(
+      z.object({ reference: z.string().min(6).max(128) }),
+      body
+    );
+    return this.paystack.verifyReference(user.id, parsed.reference);
+  }
+
+  @Get("payments/paystack/status")
+  @Public()
+  @UseGuards(RateLimitGuard)
+  async paystackStatus() {
+    return this.paystack.status();
+  }
+
+  @Public()
+  @Post("webhooks/paystack")
+  @HttpCode(200)
+  @UseGuards(RateLimitGuard)
+  async paystackWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers("x-paystack-signature") signature?: string
+  ) {
+    const raw =
+      req.rawBody ??
+      (typeof req.body === "string" || Buffer.isBuffer(req.body)
+        ? req.body
+        : Buffer.from(JSON.stringify(req.body ?? {})));
+    const size = Buffer.isBuffer(raw) ? raw.length : Buffer.byteLength(raw);
+    if (size > stripeWebhookMaxBodyBytes()) {
+      throw new PayloadTooLargeException("Payload Too Large");
+    }
+    return this.paystack.handleWebhook(raw, signature);
   }
 
   @Post("payments/evc/proof/sign-upload")
