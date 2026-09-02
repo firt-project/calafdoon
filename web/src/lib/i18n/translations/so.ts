@@ -601,6 +601,7 @@ export const so: Translations = {
     payWithCard: "Ku bixi kaarka",
     payWithWaafi: "WaafiPay",
     payWithPaystack: "Paystack",
+    payWithMpesa: "M-Pesa",
     payWithMobileMoney: "EVC / M-PESA",
     stepAccount: "Akoon",
     stepDetails: "Faahfaahin",
@@ -699,6 +700,16 @@ export const so: Translations = {
     paystackCardsNote:
       "Ku bixi kaar debit/credit, wareejin bangi, ama lacag mobile. Sawir looma baahna.",
     paystackFailed: "Lama bilaabi karo lacag bixinta Paystack. Fadlan isku day mar kale.",
+    mpesaBadge: "M-Pesa",
+    mpesaCheckoutTitle: "Ku bixi M-Pesa",
+    mpesaCheckoutSubtitle:
+      "Bixi ${{price}} 30-ka maalmood ee kowaad adigoo isticmaalaya STK push-ka M-Pesa, ka dibna kaliya ${{monthly}} bil kasta. Sawir looma baahna.",
+    mpesaPay: "Ku bixi ${{price}} M-Pesa",
+    mpesaRedirecting: "Furaya bogga M-Pesa…",
+    mpesaSecureNote: "Lacag bixin ammaan ah M-Pesa iyada oo loo marayo Paystack.",
+    mpesaStepsNote:
+      "Geli lambarkaaga M-Pesa, ka dibna ansixi codsiga STK push ee telefoonkaaga.",
+    mpesaFailed: "Lama bilaabi karo lacag bixinta M-Pesa. Fadlan isku day mar kale.",
   },
   faq: {
     title: "Su'aalaha Inta Badan La Isweydiiyo",

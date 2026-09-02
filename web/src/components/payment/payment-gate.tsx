@@ -17,7 +17,7 @@ import {
 } from "@/data/payments/hooks";
 
 type RegistrationTier = "basic" | "premium";
-type PayMethod = "card" | "waafi" | "paystack" | "evc";
+type PayMethod = "card" | "waafi" | "mpesa" | "paystack" | "evc";
 
 function formatPrice(price: number): string {
   return Number.isInteger(price) ? String(price) : price.toFixed(2);
@@ -217,13 +217,22 @@ export function PaymentGate({
             {t("payment.payWithWaafi")}
           </MethodButton>
           {paystackEnabled ? (
-            <MethodButton
-              active={payMethod === "paystack"}
-              onClick={() => setPayMethod("paystack")}
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              {t("payment.payWithPaystack")}
-            </MethodButton>
+            <>
+              <MethodButton
+                active={payMethod === "mpesa"}
+                onClick={() => setPayMethod("mpesa")}
+              >
+                <Smartphone className="h-4 w-4 mr-2" />
+                {t("payment.payWithMpesa")}
+              </MethodButton>
+              <MethodButton
+                active={payMethod === "paystack"}
+                onClick={() => setPayMethod("paystack")}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                {t("payment.payWithPaystack")}
+              </MethodButton>
+            </>
           ) : null}
           <MethodButton
             active={payMethod === "evc"}
@@ -310,6 +319,10 @@ export function PaymentGate({
       ) : null}
 
       {payMethod === "waafi" ? <WaafiPaymentSection /> : null}
+
+      {payMethod === "mpesa" && paystackEnabled ? (
+        <PaystackPaymentSection variant="mpesa" />
+      ) : null}
 
       {payMethod === "paystack" && paystackEnabled ? (
         <PaystackPaymentSection />

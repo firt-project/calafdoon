@@ -57,6 +57,8 @@ export type PaymentsAdapter = {
     status(): Promise<PaystackStatus>;
     startCheckout(body: {
       tier?: "basic" | "premium";
+      /** "mobile_money" opens the hosted checkout straight to M-Pesa. */
+      channel?: "mobile_money" | "card" | "bank";
     }): Promise<PaystackCheckoutResult>;
     verify(reference: string): Promise<PaystackVerifyResult>;
   };

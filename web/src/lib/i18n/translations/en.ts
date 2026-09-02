@@ -594,6 +594,7 @@ export const en = {
     payWithCard: "Pay with card",
     payWithWaafi: "WaafiPay",
     payWithPaystack: "Paystack",
+    payWithMpesa: "M-Pesa",
     payWithMobileMoney: "EVC / M-PESA",
     stepAccount: "Account",
     stepDetails: "Details",
@@ -691,6 +692,16 @@ export const en = {
     paystackCardsNote:
       "Pay with a debit/credit card, bank transfer, or mobile money. No screenshot needed.",
     paystackFailed: "Could not start the Paystack payment. Please try again.",
+    mpesaBadge: "M-Pesa",
+    mpesaCheckoutTitle: "Pay with M-Pesa",
+    mpesaCheckoutSubtitle:
+      "Pay ${{price}} for your first 30 days with an M-Pesa STK push, then just ${{monthly}} every month. No screenshot needed.",
+    mpesaPay: "Pay ${{price}} with M-Pesa",
+    mpesaRedirecting: "Opening M-Pesa checkout…",
+    mpesaSecureNote: "Secure M-Pesa checkout via Paystack.",
+    mpesaStepsNote:
+      "Enter your M-Pesa number, then approve the STK push prompt on your phone.",
+    mpesaFailed: "Could not start the M-Pesa payment. Please try again.",
   },
   faq: {
     title: "Frequently Asked Questions",
