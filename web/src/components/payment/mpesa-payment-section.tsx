@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * opens straight to an M-Pesa STK push. Renders an unavailable notice until
  * PAYSTACK_SECRET_KEY is configured on the API host.
  */
-export function PaystackPaymentSection() {
+export function MpesaPaymentSection() {
   const { t } = useTranslation();
   const { profile: profileRaw } = useProfile();
   const profile = profileRaw as
@@ -97,7 +97,7 @@ export function PaystackPaymentSection() {
               </span>
             </div>
             <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
-              {t("payment.paystackPeriodNote", {
+              {t("payment.mpesaPeriodNote", {
                 price: firstLabel,
                 monthly: monthlyLabel,
               })}

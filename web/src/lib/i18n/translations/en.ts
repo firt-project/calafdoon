@@ -593,7 +593,6 @@ export const en = {
       "Card payments are verified by Stripe automatically. No screenshot or payment proof is required.",
     payWithCard: "Pay with card",
     payWithWaafi: "WaafiPay",
-    payWithPaystack: "Paystack",
     payWithMpesa: "Paystack M-Pesa",
     payWithMobileMoney: "Manual payment",
     gatewayUnavailable:
@@ -682,18 +681,8 @@ export const en = {
     waafiFailed: "WaafiPay payment failed. Check your number and try again.",
     waafiShowManual: "Prefer to send money manually? Upload a screenshot",
     waafiHideManual: "Hide manual payment form",
-    paystackBadge: "Paystack",
-    paystackTitle: "Pay with card or bank",
-    paystackSubtitle:
-      "Pay ${{price}} for your first 30 days on Paystack's secure checkout, then just ${{monthly}} every month.",
-    paystackPeriodNote:
+    mpesaPeriodNote:
       "Access lasts 30 days. Your first payment is ${{price}}; every renewal after that is ${{monthly}}.",
-    paystackPay: "Pay ${{price}} with Paystack",
-    paystackRedirecting: "Opening Paystack checkout…",
-    paystackSecureNote: "Secure Paystack checkout.",
-    paystackCardsNote:
-      "Pay with a debit/credit card, bank transfer, or mobile money. No screenshot needed.",
-    paystackFailed: "Could not start the Paystack payment. Please try again.",
     mpesaBadge: "M-Pesa",
     mpesaCheckoutTitle: "Pay with M-Pesa",
     mpesaCheckoutSubtitle:

@@ -600,7 +600,6 @@ export const so: Translations = {
       "Lacagta kaarka waxaa Stripe si toos ah u xaqiijiyaa. Sawir ama cadeyn lacag bixin looma baahna.",
     payWithCard: "Ku bixi kaarka",
     payWithWaafi: "WaafiPay",
-    payWithPaystack: "Paystack",
     payWithMpesa: "Paystack M-Pesa",
     payWithMobileMoney: "Bixinta gacanta ah",
     gatewayUnavailable:
@@ -690,18 +689,8 @@ export const so: Translations = {
       "Lacag bixinta WaafiPay waa fashilantay. Hubi lambarka oo isku day mar kale.",
     waafiShowManual: "Ma doorbidi kartaa inaad gacanta u dirto? Soo geli screenshot",
     waafiHideManual: "Qari foomka lacag bixinta gacanta",
-    paystackBadge: "Paystack",
-    paystackTitle: "Ku bixi kaar ama bangi",
-    paystackSubtitle:
-      "Bixi ${{price}} 30-ka maalmood ee kowaad adigoo isticmaalaya bogga ammaanka ah ee Paystack, ka dibna kaliya ${{monthly}} bil kasta.",
-    paystackPeriodNote:
+    mpesaPeriodNote:
       "Helitaanku waa 30 maalmood. Lacagta kowaad waa ${{price}}; cusbooneysiin kasta ka dib waa ${{monthly}}.",
-    paystackPay: "Ku bixi ${{price}} Paystack",
-    paystackRedirecting: "Furaya bogga Paystack…",
-    paystackSecureNote: "Lacag bixin ammaan ah Paystack.",
-    paystackCardsNote:
-      "Ku bixi kaar debit/credit, wareejin bangi, ama lacag mobile. Sawir looma baahna.",
-    paystackFailed: "Lama bilaabi karo lacag bixinta Paystack. Fadlan isku day mar kale.",
     mpesaBadge: "M-Pesa",
     mpesaCheckoutTitle: "Ku bixi M-Pesa",
     mpesaCheckoutSubtitle:

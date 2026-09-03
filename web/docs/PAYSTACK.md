@@ -12,7 +12,7 @@ Code lives in `apps/api/src/payments/`:
 | `paystack-payments.service.ts` | Business logic — start checkout, verify, webhook fulfilment |
 | `paystack.client.test.ts` | Unit tests (config + webhook signature) |
 
-Frontend: `src/components/payment/paystack-payment-section.tsx`, wired into
+Frontend: `src/components/payment/mpesa-payment-section.tsx`, wired into
 `payment-gate.tsx` as the **"Paystack M-Pesa"** option (one of four tabs:
 Stripe card / WaafiPay / Paystack M-Pesa / manual payment). The section sends
 `channel: "mobile_money"` so the hosted checkout opens straight to an M-Pesa

@@ -10,7 +10,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 import { EvcPaymentSection } from "@/components/payment/evc-payment-section";
 import { WaafiPaymentSection } from "@/components/payment/waafi-payment-section";
-import { PaystackPaymentSection } from "@/components/payment/paystack-payment-section";
+import { MpesaPaymentSection } from "@/components/payment/mpesa-payment-section";
 import { useCreateRegistrationCheckout } from "@/data/payments/hooks";
 
 type RegistrationTier = "basic" | "premium";
@@ -305,7 +305,7 @@ export function PaymentGate({
 
       {payMethod === "waafi" ? <WaafiPaymentSection /> : null}
 
-      {payMethod === "mpesa" ? <PaystackPaymentSection /> : null}
+      {payMethod === "mpesa" ? <MpesaPaymentSection /> : null}
 
       {payMethod === "evc" ? <EvcPaymentSection gender={gender} /> : null}
     </div>
