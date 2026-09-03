@@ -9,6 +9,7 @@ export type TelemetryEvent =
   | "login_session_unconfirmed"
   | "register_failure"
   | "socket_reconnect"
+  | "socket_connect_error"
   | "message_failure"
   | "upload_failure"
   | "checkout_failure"

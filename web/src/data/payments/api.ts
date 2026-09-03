@@ -1,6 +1,15 @@
-import { apiClient } from "../api-client";
+import { apiClient, ApiClientError } from "../api-client";
 import { track } from "../telemetry";
-import type { PaymentsAdapter } from "./types";
+import type { PaymentsAdapter, PaystackStatus, WaafiStatus } from "./types";
+
+/**
+ * A 404 here means the API host is older than this web build (the route does
+ * not exist yet). Treat that as "gateway not available" instead of a hard
+ * failure so the checkout UI shows its unavailable notice and moves on.
+ */
+function isMissingRoute(e: unknown): boolean {
+  return e instanceof ApiClientError && e.status === 404;
+}
 
 export const apiPayments: PaymentsAdapter = {
   async createRegistrationCheckout(tier) {
@@ -32,7 +41,12 @@ export const apiPayments: PaymentsAdapter = {
   },
   waafi: {
     async status() {
-      return apiClient.get("/payments/waafi/status");
+      try {
+        return await apiClient.get<WaafiStatus>("/payments/waafi/status");
+      } catch (e) {
+        if (isMissingRoute(e)) return { enabled: false };
+        throw e;
+      }
     },
     async purchase(body) {
       return apiClient.post("/payments/waafi/purchase", body);
@@ -40,7 +54,14 @@ export const apiPayments: PaymentsAdapter = {
   },
   paystack: {
     async status() {
-      return apiClient.get("/payments/paystack/status");
+      try {
+        return await apiClient.get<PaystackStatus>(
+          "/payments/paystack/status"
+        );
+      } catch (e) {
+        if (isMissingRoute(e)) return { enabled: false };
+        throw e;
+      }
     },
     async startCheckout(body) {
       try {
