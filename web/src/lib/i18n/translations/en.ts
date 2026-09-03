@@ -594,8 +594,10 @@ export const en = {
     payWithCard: "Pay with card",
     payWithWaafi: "WaafiPay",
     payWithPaystack: "Paystack",
-    payWithMpesa: "M-Pesa",
-    payWithMobileMoney: "EVC / M-PESA",
+    payWithMpesa: "Paystack M-Pesa",
+    payWithMobileMoney: "Manual payment",
+    gatewayUnavailable:
+      "This payment option is temporarily unavailable. Please use card, WaafiPay, or manual payment.",
     stepAccount: "Account",
     stepDetails: "Details",
     stepProfile: "Profile",

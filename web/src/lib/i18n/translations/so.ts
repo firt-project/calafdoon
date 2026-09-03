@@ -601,8 +601,10 @@ export const so: Translations = {
     payWithCard: "Ku bixi kaarka",
     payWithWaafi: "WaafiPay",
     payWithPaystack: "Paystack",
-    payWithMpesa: "M-Pesa",
-    payWithMobileMoney: "EVC / M-PESA",
+    payWithMpesa: "Paystack M-Pesa",
+    payWithMobileMoney: "Bixinta gacanta ah",
+    gatewayUnavailable:
+      "Habkan lacag-bixineed hadda lama heli karo. Fadlan isticmaal kaar, WaafiPay, ama bixinta gacanta ah.",
     stepAccount: "Akoon",
     stepDetails: "Faahfaahin",
     stepProfile: "Profile",

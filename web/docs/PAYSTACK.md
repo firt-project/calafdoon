@@ -13,10 +13,12 @@ Code lives in `apps/api/src/payments/`:
 | `paystack.client.test.ts` | Unit tests (config + webhook signature) |
 
 Frontend: `src/components/payment/paystack-payment-section.tsx`, wired into
-`payment-gate.tsx`; adapter in `src/data/payments/`. The section takes a
-`variant` prop — `"paystack"` (card / bank / mobile money) and `"mpesa"`
-(sends `channel: "mobile_money"`, M-Pesa-only checkout). Both render only when
-`/payments/paystack/status` returns `enabled: true`.
+`payment-gate.tsx` as the **"Paystack M-Pesa"** option (one of four tabs:
+Stripe card / WaafiPay / Paystack M-Pesa / manual payment). The section sends
+`channel: "mobile_money"` so the hosted checkout opens straight to an M-Pesa
+STK push. The tab is always shown; when `/payments/paystack/status` returns
+`enabled: false` it renders an "temporarily unavailable" notice instead of the
+pay button (`payment.gatewayUnavailable`).
 
 ---
 
@@ -54,10 +56,9 @@ Set on the **API host (Render)** — never Vercel, never committed.
 | `PAYSTACK_USD_RATE` | `130` | Units of `PAYSTACK_CURRENCY` per 1 USD. **Required when `PAYSTACK_CURRENCY` ≠ USD** — the client throws rather than charge the wrong amount. |
 
 `mode()` is derived from the key prefix (`sk_live_` → live, `sk_test_` → test).
-`/payments/paystack/status` reports `enabled`, `mode`, and `currency` so the
-frontend only shows the **Paystack** and **M-Pesa** buttons when a key is
-present. With no key set, neither button renders (members still have card /
-WaafiPay / the manual EVC-M-PESA proof flow).
+`/payments/paystack/status` reports `enabled`, `mode`, and `currency`. The
+**Paystack M-Pesa** tab is always visible; with no key set it shows an
+"unavailable" notice and members use card / WaafiPay / the manual proof flow.
 
 > **Currency:** `Payment.amount` is always stored in **USD cents** (canonical —
 > keeps admin revenue reporting in one currency). When `PAYSTACK_CURRENCY` is
@@ -77,7 +78,7 @@ All under the payments controller (`apps/api/src/payments/payments.controller.ts
 
 | Method & path | Auth | Purpose |
 | --- | --- | --- |
-| `POST /payments/paystack/registration-checkout` | session + CSRF + rate limit | Body `{ tier?: "basic" \| "premium", channel?: "mobile_money" \| "card" \| "bank" }`. Creates a pending `Payment`, calls Paystack `initialize`, returns `{ authorizationUrl, reference, amountCents, tier, isRenewal }`. `channel: "mobile_money"` (sent by the **M-Pesa** button) restricts the hosted checkout to Paystack's `channels: ["mobile_money"]`. |
+| `POST /payments/paystack/registration-checkout` | session + CSRF + rate limit | Body `{ tier?: "basic" \| "premium", channel?: "mobile_money" \| "card" \| "bank" }`. Creates a pending `Payment`, calls Paystack `initialize`, returns `{ authorizationUrl, reference, amountCents, tier, isRenewal }`. The **Paystack M-Pesa** tab sends `channel: "mobile_money"`, which restricts the hosted checkout to Paystack's `channels: ["mobile_money"]`. |
 | `POST /payments/paystack/verify` | session + CSRF + rate limit | Body `{ reference }`. Verifies with Paystack and grants access. Called by the success page. |
 | `GET /payments/paystack/status` | public | `{ enabled, configured, mode, currency, publicKey }`. |
 | `POST /webhooks/paystack` | public (HMAC-verified) | Paystack `charge.success` events — backstop fulfilment. |
