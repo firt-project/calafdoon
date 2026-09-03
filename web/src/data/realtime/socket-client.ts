@@ -1,5 +1,5 @@
 import { io, type Socket } from "socket.io-client";
-import { getSocketUrl, usesSameOriginApiProxy } from "../provider";
+import { getSocketUrl } from "../provider";
 import { track } from "../telemetry";
 
 export type RealtimeEvent =
@@ -20,22 +20,38 @@ type ListenerEntry = {
 
 let socket: Socket | null = null;
 let refreshCallback: (() => void) | null = null;
+let loggedConnectError = false;
 const listeners = new Set<ListenerEntry>();
 const joinedRooms = new Set<string>();
+
+/**
+ * True when the socket URL is the page origin itself, i.e. traffic goes through
+ * the Next `/socket.io` rewrite to the upstream API. WebSocket upgrades through
+ * a serverless proxy (Vercel) don't complete, so we stay on HTTP long-polling
+ * and don't probe for an upgrade that just spams failed `wss://` attempts. A
+ * direct api.* host (distinct origin) does WebSocket first as normal.
+ */
+function isViaSameOriginProxy(url: string): boolean {
+  if (url.startsWith("/")) return true;
+  if (typeof window === "undefined") return false;
+  try {
+    return new URL(url).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
 
 function ensureSocket(): Socket | null {
   if (socket) return socket;
 
   const url = getSocketUrl();
-  // Same-origin Vercel rewrite: prefer HTTP long-polling first (WS upgrades
-  // through serverless proxies are unreliable). Direct api.* host can WS first.
-  const sameOrigin = usesSameOriginApiProxy();
+  const viaProxy = isViaSameOriginProxy(url);
   // H5: authenticate Socket.IO via HttpOnly session cookie (withCredentials).
   socket = io(url, {
     withCredentials: true,
-    transports: sameOrigin
-      ? ["polling", "websocket"]
-      : ["websocket", "polling"],
+    transports: viaProxy ? ["polling"] : ["websocket", "polling"],
+    // No polling→websocket upgrade attempt when the upgrade can't succeed.
+    upgrade: !viaProxy,
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
@@ -44,7 +60,22 @@ function ensureSocket(): Socket | null {
     timeout: 20_000,
   });
 
+  socket.on("connect_error", (err: Error) => {
+    if (loggedConnectError) return;
+    loggedConnectError = true;
+    track("socket_connect_error");
+    console.warn(
+      `[realtime] Socket.IO could not connect to ${url} (${err.message}). ` +
+        (viaProxy
+          ? "Traffic is proxied through the page origin — the upstream API must " +
+            "run a single instance or use sticky sessions for HTTP long-polling. " +
+            "For WebSocket support, point NEXT_PUBLIC_SOCKET_URL at the API host directly."
+          : "Check the API host and that its CORS allowlist includes this origin.")
+    );
+  });
+
   socket.on("connect", () => {
+    loggedConnectError = false;
     // Re-join rooms after reconnect
     for (const id of joinedRooms) {
       socket?.emit("conversation:join", { conversationId: id });

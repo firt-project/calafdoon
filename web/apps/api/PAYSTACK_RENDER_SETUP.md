@@ -89,6 +89,14 @@ Expected:
 { "enabled": true, "mode": "live", "currency": "KES", "publicKey": "pk_live_..." }
 ```
 
+If you get **`404` / "Cannot GET"** instead of JSON, the deployed API build is
+older than the Paystack code — redeploy the Render service from the branch that
+has `apps/api/src/payments/paystack-*`. Until then the web app shows the
+"gateway temporarily unavailable" notice on the M-Pesa tab (it treats the
+missing route as "disabled"), and `curl .../payments/paystack/status` through
+the web host (`https://your-web-domain.com/backend/payments/paystack/status`)
+also 404s.
+
 **c. On the site**, open the payment page → the **Paystack M-Pesa** tab shows the
 pay button (not the "temporarily unavailable" notice).
 
