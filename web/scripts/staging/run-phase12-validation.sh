@@ -17,13 +17,13 @@ echo "==> prisma validate"
 npm run prisma:validate
 
 echo "==> API unit tests"
-STRIPE_GATEWAY=fake npm test -w @hel/api
+STRIPE_GATEWAY=fake npm test -w @web/api
 
 echo "==> frontend + shadow tests"
 npm run test:frontend
 
 echo "==> API tsc"
-npm run lint -w @hel/api
+npm run lint -w @web/api
 
 echo "==> health"
 curl -sf "$API_URL/health" | tee "$OUT/health-snapshot.json"
@@ -36,7 +36,7 @@ echo "==> media validation"
 DATABASE_URL="${DATABASE_URL:-}" npm run staging:validate-media || true
 
 echo "==> payment reconcile audit"
-npm run payment:reconcile-audit -w @hel/api || true
+npm run payment:reconcile-audit -w @web/api || true
 
 cat >"$OUT/local-validation.json" <<EOF
 {

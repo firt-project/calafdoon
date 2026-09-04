@@ -35,7 +35,7 @@ export function getRegistrationCheckoutDetails(
         : PERSONAL_SUPPORT_AMOUNT_CENTS,
       paymentType: "registration_premium" as const,
       registrationTier: "premium" as const,
-      productName: "Hel Calafkaaga Premium",
+      productName: "Web Premium",
       productDescription: womenPremium
         ? "WhatsApp personal support and help finding your match"
         : "Full app access plus WhatsApp personal support and help finding your match",
@@ -51,8 +51,8 @@ export function getRegistrationCheckoutDetails(
     paymentType: "registration" as const,
     registrationTier: "basic" as const,
     productName: womenBasic
-      ? "Hel Calafkaaga Membership (Women)"
-      : "Hel Calafkaaga Membership",
+      ? "Web Membership (Women)"
+      : "Web Membership",
     productDescription:
       "First payment $4.99, then $1 every month — full access to matches and messaging",
     metadataType: "registration" as const,

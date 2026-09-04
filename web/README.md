@@ -1,4 +1,4 @@
-# Hel Calafkaaga — Halal Marriage Matchmaking Platform
+# Web — Halal Marriage Matchmaking Platform
 
 Find your halal life partner with confidence.
 

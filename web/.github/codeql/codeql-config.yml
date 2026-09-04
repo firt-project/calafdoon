@@ -1,7 +1,7 @@
 # CodeQL language/query pack defaults for this monorepo (L3).
 # Paths ignored are generated, vendored, or non-app artifacts.
 
-name: Hel Calafkaaga CodeQL config
+name: Web CodeQL config
 
 paths-ignore:
   - "**/node_modules/**"

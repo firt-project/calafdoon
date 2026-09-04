@@ -26,6 +26,8 @@ export type PaystackInitInput = {
   reference: string;
   callbackUrl: string;
   metadata: Record<string, unknown>;
+  /** Restrict the hosted checkout to specific Paystack channels (e.g. ["mobile_money"] for M-Pesa). */
+  channels?: string[];
 };
 
 export type PaystackInitResult =
@@ -157,6 +159,7 @@ export class PaystackClient implements OnModuleInit {
           reference: input.reference,
           callback_url: input.callbackUrl,
           metadata: input.metadata,
+          ...(input.channels?.length ? { channels: input.channels } : {}),
         }),
         signal: AbortSignal.timeout(30_000),
       });

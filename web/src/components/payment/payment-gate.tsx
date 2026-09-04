@@ -10,14 +10,11 @@ import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 import { EvcPaymentSection } from "@/components/payment/evc-payment-section";
 import { WaafiPaymentSection } from "@/components/payment/waafi-payment-section";
-import { PaystackPaymentSection } from "@/components/payment/paystack-payment-section";
-import {
-  useCreateRegistrationCheckout,
-  usePaystackEnabled,
-} from "@/data/payments/hooks";
+import { MpesaPaymentSection } from "@/components/payment/mpesa-payment-section";
+import { useCreateRegistrationCheckout } from "@/data/payments/hooks";
 
 type RegistrationTier = "basic" | "premium";
-type PayMethod = "card" | "waafi" | "paystack" | "evc";
+type PayMethod = "card" | "waafi" | "mpesa" | "evc";
 
 function formatPrice(price: number): string {
   return Number.isInteger(price) ? String(price) : price.toFixed(2);
@@ -168,7 +165,6 @@ export function PaymentGate({
 }: PaymentGateProps) {
   const { t } = useTranslation();
   const [payMethod, setPayMethod] = useState<PayMethod>("waafi");
-  const { enabled: paystackEnabled } = usePaystackEnabled();
   const basicPrice = REGISTRATION_PRICE;
   const monthlyPrice = MONTHLY_PRICE;
   const isWoman = gender === "female";
@@ -216,15 +212,13 @@ export function PaymentGate({
             <Smartphone className="h-4 w-4 mr-2" />
             {t("payment.payWithWaafi")}
           </MethodButton>
-          {paystackEnabled ? (
-            <MethodButton
-              active={payMethod === "paystack"}
-              onClick={() => setPayMethod("paystack")}
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              {t("payment.payWithPaystack")}
-            </MethodButton>
-          ) : null}
+          <MethodButton
+            active={payMethod === "mpesa"}
+            onClick={() => setPayMethod("mpesa")}
+          >
+            <Smartphone className="h-4 w-4 mr-2" />
+            {t("payment.payWithMpesa")}
+          </MethodButton>
           <MethodButton
             active={payMethod === "evc"}
             onClick={() => setPayMethod("evc")}
@@ -311,9 +305,7 @@ export function PaymentGate({
 
       {payMethod === "waafi" ? <WaafiPaymentSection /> : null}
 
-      {payMethod === "paystack" && paystackEnabled ? (
-        <PaystackPaymentSection />
-      ) : null}
+      {payMethod === "mpesa" ? <MpesaPaymentSection /> : null}
 
       {payMethod === "evc" ? <EvcPaymentSection gender={gender} /> : null}
     </div>

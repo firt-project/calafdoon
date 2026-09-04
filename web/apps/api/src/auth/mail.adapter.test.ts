@@ -15,7 +15,7 @@ describe("ConsoleMailAdapter redaction (M1)", () => {
       await adapter.send({
         to: "invitee@example.com",
         subject: "invite",
-        text: `Accept: https://www.helcalafkaaga.com/admin/invite?token=${token}`,
+        text: `Accept: https://web.example.com/admin/invite?token=${token}`,
       });
     } finally {
       console.info = original;

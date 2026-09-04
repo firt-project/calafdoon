@@ -1,4 +1,4 @@
-# Create MinIO buckets for Hel Calafkaaga local file migration (Phase 3).
+# Create MinIO buckets for Web local file migration (Phase 3).
 # Buckets are private — no anonymous/public policies.
 # Browser PUT/GET uses presigned URLs; MinIO API-level CORS covers that.
 set -eu

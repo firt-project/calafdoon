@@ -15,7 +15,7 @@ function getCanonicalSiteUrl() {
 
 /**
  * Google Search "site name" preference (the brand line above the URL).
- * Goal: show "Hel Calafkaaga", NOT "helcalafkaaga.com".
+ * Goal: show "Web", NOT "web.example.com".
  *
  * Google treats this as a suggestion — if confidence is low it falls back
  * to the domain. Follow official order: preferred name first, domain last.
@@ -25,14 +25,14 @@ export function SiteJsonLd() {
   const siteUrl = getCanonicalSiteUrl();
   const siteOrigin = siteUrl.replace(/\/$/, "");
   const logoUrl = `${siteOrigin}/logo`;
-  const domainFallback = "helcalafkaaga.com";
+  const domainFallback = "web.example.com";
 
   // WebSite block matches Google's site-name example closely (not only @graph).
   const websiteLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_BRAND_NAME,
-    alternateName: ["HelCalafkaaga", domainFallback],
+    alternateName: ["Web", domainFallback],
     url: siteUrl,
     description: HOME_OG_DESCRIPTION,
     inLanguage: ["so", "en"],
@@ -48,7 +48,7 @@ export function SiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_BRAND_NAME,
-    alternateName: ["HelCalafkaaga", domainFallback],
+    alternateName: ["Web", domainFallback],
     url: siteUrl,
     logo: {
       "@type": "ImageObject",

@@ -108,6 +108,7 @@ export function usePaystackCheckout() {
   return useCallback(
     async (body: {
       tier?: "basic" | "premium";
+      channel?: "mobile_money" | "card" | "bank";
     }): Promise<PaystackCheckoutResult> =>
       apiPayments.paystack.startCheckout(body) as Promise<PaystackCheckoutResult>,
     []

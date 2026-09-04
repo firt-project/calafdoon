@@ -85,7 +85,7 @@ export class AdminUsersService {
 
   private appUrl(): string {
     return (
-      this.config.get<string>("APP_URL") ?? "https://www.helcalafkaaga.com"
+      this.config.get<string>("APP_URL") ?? "https://web.example.com"
     ).replace(/\/$/, "");
   }
 

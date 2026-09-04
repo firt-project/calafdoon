@@ -12,13 +12,13 @@ const CHILD_SAFETY_CONTACT_EMAIL = "alqaazimi@gmail.com";
 export function ChildSafetyPageContent() {
   return (
     <MarketingPage
-      title="HelCalaf — Child Safety Standards (CSAE)"
-      subtitle="Public child safety standards for Hel Calafkaaga (HelCalaf). Adults 18+ only."
+      title="Web — Child Safety Standards (CSAE)"
+      subtitle="Public child safety standards for Web (Web). Adults 18+ only."
     >
       <article className="prose prose-neutral dark:prose-invert mx-auto max-w-3xl space-y-6 text-muted-foreground">
         <section className="space-y-3">
           <p className="text-base leading-relaxed text-foreground">
-            HelCalaf is a marriage matchmaking app for adults 18+.
+            Web is a marriage matchmaking app for adults 18+.
           </p>
           <p className="leading-relaxed">We do not allow users under 18.</p>
           <p className="leading-relaxed">

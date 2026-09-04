@@ -38,7 +38,7 @@ COPY --from=build /app/prisma ./prisma
 # Android install page + APK (served by DownloadController).
 COPY public ./public
 # Bust image cache when the APK binary changes (size alone is not enough).
-COPY public/download/hel-calafkaaga.apk ./public/download/hel-calafkaaga.apk
+COPY public/download/web.apk ./public/download/web.apk
 ARG APK_BUNDLE_REV=2026-07-31-debug-apk
 LABEL apk.bundle.rev="${APK_BUNDLE_REV}"
 

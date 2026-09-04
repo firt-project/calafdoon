@@ -71,40 +71,40 @@ describe("provider", () => {
       {
         NEXT_PUBLIC_API_URL: "/backend",
         NEXT_PUBLIC_SOCKET_URL: undefined,
-        NEXT_PUBLIC_APP_URL: "https://helcalafkaaga.com",
+        NEXT_PUBLIC_APP_URL: "https://web.example.com",
       },
       () => {
         assert.equal(isRelativeApiBase("/backend"), true);
         assert.equal(getApiBaseUrl(), "/backend");
         assert.equal(usesSameOriginApiProxy(), true);
-        assert.equal(getSocketUrl(), "https://helcalafkaaga.com");
+        assert.equal(getSocketUrl(), "https://web.example.com");
       }
     );
   });
 
-  it("production api.helcalafkaaga.com host is used for REST and Socket.IO", () => {
+  it("production api.web.example.com host is used for REST and Socket.IO", () => {
     withEnv(
       {
-        NEXT_PUBLIC_API_URL: "https://api.helcalafkaaga.com/",
-        NEXT_PUBLIC_SOCKET_URL: "https://api.helcalafkaaga.com/",
+        NEXT_PUBLIC_API_URL: "https://api.web.example.com/",
+        NEXT_PUBLIC_SOCKET_URL: "https://api.web.example.com/",
       },
       () => {
-        assert.equal(getApiBaseUrl(), "https://api.helcalafkaaga.com");
-        assert.equal(getSocketUrl(), "https://api.helcalafkaaga.com");
+        assert.equal(getApiBaseUrl(), "https://api.web.example.com");
+        assert.equal(getSocketUrl(), "https://api.web.example.com");
         assert.equal(usesSameOriginApiProxy(), false);
       }
     );
   });
 
-  it("browser on helcalafkaaga.com ignores cross-site onrender NEXT_PUBLIC_API_URL", () => {
+  it("browser on web.example.com ignores cross-site NEXT_PUBLIC_API_URL", () => {
     const prev = globalThis.window;
     Object.defineProperty(globalThis, "window", {
       configurable: true,
       writable: true,
       value: {
         location: {
-          origin: "https://helcalafkaaga.com",
-          hostname: "helcalafkaaga.com",
+          origin: "https://web.example.com",
+          hostname: "web.example.com",
           protocol: "https:",
         },
       },
@@ -112,12 +112,12 @@ describe("provider", () => {
     try {
       withEnv(
         {
-          NEXT_PUBLIC_API_URL: "https://tel-calafkaaga-1.onrender.com",
-          NEXT_PUBLIC_SOCKET_URL: "https://tel-calafkaaga-1.onrender.com",
+          NEXT_PUBLIC_API_URL: "https://api.rollback-host.net",
+          NEXT_PUBLIC_SOCKET_URL: "https://api.rollback-host.net",
         },
         () => {
           assert.equal(getApiBaseUrl(), "/backend");
-          assert.equal(getSocketUrl(), "https://helcalafkaaga.com");
+          assert.equal(getSocketUrl(), "https://web.example.com");
           assert.equal(usesSameOriginApiProxy(), true);
         }
       );

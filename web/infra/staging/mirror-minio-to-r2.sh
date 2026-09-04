@@ -41,4 +41,4 @@ for bucket in "${BUCKETS[@]}"; do
   "
 done
 
-echo "Done. Set R2 CORS for https://tel-calafkaaga-1-api-one.vercel.app (GET, HEAD)."
+echo "Done. Set R2 CORS for https://web-api-preview.vercel.app (GET, HEAD)."

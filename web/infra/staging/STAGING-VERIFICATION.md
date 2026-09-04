@@ -3,7 +3,7 @@
 Use after every Render + Vercel deploy. Health must show `phase: 13` and `photoDelivery: "signed-url"` before testing photos.
 
 ## 0) Deploy health
-- [ ] `curl -s https://tel-calafkaaga-1.onrender.com/health` → `phase: 14`, `photoDelivery: "signed-url"`, `viewModal: "hardened"`
+- [ ] `curl -s https://api.example.com/health` → `phase: 14`, `photoDelivery: "signed-url"`, `viewModal: "hardened"`
 - [ ] Vercel redeploy finished for frontend on latest `main`
 
 ## 1) Auth

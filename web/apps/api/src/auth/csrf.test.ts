@@ -32,7 +32,7 @@ function mockContext(opts: {
   };
 }
 
-describe("cookieSameSite (same-site api.helcalafkaaga.com)", () => {
+describe("cookieSameSite (same-site api.web.example.com)", () => {
   it("defaults to lax even when Secure (does not force None)", () => {
     const prev = process.env.COOKIE_SAMESITE;
     delete process.env.COOKIE_SAMESITE;
@@ -129,12 +129,12 @@ describe("setSessionCookie / issueCsrfCookie", () => {
     const { res, calls } = mockCookieRes();
     setSessionCookie(res, "tok", {
       secure: true,
-      domain: ".helcalafkaaga.com",
+      domain: ".web.example.com",
       expiresAt: new Date("2030-01-01T00:00:00.000Z"),
     });
-    assert.equal(calls[0]!.opts.domain, ".helcalafkaaga.com");
-    clearAuthCookies(res, { secure: true, domain: ".helcalafkaaga.com" });
-    assert.equal(calls[1]!.opts.domain, ".helcalafkaaga.com");
+    assert.equal(calls[0]!.opts.domain, ".web.example.com");
+    clearAuthCookies(res, { secure: true, domain: ".web.example.com" });
+    assert.equal(calls[1]!.opts.domain, ".web.example.com");
     process.env.COOKIE_SAMESITE = prev;
   });
 });

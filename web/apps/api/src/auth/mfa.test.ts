@@ -39,7 +39,7 @@ describe("mfa-totp", () => {
     const secret = generateTotpSecret();
     const url = totpOtpauthUrl(secret, "admin@example.com");
     assert.match(url, /^otpauth:\/\/totp\//);
-    assert.match(url, /Hel%20Calafkaaga|Hel Calafkaaga/);
+    assert.match(url, /Web|Web/);
   });
 
   it("verifies a current TOTP code", () => {

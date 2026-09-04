@@ -26,31 +26,31 @@ describe("resolveCorsOrigins (L5)", () => {
   it("production trusts only explicitly configured origins", () => {
     const origins = resolveCorsOrigins({
       CORS_ORIGINS:
-        "https://www.helcalafkaaga.com,https://helcalafkaaga.com",
-      APP_URL: "https://www.helcalafkaaga.com",
+        "https://web.example.com,https://www.web.example.com",
+      APP_URL: "https://web.example.com",
       RENDER: "true",
       NODE_ENV: "production",
     } as NodeJS.ProcessEnv);
     assert.deepEqual(
       origins.sort(),
-      ["https://helcalafkaaga.com", "https://www.helcalafkaaga.com"].sort()
+      ["https://web.example.com", "https://www.web.example.com"].sort()
     );
   });
 
   it("does not hardcode Vercel preview hosts in production", () => {
     const origins = resolveCorsOrigins({
-      CORS_ORIGINS: "https://www.helcalafkaaga.com,https://helcalafkaaga.com",
+      CORS_ORIGINS: "https://web.example.com,https://web.example.com",
       RENDER: "true",
       NODE_ENV: "production",
     } as NodeJS.ProcessEnv);
     assert.ok(!origins.some((o) => o.includes("vercel.app")));
-    assert.ok(!origins.includes("https://tel-calafkaaga-1-api-one.vercel.app"));
+    assert.ok(!origins.includes("https://web-api-preview.vercel.app"));
   });
 
   it("allows preview only when explicitly listed in CORS_ORIGINS", () => {
-    const preview = "https://tel-calafkaaga-1-api-one.vercel.app";
+    const preview = "https://web-api-preview.vercel.app";
     const origins = resolveCorsOrigins({
-      CORS_ORIGINS: `https://www.helcalafkaaga.com,${preview}`,
+      CORS_ORIGINS: `https://web.example.com,${preview}`,
       NODE_ENV: "production",
       RENDER: "true",
     } as NodeJS.ProcessEnv);
@@ -67,7 +67,7 @@ describe("resolveCorsOrigins (L5)", () => {
 
   it("rejects unauthorized origins by omission from allowlist", () => {
     const origins = resolveCorsOrigins({
-      CORS_ORIGINS: "https://www.helcalafkaaga.com",
+      CORS_ORIGINS: "https://web.example.com",
       NODE_ENV: "production",
     } as NodeJS.ProcessEnv);
     assert.ok(!origins.includes("https://evil.example"));

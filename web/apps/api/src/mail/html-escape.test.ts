@@ -169,7 +169,7 @@ describe("profile moderation email HTML (M9)", () => {
   it("escapes profile comment / rejection body the same way notifyApproval does", () => {
     const body = `Please fix <script>evil()</script> & photo`;
     const label = `Update <b>profile</b>`;
-    const absolute = `https://www.helcalafkaaga.com/profile`;
+    const absolute = `https://web.example.com/profile`;
     const html = `<p>${escapeHtml(body)}</p><p><a href="${escapeHtml(absolute)}">${escapeHtml(label)}</a></p>`;
     assert.equal(html.includes("<script>"), false);
     assert.equal(html.includes("<b>"), false);

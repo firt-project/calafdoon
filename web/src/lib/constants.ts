@@ -1,7 +1,13 @@
-export const APP_NAME = "Hel Calafkaaga";
+// TODO(rebrand): fill in the real product identity before going live.
+//   APP_NAME / SITE_BRAND_NAME  — the name shown across the UI, emails and SEO
+//   PRODUCTION_SITE_URL         — your real domain (replaces web.example.com)
+//   SUPPORT_EMAIL               — your real support inbox
+//   PLAY_STORE_PACKAGE_ID       — your Android application id
+//   WHATSAPP_* / *_PAYEE_*      — your real contact + payout details
+export const APP_NAME = "Web";
 /** Full brand / business name — used for Google site name & Organization schema. */
-export const SITE_BRAND_NAME = "Hel Calafkaaga";
-export const PRODUCTION_SITE_URL = "https://www.helcalafkaaga.com";
+export const SITE_BRAND_NAME = "Web";
+export const PRODUCTION_SITE_URL = "https://web.example.com";
 export const APP_TAGLINE = "Find Your Perfect Match";
 export const APP_DESCRIPTION =
   "We connect serious men and women for marriage based on Islamic values, trust, and respect.";
@@ -15,11 +21,11 @@ export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const ANDROID_INSTALL_PATH = "/download";
 export const ANDROID_INSTALL_URL = `${PRODUCTION_SITE_URL}${ANDROID_INSTALL_PATH}`;
 /** Google Play listing — primary install CTA on the homepage. */
-export const PLAY_STORE_PACKAGE_ID = "com.helcalaf.app";
+export const PLAY_STORE_PACKAGE_ID = "com.example.web";
 export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE_ID}`;
 /** Legacy direct APK (optional sideload); prefer Play Store. */
-export const ANDROID_APK_URL = "/download/hel-calafkaaga.apk";
-export const SUPPORT_EMAIL = "support@helcalafkaaga.com";
+export const ANDROID_APK_URL = "/download/web.apk";
+export const SUPPORT_EMAIL = "support@web.example.com";
 /** Manual EVC / Hormuud mobile-money payee (Somalia). */
 export const EVC_PAYEE_NAME = "Axmed Xaaji";
 export const EVC_PAYEE_PHONE = "+252617975403";
@@ -368,9 +374,9 @@ export type AppNavIcon =
 
 export const FAQ_ITEMS = [
   {
-    question: "Is Hel Calafkaaga halal?",
+    question: "Is Web halal?",
     answer:
-      "Yes. Hel Calafkaaga is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
+      "Yes. Web is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
   },
   {
     question: "How does matching work?",
@@ -378,7 +384,7 @@ export const FAQ_ITEMS = [
       "Our compatibility algorithm analyzes religion, age, location, education, lifestyle, and personality traits to find your best matches.",
   },
   {
-    question: "How much does Hel Calafkaaga cost?",
+    question: "How much does Web cost?",
     answer:
       "New members: Basic $2 or Premium ($20 men / $15 women). Existing members keep free Basic and can upgrade to Premium for $15.",
   },

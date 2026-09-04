@@ -25,7 +25,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           fallback={
             <header className="sticky top-0 z-50 border-b border-border bg-card px-4 py-4">
               <a href="/" className="font-display text-lg font-semibold text-foreground">
-                Hel Calafkaaga
+                Web
               </a>
             </header>
           }

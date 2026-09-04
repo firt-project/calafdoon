@@ -345,7 +345,7 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
     if (member.email) {
       await this.mail.send({
         to: member.email,
-        subject: "Support reply from Hel Calafkaaga",
+        subject: "Support reply from Web",
         text: `${message}\n\nThis conversation will be removed automatically after 30 minutes.\nOpen the app: /profile`,
       });
     }

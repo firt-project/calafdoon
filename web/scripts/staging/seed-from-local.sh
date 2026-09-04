@@ -13,7 +13,7 @@ MODE="${1:---print-only}"
 
 print_commands() {
   cat <<EOF
-# Hel Calafkaaga — seed staging DB from local dump
+# Web — seed staging DB from local dump
 
 ## Auth policy (staging)
 Only allowlisted test accounts may authenticate in staging E2E.

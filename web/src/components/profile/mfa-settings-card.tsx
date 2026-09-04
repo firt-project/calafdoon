@@ -70,7 +70,7 @@ export function MfaSettingsCard({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "hel-calafkaaga-mfa-recovery-codes.txt";
+    a.download = "web-mfa-recovery-codes.txt";
     a.click();
     URL.revokeObjectURL(url);
   };

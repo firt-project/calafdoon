@@ -27,10 +27,7 @@ export const SEO_SO = {
     "xalaal",
     "muslim",
     "islaam",
-    "hel calafkaaga",
-    "Hel Calafkaaga",
-    "helcalafkaaga",
-    "HelCalafkaaga",
+    "web",
     "lammaane",
     "lamaanahaaga",
     "Hel Lammaanaha Noloshaada",
@@ -45,52 +42,52 @@ export const SEO_SO = {
     about: {
       title: "Naga Saabsan",
       description:
-        "Hel Calafkaaga waxay ka caawisaa Muslimiinta inay helaan lammaane xalaal ah iyadoo la ilaalinayo qarsoodiga iyo qiyamka Islaamka.",
+        "Web waxay ka caawisaa Muslimiinta inay helaan lammaane xalaal ah iyadoo la ilaalinayo qarsoodiga iyo qiyamka Islaamka.",
     },
     howItWorks: {
       title: "Sida Uu U Shaqeeyo",
       description:
-        "Is diiwaangeli, dhammaystir profile-kaaga, hel isbarbardhigyo ku habboon, oo si ixtiraam leh ula xiriir lammaanayaasha Hel Calafkaaga.",
+        "Is diiwaangeli, dhammaystir profile-kaaga, hel isbarbardhigyo ku habboon, oo si ixtiraam leh ula xiriir lammaanayaasha Web.",
     },
     pricing: {
       title: "Qiimaha",
       description:
-        "Diiwaangelinta Hel Calafkaaga: Basic $2 (rag iyo haween). Premium $20 rag / $15 haween. Kor u qaadis Premium $15.",
+        "Diiwaangelinta Web: Basic $2 (rag iyo haween). Premium $20 rag / $15 haween. Kor u qaadis Premium $15.",
     },
     faq: {
       title: "Su'aalaha Inta Badan La Isweydiiyo",
       description:
-        "Jawaabo ku saabsan Hel Calafkaaga — guur xalaal, qiimaha (Basic $2 / Premium $20 / kor u qaadis $15), qarsoodiga, iyo sida isbarbardhiggu u shaqeeyo.",
+        "Jawaabo ku saabsan Web — guur xalaal, qiimaha (Basic $2 / Premium $20 / kor u qaadis $15), qarsoodiga, iyo sida isbarbardhiggu u shaqeeyo.",
     },
     contact: {
       title: "Nala Soo Xiriir",
       description:
-        "La xiriir Hel Calafkaaga — email ama WhatsApp caawinta diiwaangelinta iyo taageerada shakhsi ahaaneed.",
+        "La xiriir Web — email ama WhatsApp caawinta diiwaangelinta iyo taageerada shakhsi ahaaneed.",
     },
     privacy: {
       title: "Siyaasadda Qarsoodiga",
       description:
-        "Sida Hel Calafkaaga u ilaaliso xogtaada shakhsi ahaaneed iyo sida aan u maamulno macluumaadka xubnaha.",
+        "Sida Web u ilaaliso xogtaada shakhsi ahaaneed iyo sida aan u maamulno macluumaadka xubnaha.",
     },
     terms: {
       title: "Shuruudaha Adeegga",
       description:
-        "Shuruudaha isticmaalka Hel Calafkaaga — diiwaangelinta, dhaqanka xubnaha, iyo mabaadi'da guurka xalaal ah.",
+        "Shuruudaha isticmaalka Web — diiwaangelinta, dhaqanka xubnaha, iyo mabaadi'da guurka xalaal ah.",
     },
     download: {
       title: "Soo Deg App-ka Android",
       description:
-        "Soo deg oo rakib Hel Calafkaaga Android APK — guur xalaal, isbarbardhig, iyo sheekaysi ammaan ah telefoonkaaga.",
+        "Soo deg oo rakib Web Android APK — guur xalaal, isbarbardhig, iyo sheekaysi ammaan ah telefoonkaaga.",
     },
     deleteAccount: {
       title: "Tirtir Akoonka",
       description:
-        "Sida loo tirtiro akoonkaaga Hel Calafkaaga — website, app, waxa la tirtirayo, iyo sida nala soo xiriirayo.",
+        "Sida loo tirtiro akoonkaaga Web — website, app, waxa la tirtirayo, iyo sida nala soo xiriirayo.",
     },
     childSafety: {
       title: "Child Safety Standards (CSAE)",
       description:
-        "HelCalaf / Hel Calafkaaga child safety standards — adults 18+ only, CSAE prohibition, reporting, and compliance contacts.",
+        "Web / Web child safety standards — adults 18+ only, CSAE prohibition, reporting, and compliance contacts.",
     },
   },
 } as const;

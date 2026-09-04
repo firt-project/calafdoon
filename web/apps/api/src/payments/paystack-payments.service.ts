@@ -62,6 +62,8 @@ export class PaystackPaymentsService {
   async startRegistration(opts: {
     userId: string;
     tier?: RegistrationTier;
+    /** Restrict the hosted checkout to one channel — "mobile_money" powers the M-Pesa button. */
+    channel?: "mobile_money" | "card" | "bank";
   }): Promise<{
     ok: true;
     authorizationUrl: string;
@@ -152,6 +154,7 @@ export class PaystackPaymentsService {
         type: "registration",
         isRenewal,
       },
+      channels: opts.channel ? [opts.channel] : undefined,
     });
 
     if (!init.ok) {

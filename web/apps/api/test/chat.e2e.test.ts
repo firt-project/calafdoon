@@ -147,7 +147,7 @@ describe("Phase 7 chat e2e", () => {
     try {
       AppModule = require(distAppModule).AppModule;
     } catch {
-      throw new Error(`Missing ${distAppModule}. Run npm run build -w @hel/api`);
+      throw new Error(`Missing ${distAppModule}. Run npm run build -w @web/api`);
     }
 
     prisma = new PrismaClient();

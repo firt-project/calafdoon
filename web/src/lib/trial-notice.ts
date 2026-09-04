@@ -1,4 +1,4 @@
-const TRIAL_WELCOME_KEY = "hel-calafkaaga-trial-welcome-seen";
+const TRIAL_WELCOME_KEY = "web-trial-welcome-seen";
 
 function storageKey(userId?: string) {
   return userId ? `${TRIAL_WELCOME_KEY}:${userId}` : TRIAL_WELCOME_KEY;

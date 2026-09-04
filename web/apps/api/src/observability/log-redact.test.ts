@@ -22,9 +22,9 @@ const MARK = {
   password: "FAKE_PASSWORD_MARKER_778899",
   sessionToken: "FAKE_SESSION_TOKEN_FIELD_MARKER_99aa",
   inviteUrl:
-    "https://www.helcalafkaaga.com/admin/invite?token=FAKE_INVITE_TOKEN_MARKER_bbccdd",
+    "https://web.example.com/admin/invite?token=FAKE_INVITE_TOKEN_MARKER_bbccdd",
   resetUrl:
-    "https://www.helcalafkaaga.com/reset-password?token=FAKE_RESET_TOKEN_MARKER_eeff00",
+    "https://web.example.com/reset-password?token=FAKE_RESET_TOKEN_MARKER_eeff00",
   signedUrl:
     "https://bucket.r2.cloudflarestorage.com/obj?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FAKECRED&X-Amz-Signature=FAKESIG123",
   databaseUrl: "postgresql://hel:FAKE_DB_PASSWORD_MARKER@localhost:5432/hel",

@@ -78,7 +78,7 @@ export class CsrfGuard implements CanActivate {
  * SameSite for auth cookies.
  *
  * Default is Lax — correct for same-site sibling hosts
- * (`helcalafkaaga.com` ↔ `api.helcalafkaaga.com`).
+ * (`web.example.com` ↔ `api.web.example.com`).
  *
  * Set `COOKIE_SAMESITE=none` only when the browser must send cookies on
  * true cross-site requests (legacy `*.onrender.com` API host). SameSite=None

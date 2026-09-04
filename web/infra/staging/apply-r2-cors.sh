@@ -2,11 +2,11 @@
 # Apply browser CORS to all Hel R2 buckets (view images + registration/EVC PUT uploads).
 #
 # Usage:
-#   set -a && source TEL-CALAFKAAGA-1.env && set +a
+#   set -a && source WEB-API.env && set +a
 #   ./infra/staging/apply-r2-cors.sh
 #
 # Origins (comma-separated). Defaults include Vercel staging + production domain.
-#   CORS_ORIGINS=https://www.helcalafkaaga.com,https://helcalafkaaga.com,https://tel-calafkaaga-1-api-one.vercel.app
+#   CORS_ORIGINS=https://web.example.com,https://web.example.com,https://web-api-preview.vercel.app
 
 set -euo pipefail
 
@@ -14,7 +14,7 @@ set -euo pipefail
 : "${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID}"
 : "${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY}"
 
-ORIGINS="${CORS_ORIGINS:-https://www.helcalafkaaga.com,https://helcalafkaaga.com,https://tel-calafkaaga-1-api-one.vercel.app}"
+ORIGINS="${CORS_ORIGINS:-https://web.example.com,https://web.example.com,https://web-api-preview.vercel.app}"
 # Back-compat with single CORS_ORIGIN
 if [[ -n "${CORS_ORIGIN:-}" ]]; then
   ORIGINS="${CORS_ORIGIN},${ORIGINS}"

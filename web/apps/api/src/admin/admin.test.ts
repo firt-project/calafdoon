@@ -179,7 +179,7 @@ describe("Phase 9 admin unit tests", () => {
         }),
       } as never,
       { transition: async () => ({ ok: true }), recordHistory: async () => {} } as never,
-      { get: () => "https://www.helcalafkaaga.com" } as never,
+      { get: () => "https://web.example.com" } as never,
       mail
     );
     moderation = new ModerationService(prisma as never, audit);
@@ -199,7 +199,7 @@ describe("Phase 9 admin unit tests", () => {
     invites = new StaffInvitesService(
       prisma as never,
       audit,
-      { get: () => "https://www.helcalafkaaga.com" } as never,
+      { get: () => "https://web.example.com" } as never,
       mail
     );
     announcements = new AnnouncementsService(

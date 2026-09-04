@@ -138,10 +138,10 @@ export const en = {
     heroCta: "Register Now — from ${{price}}",
     seeHowItWorks: "See how it works",
     watchHowToUse: "Watch how to use",
-    videoTitle: "See how members use Hel Calafkaaga",
+    videoTitle: "See how members use Web",
     videoDesc:
       "Watch a short walkthrough: create your account, complete your profile, and start finding matches.",
-    videoIframeTitle: "How to use Hel Calafkaaga",
+    videoIframeTitle: "How to use Web",
     findMatchTitle: "Find Your Match",
     findMatchIam: "I am a",
     findMatchLookingFor: "Looking for",
@@ -154,7 +154,7 @@ export const en = {
     findMatchSearch: "Search",
     quote:
       "The right partner is not just about love, it's about building a beautiful future together.",
-    quoteAuthor: "HEL CALAFKAAGA Member",
+    quoteAuthor: "WEB Member",
     pricingTitle: "Simple Pricing",
     pricingSubtitle:
       "Men: Basic ${{basic}} or Premium ${{premium}}. Women: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Same app features; Premium adds WhatsApp help and match search.",
@@ -199,7 +199,7 @@ export const en = {
     previewProfile: "Complete your profile questionnaire",
     previewMatches: "Discover compatible matches with scores",
     previewChat: "Message matches securely in-app",
-    howWorks: "How HEL CALAFKAAGA Works",
+    howWorks: "How WEB Works",
     step1Title: "Register & Complete Profile",
     step1Desc: "Create your account and complete your marriage profile with photo and preferences.",
     step2Title: "Choose Your Plan",
@@ -223,9 +223,9 @@ export const en = {
     story2Location: "London, UK",
     story3Location: "Minneapolis, USA",
     story1Quote:
-      "Alhamdulillah, I found my life partner through HEL CALAFKAAGA. The questionnaire helped us align on faith and family values.",
+      "Alhamdulillah, I found my life partner through WEB. The questionnaire helped us align on faith and family values.",
     story2Quote:
-      "HEL CALAFKAAGA helped us find someone who matches our faith and culture. The process felt respectful from start to finish.",
+      "WEB helped us find someone who matches our faith and culture. The process felt respectful from start to finish.",
     story3Quote:
       "Professional and dignified service. I recommend it to anyone serious about marriage.",
     faqTitle: "Common Questions",
@@ -275,12 +275,12 @@ export const en = {
     feature2: "Verified Muslim profiles",
     feature3: "Compatibility-based matching",
     testimonialQuote:
-      "We matched on Hel Calafkaaga and were married within the year, alhamdulillah. The process felt respectful and serious from day one.",
+      "We matched on Web and were married within the year, alhamdulillah. The process felt respectful and serious from day one.",
     testimonialAuthor: "Aisha & Yusuf — married couple",
     joinNowPrice: "Register Now – ${{price}}",
     registerTitle: "Register on {{name}}",
     registerHeading: "Create your account",
-    registerEyebrow: "Join Hel Calafkaaga",
+    registerEyebrow: "Join Web",
     registerStep1Desc: "Enter your email and a secure password to get started",
     stepAccount: "Account",
     stepProfile: "Profile",
@@ -418,7 +418,7 @@ export const en = {
   aboutPage: {
     title: "About {{name}}",
     subtitle: "Building meaningful connections in the Muslim community.",
-    p1: "Hel Calafkaaga was founded with a simple mission: to help Muslims find their halal life partner in a modern, respectful, and secure environment. We understand that marriage is one of the most important decisions in life, and we are committed to making that journey as smooth and meaningful as possible.",
+    p1: "Web was founded with a simple mission: to help Muslims find their halal life partner in a modern, respectful, and secure environment. We understand that marriage is one of the most important decisions in life, and we are committed to making that journey as smooth and meaningful as possible.",
     p2: "Our platform combines thoughtful technology with Islamic values. Every feature — from our compatibility algorithm to our privacy controls — is designed with the Muslim community in mind. We believe that finding a spouse should be dignified, intentional, and guided by faith.",
     valuesTitle: "Our Values",
     valueHalalTitle: "Halal:",
@@ -454,15 +454,15 @@ export const en = {
   deleteAccountPage: {
     title: "Delete your account",
     subtitle:
-      "How to permanently delete your Hel Calafkaaga account on the website or mobile app.",
+      "How to permanently delete your Web account on the website or mobile app.",
     intro:
-      "You can delete your Hel Calafkaaga account at any time. Deletion removes your profile and account data from our active systems. Some records may be kept where required by law (for example payment records or safety investigations).",
+      "You can delete your Web account at any time. Deletion removes your profile and account data from our active systems. Some records may be kept where required by law (for example payment records or safety investigations).",
     webTitle: "Delete on the website",
     webSteps:
-      "1. Sign in at helcalafkaaga.com\n2. Open Profile (or Settings)\n3. Choose Delete account\n4. Enter your password and confirm",
+      "1. Sign in at web.example.com\n2. Open Profile (or Settings)\n3. Choose Delete account\n4. Enter your password and confirm",
     appTitle: "Delete in the Android / iOS app",
     appSteps:
-      "1. Open the Hel Calafkaaga app\n2. Go to Settings\n3. Tap Delete account\n4. Enter your password and confirm",
+      "1. Open the Web app\n2. Go to Settings\n3. Tap Delete account\n4. Enter your password and confirm",
     whatDeletedTitle: "What is deleted",
     whatDeletedBody:
       "Your profile, photos linked to your account, likes, matches, sessions, and in-app messages associated with your account are removed or disconnected as part of account deletion.",
@@ -525,7 +525,7 @@ export const en = {
   },
   downloadPage: {
     title: "Install Android App",
-    subtitle: "Get Hel Calafkaaga on Google Play for your Android phone.",
+    subtitle: "Get Web on Google Play for your Android phone.",
     intro:
       "The easiest way to install is Google Play. Tap the button below to open the store listing on your phone.",
     openPlayStore: "Open Google Play",
@@ -534,13 +534,13 @@ export const en = {
     stepsTitle: "On your phone:",
     step1: "Open this page in Chrome or the Play Store app",
     step2: "Tap Open Google Play",
-    step3: "Tap Install on the Hel Calafkaaga listing",
+    step3: "Tap Install on the Web listing",
     step4: "Open the app and sign in or create an account",
     packageLabel: "Package",
   },
   payment: {
     completeRegistration: "Complete Your Registration",
-    welcome: "Welcome to Hel Calafkaaga!",
+    welcome: "Welcome to Web!",
     welcomeDesc:
       "Your account is created. Complete your profile questionnaire first, then choose a plan to start matching.",
     choosePlan:
@@ -593,8 +593,10 @@ export const en = {
       "Card payments are verified by Stripe automatically. No screenshot or payment proof is required.",
     payWithCard: "Pay with card",
     payWithWaafi: "WaafiPay",
-    payWithPaystack: "Paystack",
-    payWithMobileMoney: "EVC / M-PESA",
+    payWithMpesa: "Paystack M-Pesa",
+    payWithMobileMoney: "Manual payment",
+    gatewayUnavailable:
+      "This payment option is temporarily unavailable. Please use card, WaafiPay, or manual payment.",
     stepAccount: "Account",
     stepDetails: "Details",
     stepProfile: "Profile",
@@ -603,7 +605,7 @@ export const en = {
     paymentCanceled: "Payment canceled. Complete payment to unlock matches.",
     trialEndedTitle: "Payment required",
     trialEndedDesc:
-      "Pay ${{basic}} first, then ${{monthly}}/month (or Premium ${{premium}}) to unlock matches and messaging on Hel Calafkaaga.",
+      "Pay ${{basic}} first, then ${{monthly}}/month (or Premium ${{premium}}) to unlock matches and messaging on Web.",
     profileNotFound: "Profile not found.",
     confirmingDesc: "Please wait while we verify your payment with Stripe.",
     success: "Payment successful",
@@ -679,32 +681,32 @@ export const en = {
     waafiFailed: "WaafiPay payment failed. Check your number and try again.",
     waafiShowManual: "Prefer to send money manually? Upload a screenshot",
     waafiHideManual: "Hide manual payment form",
-    paystackBadge: "Paystack",
-    paystackTitle: "Pay with card or bank",
-    paystackSubtitle:
-      "Pay ${{price}} for your first 30 days on Paystack's secure checkout, then just ${{monthly}} every month.",
-    paystackPeriodNote:
+    mpesaPeriodNote:
       "Access lasts 30 days. Your first payment is ${{price}}; every renewal after that is ${{monthly}}.",
-    paystackPay: "Pay ${{price}} with Paystack",
-    paystackRedirecting: "Opening Paystack checkout…",
-    paystackSecureNote: "Secure Paystack checkout.",
-    paystackCardsNote:
-      "Pay with a debit/credit card, bank transfer, or mobile money. No screenshot needed.",
-    paystackFailed: "Could not start the Paystack payment. Please try again.",
+    mpesaBadge: "M-Pesa",
+    mpesaCheckoutTitle: "Pay with M-Pesa",
+    mpesaCheckoutSubtitle:
+      "Pay ${{price}} for your first 30 days with an M-Pesa STK push, then just ${{monthly}} every month. No screenshot needed.",
+    mpesaPay: "Pay ${{price}} with M-Pesa",
+    mpesaRedirecting: "Opening M-Pesa checkout…",
+    mpesaSecureNote: "Secure M-Pesa checkout via Paystack.",
+    mpesaStepsNote:
+      "Enter your M-Pesa number, then approve the STK push prompt on your phone.",
+    mpesaFailed: "Could not start the M-Pesa payment. Please try again.",
   },
   faq: {
     title: "Frequently Asked Questions",
-    subtitle: "Everything you need to know about Hel Calafkaaga.",
-    q1: "Is Hel Calafkaaga halal?",
-    a1: "Yes. Hel Calafkaaga is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
+    subtitle: "Everything you need to know about Web.",
+    q1: "Is Web halal?",
+    a1: "Yes. Web is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
     q2: "How does matching work?",
     a2: "Our compatibility algorithm analyzes religion, age, location, education, lifestyle, and personality traits to find your best matches.",
-    q3: "How much does Hel Calafkaaga cost?",
+    q3: "How much does Web cost?",
     a3: "New members pay $4.99 first, then $1 every month for Basic. Premium is $20 for new men or $15 for women / upgrades (WhatsApp support and match-search help).",
     q4: "How is my data protected?",
     a4: "We use industry-standard encryption and never share your personal data with third parties. Your privacy is our priority.",
     q5: "Can I delete my account?",
-    a5: "Yes. Delete anytime from Profile → Delete account, or follow https://www.helcalafkaaga.com/delete-account. You can also email support if you cannot sign in.",
+    a5: "Yes. Delete anytime from Profile → Delete account, or follow https://web.example.com/delete-account. You can also email support if you cannot sign in.",
     q6: "What is Premium?",
     a6: "Premium includes everything in Basic, plus personal WhatsApp support and staff help searching for your match. New men Premium signup is $20; upgrade from Basic (and all women) is $15.",
     stillHaveQuestions: "Still have questions?",
@@ -743,7 +745,7 @@ export const en = {
   },
   howItWorks: {
     title: "How It Works",
-    subtitle: "Your journey to finding a life partner on Hel Calafkaaga.",
+    subtitle: "Your journey to finding a life partner on Web.",
     step1: "Register & Complete Profile",
     step1Desc:
       "Create your account, add your details, and complete the marriage questionnaire with photo and preferences.",

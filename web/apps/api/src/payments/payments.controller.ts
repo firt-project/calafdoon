@@ -150,12 +150,16 @@ export class PaymentsController {
     @Body() body: unknown
   ) {
     const parsed = parseBody(
-      z.object({ tier: z.enum(["basic", "premium"]).optional() }),
+      z.object({
+        tier: z.enum(["basic", "premium"]).optional(),
+        channel: z.enum(["mobile_money", "card", "bank"]).optional(),
+      }),
       body ?? {}
     );
     return this.paystack.startRegistration({
       userId: user.id,
       tier: parsed.tier,
+      channel: parsed.channel,
     });
   }
 
