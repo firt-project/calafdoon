@@ -1,16 +1,15 @@
-// TODO(rebrand): fill in the real product identity before going live.
-//   APP_NAME / SITE_BRAND_NAME  — the name shown across the UI, emails and SEO
+// TODO(rebrand): still to confirm before go-live —
 //   PRODUCTION_SITE_URL         — your real domain (replaces web.example.com)
 //   SUPPORT_EMAIL               — your real support inbox
 //   PLAY_STORE_PACKAGE_ID       — your Android application id
 //   WHATSAPP_* / *_PAYEE_*      — your real contact + payout details
-export const APP_NAME = "Web";
+export const APP_NAME = "Calafdoon";
 /** Full brand / business name — used for Google site name & Organization schema. */
-export const SITE_BRAND_NAME = "Web";
+export const SITE_BRAND_NAME = "Calafdoon";
 export const PRODUCTION_SITE_URL = "https://web.example.com";
-export const APP_TAGLINE = "Find Your Perfect Match";
+export const APP_TAGLINE = "Find the one meant for you";
 export const APP_DESCRIPTION =
-  "We connect serious men and women for marriage based on Islamic values, trust, and respect.";
+  "Calafdoon is a Somali marriage platform where you are matched by compatibility — faith, family plans and life goals — not by swiping. Every profile is reviewed by a real person.";
 export const BRAND_PINK = "#8E2438";
 export const BRAND_NAVY = "#1A1214";
 export const WHATSAPP_GREEN = "#25D366";

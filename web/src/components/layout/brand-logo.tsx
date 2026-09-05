@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Heart } from "lucide-react";
 import { SITE_BRAND_NAME } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
@@ -15,6 +14,38 @@ interface BrandLogoProps {
   className?: string;
 }
 
+/**
+ * Calafdoon wordmark. The mark is a pomegranate (rummaan) — one skin, many
+ * seeds held together. Pomegranate stroke + a couple of gold seeds.
+ */
+function PomegranateMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 26 26"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M13 2.6c1 1.7.7 3-.3 4"
+        stroke="var(--gold)"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M13 6.4c4.3 0 7.6 3.6 7.6 8.3 0 5-3.4 8.7-7.6 8.7s-7.6-3.7-7.6-8.7c0-4.7 3.3-8.3 7.6-8.3Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <circle cx="10.2" cy="13" r="1.3" fill="currentColor" />
+      <circle cx="15.8" cy="13" r="1.3" fill="currentColor" />
+      <circle cx="13" cy="17" r="1.3" fill="currentColor" />
+      <circle cx="10.6" cy="19.6" r="1.15" fill="var(--gold)" />
+      <circle cx="15.4" cy="19.6" r="1.15" fill="var(--gold)" />
+    </svg>
+  );
+}
+
 export function BrandLogo({
   href = "/",
   size = "md",
@@ -24,9 +55,9 @@ export function BrandLogo({
   className,
 }: BrandLogoProps) {
   const { t } = useTranslation();
-  const iconSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
-  const heartSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
-  const textSize = size === "sm" ? "text-base sm:text-lg" : "text-lg sm:text-xl";
+  const iconSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  const markSize = size === "sm" ? "h-5 w-5" : "h-6 w-6";
+  const textSize = size === "sm" ? "text-lg" : "text-xl sm:text-[1.35rem]";
   const isLight = variant === "light";
 
   return (
@@ -35,17 +66,20 @@ export function BrandLogo({
       aria-label={SITE_BRAND_NAME}
       className={cn("inline-flex items-center gap-2.5 group", className)}
     >
-      <div
+      <span
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md transition-transform group-hover:scale-105",
+          "flex shrink-0 items-center justify-center rounded-lg border transition-transform group-hover:scale-105",
+          isLight
+            ? "border-white/25 text-white"
+            : "border-primary/25 text-primary",
           iconSize
         )}
         aria-hidden
       >
-        <Heart className={heartSize} fill="currentColor" />
-      </div>
+        <PomegranateMark className={markSize} />
+      </span>
       {showName && (
-        <div className="flex min-w-0 flex-col leading-tight">
+        <span className="flex min-w-0 flex-col leading-none">
           <span
             className={cn(
               "font-display font-semibold tracking-tight truncate",
@@ -58,14 +92,14 @@ export function BrandLogo({
           {showTagline && (
             <span
               className={cn(
-                "text-xs font-medium tracking-wide sm:text-sm",
-                isLight ? "text-primary-foreground/80" : "text-primary"
+                "mt-1 font-mono text-[0.62rem] uppercase tracking-[0.14em]",
+                isLight ? "text-white/70" : "text-muted-foreground"
               )}
             >
               {t("brand.tagline")}
             </span>
           )}
-        </div>
+        </span>
       )}
     </Link>
   );

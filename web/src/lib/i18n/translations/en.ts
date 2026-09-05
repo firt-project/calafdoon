@@ -1,8 +1,8 @@
 export const en = {
   brand: {
-    tagline: "Find Your Perfect Match",
+    tagline: "Hel calafkaaga",
     description:
-      "We connect serious men and women for marriage based on Islamic values, trust, and respect.",
+      "Calafdoon is a Somali marriage platform. You are matched by compatibility — faith, family plans and life goals — not by swiping, and every profile is reviewed by a real person.",
   },
   nav: {
     home: "Home",
@@ -237,6 +237,95 @@ export const en = {
     trust1: "Your Privacy is Our Priority",
     trust2: "Islamic Values & Respect",
     trust3: "Safe & Secure Platform",
+
+    // --- Rummaan landing (v2) ---
+    heroEyebrow: "Somali marriage · matched by compatibility",
+    heroLine1: "Matched for marriage.",
+    heroLine2: "Not for swiping.",
+    heroLead:
+      "Answer the questionnaire once. We match you on faith, family plans and life goals — then a real person checks every profile before anyone can message you.",
+    heroAssurance:
+      "No casual browsing. Everyone here has told us they are ready to marry.",
+    matchExampleName: "Amina, 26",
+    matchExampleMeta: "Nairobi · reviewed",
+    matchRowDeen: "Deen & practice",
+    matchRowChildren: "Wants children",
+    matchRowRelocate: "Open to relocating",
+    matchRowFamily: "Family involvement",
+    matchRowValueAligned: "aligned",
+    matchRowValueBoth: "both yes",
+    matchRowValueYou: "you & her",
+    matchRowValueWelcome: "welcomed",
+    matchReviewedBy: "Profile checked by the Calafdoon team",
+    matchScoreLabel: "match",
+
+    proofReviewed: "Every profile reviewed by a real person",
+    proofReach: "Members across Kenya, Somalia & the diaspora",
+    proofPayWith: "Pay with",
+
+    howEyebrow: "How it works",
+    howTitle: "You are matched on what a marriage needs — not a photo.",
+    howLead:
+      "Three steps. The questionnaire does the work, so your matches are people you could actually build a life with.",
+    howStep1Title: "Answer the questionnaire",
+    howStep1Desc:
+      "Faith and practice, family and children, work, location, what you will and will not compromise on. Ten minutes, save and finish later.",
+    howStep2Title: "Get a compatibility score",
+    howStep2Desc:
+      "Every potential match is scored against your answers. You see where you align and where you differ, before you ever say salaam.",
+    howStep3Title: "Meet your matches",
+    howStep3Desc:
+      "A new match each day, plus everyone who scored above the line. Like, and if they like back, the conversation opens.",
+    floorLabel: "The 40% line",
+    floorNote:
+      "We do not show you matches below a {{score}}% compatibility score — even if they liked you. It keeps every introduction worth your time, and your family's.",
+
+    lifeEyebrow: "Why Calafdoon",
+    lifeTitle: "Built for how you actually live.",
+    lifeLead:
+      "Most Muslim marriage apps are made for a phone in London. This one is made for a phone in Eastleigh, Hargeisa or Minneapolis — whichever you are holding.",
+    lifeFamilyTitle: "Family is welcome",
+    lifeFamilyDesc:
+      "Add a wali or family contact to your account. Nothing here assumes you are doing this alone or in secret.",
+    lifePayTitle: "Pay the way you already pay",
+    lifePayDesc:
+      "M-Pesa, EVC Plus and Hormuud alongside card. No forcing a Visa you do not have.",
+    lifePhoneTitle: "Works on any phone, any speed",
+    lifePhoneDesc:
+      "Light pages, small images, an installable app. Built to load on a slow connection, not just office wifi.",
+    lifeLangTitle: "English & Somali, everywhere",
+    lifeLangDesc:
+      "Every screen, email and notification in both languages. Switch any time — your family can read it too.",
+
+    safetyEyebrow: "Safety",
+    safetyTitle: "A real person stands between you and a stranger.",
+    safetyLead:
+      "Verification is not a checkbox here. It is a step every profile goes through before it is visible to anyone.",
+    safe1: "Human review of every new profile and photo before it goes live",
+    safe2: "Report and block on every profile and chat, always one tap away",
+    safe3: "Your photos stay private until you choose to share them with a match",
+    safe4: "No public browsing — profiles are shown only to matched members",
+
+    priceEyebrow: "Pricing",
+    priceTitle: "One plan. The price of a coffee.",
+    priceLead:
+      "Everything is included. No pay-per-message, no unlocking your own likes, no surprise renewal.",
+    priceOnce: "once",
+    priceThen: "then ${{monthly}} / month · cancel any time",
+    priceFeatureProfile: "Full profile, questionnaire and photos",
+    priceFeatureMatches: "Daily matches and unlimited likes",
+    priceFeatureChat: "Messaging with every mutual match",
+    priceFeatureLikes: "See who liked you",
+    priceFeatureWali: "Add a wali / family contact",
+    priceCompare:
+      "Muzz and Salams charge $20 to $45 a month for the same thing.",
+    priceAsideBody:
+      "Calafdoon is priced so a student in Nairobi and a nurse in Mogadishu can both afford it — not just the diaspora. The first ${{basic}} covers your review; ${{monthly}} a month keeps the lights on.",
+
+    finalEyebrowLine: "Bilow maanta · Hel calafkaaga",
+    finalTitle: "Your calaf is looking too.",
+    finalLead:
+      "Ten minutes to build your profile. One person on the other side, ready like you are.",
   },
   auth: {
     welcomeBack: "Welcome back",

@@ -16,13 +16,13 @@ export default function Icon() {
           justifyContent: "center",
           background: "linear-gradient(135deg, #5e1626, #8e2438)",
           borderRadius: 10,
-          color: "#ffffff",
-          fontSize: 18,
-          fontWeight: 700,
-          fontFamily: "system-ui, sans-serif",
+          color: "#fdf4f0",
+          fontSize: 30,
+          fontWeight: 600,
+          fontFamily: "Georgia, 'Times New Roman', serif",
         }}
       >
-        HC
+        C
       </div>
     ),
     { ...size }

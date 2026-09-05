@@ -2,9 +2,9 @@ import type { Translations } from "./index";
 
 export const so: Translations = {
   brand: {
-    tagline: "Hel Lammaanahaaga Ugu Fiican",
+    tagline: "Hel calafkaaga",
     description:
-      "Waxaan isku xirnaa rag iyo dumar dhab u ah guurka oo doonaya guur iyadoo lagu saleynayo qiyamka Islaamka, kalsoonida, iyo ixtiraam.",
+      "Calafdoon waa barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid — diinta, qorshaha qoyska iyo hadafyada nolosha — ma aha 'swipe', qofkastana waxaa eega qof dhab ah.",
   },
   nav: {
     home: "Bogga Hore",
@@ -239,6 +239,95 @@ export const so: Translations = {
     trust1: "Qarsoodigaaga Waa Mudnaantayada",
     trust2: "Qiyamka Islaamka & Ixtiraamka",
     trust3: "Platform Amaan & La Hubo",
+
+    // --- Rummaan landing (v2) ---
+    heroEyebrow: "Guurka Soomaalida · waafaqid ayaa la isku baraa",
+    heroLine1: "Loo barbardhigay guur.",
+    heroLine2: "Ma aha 'swipe'.",
+    heroLead:
+      "Hal mar buuxi su'aalaha. Waxaan kugu barbardhignaa diinta, qorshaha qoyska iyo hadafyada nolosha — ka dibna qof dhab ah ayaa eega profile kasta ka hor inta aan cidina kula soo xiriirin.",
+    heroAssurance:
+      "Ma jiro daawasho caadi ah. Qof kasta halkan wuxuu noo sheegay inuu diyaar u yahay guur.",
+    matchExampleName: "Aamina, 26",
+    matchExampleMeta: "Nairobi · la eegay",
+    matchRowDeen: "Diin & camal",
+    matchRowChildren: "Raba carruur",
+    matchRowRelocate: "Diyaar u ah guuritaan",
+    matchRowFamily: "Ka-qaybgalka qoyska",
+    matchRowValueAligned: "waafaqsan",
+    matchRowValueBoth: "labaduba haa",
+    matchRowValueYou: "adiga & iyada",
+    matchRowValueWelcome: "la soo dhaweeyay",
+    matchReviewedBy: "Profile-ka waxaa eegay kooxda Calafdoon",
+    matchScoreLabel: "waafaqid",
+
+    proofReviewed: "Profile kasta waxaa eega qof dhab ah",
+    proofReach: "Xubno ku nool Kenya, Soomaaliya & qurbaha",
+    proofPayWith: "Ku bixi",
+
+    howEyebrow: "Sida ay u shaqeyso",
+    howTitle: "Waxaa lagugu barbardhigaa waxa guur loo baahan yahay — ma aha sawir.",
+    howLead:
+      "Saddex tallaabo. Su'aaluhu shaqada way qabtaan, sidaas darteed kuwa lagu barbardhigo waa dad aad dhab u wada nooli kartaan.",
+    howStep1Title: "Buuxi su'aalaha",
+    howStep1Desc:
+      "Diin iyo camal, qoys iyo carruur, shaqo, goobta, waxa aad tanaasuli karto iyo waxaadan tanaasuli karin. Toban daqiiqo, kaydi oo dhammee markale.",
+    howStep2Title: "Hel qiimaha waafaqidda",
+    howStep2Desc:
+      "Qof kasta oo suurtagal ah waxaa lagu qiimeeyaa jawaabahaaga. Waxaad aragtaa halka aad ku waafaqsan tihiin iyo halka aad ku kala duwan tihiin, ka hor inta aadan salaamin.",
+    howStep3Title: "La kulan kuwa lagugu barbardhigay",
+    howStep3Desc:
+      "Maalin kasta mid cusub, iyo qof kasta oo ka sarreeyay xadka. Jeclow, hadday iyaguna ku jeclaadaan, wadahadalku waa furmaa.",
+    floorLabel: "Xadka 40%",
+    floorNote:
+      "Kuma tusino kuwa hoos yimaada qiimaha waafaqidda {{score}}% — xitaa hadday ku jeclaadeen. Waxay ka dhigaysaa is-barid kasta mid qiimo leh, adiga iyo qoyskaagaba.",
+
+    lifeEyebrow: "Maxaad Calafdoon u dooran",
+    lifeTitle: "Loo dhisay sida aad dhab u nooltahay.",
+    lifeLead:
+      "Inta badan apps-ka guurka Muslimka waxaa loo sameeyay taleefan London ku yaal. Kan waxaa loo sameeyay taleefan Islii, Hargeysa ama Minneapolis — mid kasta oo aad haysato.",
+    lifeFamilyTitle: "Qoyska waa la soo dhaweeyay",
+    lifeFamilyDesc:
+      "Ku dar wali ama xiriirka qoyska akoonkaaga. Waxba halkan kuma malaynayaan inaad kaligaa ama qarsoodi ku sameyneyso.",
+    lifePayTitle: "Ku bixi sida aad caadiyan wax u bixiso",
+    lifePayDesc:
+      "M-Pesa, EVC Plus iyo Hormuud oo ay weheliyaan kaadhka. Laguma qasbayo Visa aadan haysan.",
+    lifePhoneTitle: "Wuu ku shaqeeyaa taleefan kasta, xawaare kasta",
+    lifePhoneDesc:
+      "Bogag fudud, sawirro yaryar, app la rakibi karo. Waxaa loo dhisay inuu ku shaqeeyo xiriir gaabis ah.",
+    lifeLangTitle: "Af Ingiriisi & Af Soomaali, meel kasta",
+    lifeLangDesc:
+      "Bog kasta, iimayl iyo ogeysiis labada luqadood. Bedel goortaad rabto — qoyskaaguna way akhriyi karaan.",
+
+    safetyEyebrow: "Amniga",
+    safetyTitle: "Qof dhab ah ayaa u dhexeeya adiga iyo qof aanad aqoon.",
+    safetyLead:
+      "Xaqiijintu ma aha sanduuq la calaamadeeyo. Waa tallaabo profile kastaa maro ka hor inta aan cidina arkin.",
+    safe1: "Eegis dad ah oo profile iyo sawir cusub kasta ka hor intaan la daabicin",
+    safe2: "Ka-warbixin iyo xannib profile iyo wada-hadal kasta, had iyo jeer hal taabasho",
+    safe3: "Sawiradaadu waa qarsoodi ilaa aad go'aansato inaad la wadaagto qof",
+    safe4: "Ma jirto daawasho dadweyne — profile-yada waxaa la tusaa oo kaliya xubnaha la barbardhigay",
+
+    priceEyebrow: "Qiimaha",
+    priceTitle: "Hal qorshe. Qiimaha qaxwo.",
+    priceLead:
+      "Wax walba waa ku jiraan. Ma jirto lacag-farriin, ma jirto furid jaclaystayaashaada, ma jirto cusbooneysiin lama filaan ah.",
+    priceOnce: "hal mar",
+    priceThen: "ka dibna ${{monthly}} / bishii · goorma la joojin karo",
+    priceFeatureProfile: "Profile buuxa, su'aalo iyo sawirro",
+    priceFeatureMatches: "Maalin kasta kuwo lagugu barbardhigo & jaclayn aan xad lahayn",
+    priceFeatureChat: "Farriin qof kasta oo labada dhinac isku jecel",
+    priceFeatureLikes: "Arag cidda ku jeclaatay",
+    priceFeatureWali: "Ku dar wali / xiriirka qoyska",
+    priceCompare:
+      "Muzz iyo Salams waxay bishii ku qaataan $20 ilaa $45 wax isku mid ah.",
+    priceAsideBody:
+      "Calafdoon qiimihiisa waxaa loo dhigay in arday Nairobi jooga iyo kalkaaliye Muqdisho jooga labaduba awoodi karaan — ma aha qurbaha oo kaliya. ${{basic}}-ka hore wuxuu daboolayaa eegistaada; ${{monthly}} bishii ayaa socodsiinaya.",
+
+    finalEyebrowLine: "Bilow maanta · Hel calafkaaga",
+    finalTitle: "Calafkaaguna wuu raadinayaa.",
+    finalLead:
+      "Toban daqiiqo si aad u dhisato profile-kaaga. Hal qof dhinaca kale, diyaar sida adiga oo kale.",
   },
   auth: {
     welcomeBack: "Ku soo dhawoow mar kale",
