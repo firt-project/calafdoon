@@ -1,0 +1,115 @@
+# Render Blueprint for the Nest API (apps/api).
+#
+# WHY THIS FILE EXISTS
+# The API service kept building from the wrong place after the monorepo move:
+# its "Root Directory" was still `api`, but in this repo the API lives at
+# `web/apps/api`. That produced:
+#   ==> Root directory "api" does not exist.
+# and, before that, a stale image with no /payments/paystack/* routes -> the
+# M-Pesa checkout 404'd and the web app showed "gateway unavailable".
+#
+# HOW TO USE
+# - Existing service: you do NOT need to adopt this blueprint. Just open
+#   Render -> your API service -> Settings -> Build & Deploy and set
+#     Root Directory   = web/apps/api
+#     Dockerfile Path  = ./Dockerfile        (relative to the root dir)
+#   Save, then Manual Deploy -> Deploy latest commit. Keep the existing
+#   service so its URL, DB, Redis, S3 and secrets stay put.
+# - New service: Render Dashboard -> New -> Blueprint -> pick this repo.
+#   Fill every `sync: false` var below in the Render UI (they are secrets and
+#   are intentionally not stored in git).
+#
+# VERIFY AFTER DEPLOY
+#   curl https://<api-host>/health                     -> {"status":"ok"}
+#   curl https://<api-host>/payments/paystack/status   -> JSON (not "Cannot GET")
+# Boot log should contain: `Paystack enabled=true mode=live ... currency=KES`
+# Then point Vercel's API_UPSTREAM_URL at https://<api-host>.
+
+services:
+  - type: web
+    name: web-api
+    runtime: docker
+    branch: main
+    rootDir: web/apps/api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    # plan / region are set once in the dashboard; leave them out here so a
+    # blueprint sync never downgrades a running service.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+
+      # --- Core infra (secrets - fill in the Render UI) ---
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+
+      # --- Cookies / CORS / proxy (same-site with the web app) ---
+      - key: APP_URL
+        sync: false            # https://<your-web-domain>  (NOT the API host)
+      - key: CORS_ORIGINS
+        sync: false            # https://<your-web-domain>,https://<preview-domains>
+      - key: COOKIE_DOMAIN
+        sync: false            # .your-domain.com  (omit if API is on a different site)
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: TRUST_PROXY
+        value: "true"
+
+      # --- Email ---
+      - key: MAIL_DRIVER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+
+      # --- Object storage (R2 / S3) ---
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
+
+      # --- Stripe (card) ---
+      - key: STRIPE_GATEWAY
+        value: live
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # --- WaafiPay ---
+      - key: WAAFI_MERCHANT_UID
+        sync: false
+      - key: WAAFI_API_USER_ID
+        sync: false
+      - key: WAAFI_API_KEY
+        sync: false
+
+      # --- Paystack (powers the "Pay with M-Pesa" button) ---
+      # Set these and redeploy to turn the M-Pesa tab from "unavailable" to live.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false            # sk_live_...  (also verifies the webhook signature)
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false            # pk_live_...
+      - key: PAYSTACK_CURRENCY
+        value: KES             # must equal your Paystack settlement currency
+      - key: PAYSTACK_USD_RATE
+        sync: false            # units of KES per 1 USD, e.g. 129

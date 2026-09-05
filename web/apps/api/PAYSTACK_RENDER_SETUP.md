@@ -97,6 +97,26 @@ missing route as "disabled"), and `curl .../payments/paystack/status` through
 the web host (`https://your-web-domain.com/backend/payments/paystack/status`)
 also 404s.
 
+### Build fails with `Root directory "api" does not exist`
+
+After the monorepo move the API lives at **`web/apps/api`**, not `api`. Render
+→ your API service → **Settings → Build & Deploy**:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `web/apps/api` |
+| Dockerfile Path | `./Dockerfile` (relative to the root dir) |
+
+Save → **Manual Deploy → Deploy latest commit**. The repo-root [`render.yaml`](../../../render.yaml)
+records this config; you don't have to adopt the blueprint — fixing the one
+field above is enough, and it keeps the existing service URL, database and
+secrets.
+
+Also confirm the service is connected to **this** repo
+(`github.com/firt-project/calafdoon`, branch `main`). A deploy history showing
+commits that aren't in `git log` means it's still wired to the old pre-fork repo
+and your pushes never reach it.
+
 **c. On the site**, open the payment page → the **Paystack M-Pesa** tab shows the
 pay button (not the "temporarily unavailable" notice).
 
