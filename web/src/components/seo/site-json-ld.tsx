@@ -15,7 +15,7 @@ function getCanonicalSiteUrl() {
 
 /**
  * Google Search "site name" preference (the brand line above the URL).
- * Goal: show "Web", NOT "web.example.com".
+ * Goal: show "Calafdoon", NOT "web.example.com".
  *
  * Google treats this as a suggestion — if confidence is low it falls back
  * to the domain. Follow official order: preferred name first, domain last.
@@ -32,7 +32,7 @@ export function SiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_BRAND_NAME,
-    alternateName: ["Web", domainFallback],
+    alternateName: ["Calafdoon", domainFallback],
     url: siteUrl,
     description: HOME_OG_DESCRIPTION,
     inLanguage: ["so", "en"],
@@ -48,7 +48,7 @@ export function SiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_BRAND_NAME,
-    alternateName: ["Web", domainFallback],
+    alternateName: ["Calafdoon", domainFallback],
     url: siteUrl,
     logo: {
       "@type": "ImageObject",

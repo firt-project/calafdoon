@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Heart, X, BadgeCheck } from "lucide-react";
+import { Heart, BadgeCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/lazy-image";
 import { OnlineBadge } from "@/components/ui/online-status";
 import { ReportBlockMenu } from "@/components/safety/report-block-menu";
+import { CompatibilityRing } from "@/components/matches/compatibility-ring";
 import {
   buildProfileFacts,
   ProfileFactChips,
@@ -49,13 +51,13 @@ export function MatchProfileCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03, duration: 0.3 }}
-      className="rounded-2xl border border-border/80 bg-card p-3 shadow-sm sm:p-4"
+      className="rounded-xl border border-border/80 bg-card p-3 shadow-sm sm:p-4"
     >
       <div className="flex gap-3 sm:gap-4">
         <button
           type="button"
           onClick={onView}
-          className="relative h-[9.5rem] w-[7.25rem] shrink-0 overflow-hidden rounded-2xl bg-muted sm:h-[11rem] sm:w-[8.5rem]"
+          className="relative h-[9.5rem] w-[7.25rem] shrink-0 overflow-hidden rounded-lg bg-muted sm:h-[11rem] sm:w-[8.5rem]"
           aria-label={t("matchesPage.view")}
         >
           {match.imageUrl ? (
@@ -108,11 +110,11 @@ export function MatchProfileCard({
               onClick={onView}
               className="min-w-0 text-left"
             >
-              <h3 className="flex items-center gap-1.5 text-base font-semibold tracking-tight sm:text-lg">
+              <h3 className="flex items-center gap-1.5 font-display text-base font-semibold tracking-tight sm:text-lg">
                 <span className="truncate">{match.name}</span>
                 {match.verified ? (
                   <BadgeCheck
-                    className="h-4 w-4 shrink-0 fill-emerald-500 text-white"
+                    className="h-4 w-4 shrink-0 fill-leaf text-card"
                     aria-label={t("trustBadges.approved")}
                   />
                 ) : null}
@@ -123,11 +125,14 @@ export function MatchProfileCard({
                 </p>
               ) : null}
             </button>
-            <ReportBlockMenu
-              userId={match.userId as string}
-              userName={match.name}
-              compact
-            />
+            <div className="flex shrink-0 items-center gap-1">
+              <CompatibilityRing score={match.score} size="sm" />
+              <ReportBlockMenu
+                userId={match.userId as string}
+                userName={match.name}
+                compact
+              />
+            </div>
           </div>
 
           <ProfileFactChips
@@ -143,25 +148,27 @@ export function MatchProfileCard({
             </p>
           ) : null}
 
-          <div className="mt-auto flex items-center justify-end gap-2 pt-3">
-            <button
+          <div className="mt-auto flex items-center gap-2 pt-3">
+            <Button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm disabled:opacity-50"
+              variant="outline"
+              size="sm"
+              className="flex-1"
               onClick={() => onAction("pass")}
               disabled={busy}
-              aria-label={t("matchesPage.pass")}
             >
-              <X className="h-4 w-4" />
-            </button>
-            <button
+              {t("matchesPage.pass")}
+            </Button>
+            <Button
               type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md disabled:opacity-50"
+              size="sm"
+              className="flex-1"
               onClick={() => onAction("like")}
               disabled={busy || match.liked}
-              aria-label={t("matchesPage.like")}
             >
-              <Heart className="h-5 w-5 fill-current" />
-            </button>
+              <Heart className="h-3.5 w-3.5 fill-current" />
+              {t("matchesPage.like")}
+            </Button>
           </div>
         </div>
       </div>

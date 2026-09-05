@@ -991,6 +991,7 @@ export const en = {
     waliSaved: "Calaf contact saved",
     waliSaveFailed: "Could not save Calaf contact",
     waliVisibleTitle: "Calaf / guardian",
+    compatWhereAlign: "Where you align",
     compatReligion: "Religion alignment",
     compatPrayer: "Prayer habits",
     compatAge: "Age preference",

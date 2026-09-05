@@ -1002,6 +1002,7 @@ export const so: Translations = {
     waliSaved: "Xiriirka Calaf waa la kaydiyay",
     waliSaveFailed: "Xiriirka Calaf lama kaydin karin",
     waliVisibleTitle: "Calaf / mas'uul",
+    compatWhereAlign: "Halka aad ku waafaqsan tihiin",
     compatReligion: "Iswaafajinta diinta",
     compatPrayer: "Caadooyinka salaadda",
     compatAge: "Doorbidida da'da",
