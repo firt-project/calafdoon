@@ -28,15 +28,19 @@ export function validateFrontendEnv(): FrontendEnvReport {
   const errors: string[] = [];
   const provider = getBackendProvider();
 
-  if (!hasEnv(["VITE_API_URL", "NEXT_PUBLIC_API_URL"])) {
-    errors.push("VITE_API_URL or NEXT_PUBLIC_API_URL is required");
+  if (!hasEnv(["VITE_API_URL", "NEXT_PUBLIC_API_URL", "EXPO_PUBLIC_API_URL"])) {
+    errors.push(
+      "VITE_API_URL, NEXT_PUBLIC_API_URL, or EXPO_PUBLIC_API_URL is required"
+    );
   }
   if (
     !hasEnv([
       "VITE_SOCKET_URL",
       "NEXT_PUBLIC_SOCKET_URL",
+      "EXPO_PUBLIC_SOCKET_URL",
       "VITE_API_URL",
       "NEXT_PUBLIC_API_URL",
+      "EXPO_PUBLIC_API_URL",
     ])
   ) {
     errors.push("Socket/API base URL is required");

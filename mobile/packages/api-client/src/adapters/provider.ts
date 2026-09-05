@@ -34,9 +34,15 @@ function readPublicEnv(keys: string[]): string {
 }
 
 export function getApiBaseUrl(): string {
-  const url = readPublicEnv(["VITE_API_URL", "NEXT_PUBLIC_API_URL"]);
+  const url = readPublicEnv([
+    "VITE_API_URL",
+    "NEXT_PUBLIC_API_URL",
+    "EXPO_PUBLIC_API_URL",
+  ]);
   if (!url) {
-    throw new Error("VITE_API_URL or NEXT_PUBLIC_API_URL is required");
+    throw new Error(
+      "VITE_API_URL, NEXT_PUBLIC_API_URL, or EXPO_PUBLIC_API_URL is required"
+    );
   }
   return url;
 }
@@ -45,12 +51,14 @@ export function getSocketUrl(): string {
   const url = readPublicEnv([
     "VITE_SOCKET_URL",
     "NEXT_PUBLIC_SOCKET_URL",
+    "EXPO_PUBLIC_SOCKET_URL",
     "VITE_API_URL",
     "NEXT_PUBLIC_API_URL",
+    "EXPO_PUBLIC_API_URL",
   ]);
   if (!url) {
     throw new Error(
-      "VITE_SOCKET_URL / NEXT_PUBLIC_SOCKET_URL (or API URL) is required"
+      "VITE_SOCKET_URL / NEXT_PUBLIC_SOCKET_URL / EXPO_PUBLIC_SOCKET_URL (or API URL) is required"
     );
   }
   return url;
