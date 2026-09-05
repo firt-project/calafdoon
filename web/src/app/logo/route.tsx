@@ -4,9 +4,9 @@ export async function GET() {
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Web">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6b1220"/>
-      <stop offset="55%" stop-color="#a61b2b"/>
-      <stop offset="100%" stop-color="#c41e3a"/>
+      <stop offset="0%" stop-color="#5e1626"/>
+      <stop offset="55%" stop-color="#8e2438"/>
+      <stop offset="100%" stop-color="#a83049"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
