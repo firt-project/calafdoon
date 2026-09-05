@@ -19,20 +19,20 @@ export function QuestionnairePhaseComplete({
   const { ui } = useQuestionnaireI18n();
 
   return (
-    <div className="flex flex-col items-center text-center py-8 sm:py-12">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
+    <div className="flex flex-col items-center py-8 text-center sm:py-12">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--leaf)_14%,transparent)] text-leaf">
         <Check className="h-8 w-8" strokeWidth={2.5} />
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary mb-3">
+      <p className="mb-3 font-mono text-[0.68rem] font-medium uppercase tracking-[0.14em] text-primary">
         {isAbout ? ui("part1Complete") : ui("part2Complete")}
       </p>
 
-      <h2 className="text-[1.625rem] sm:text-3xl font-semibold tracking-tight mb-3">
+      <h2 className="mb-3 font-display text-[1.625rem] font-medium tracking-tight sm:text-3xl">
         {isAbout ? ui("infoSaved") : ui("prefsSaved")}
       </h2>
 
-      <p className="text-muted-foreground max-w-md mb-10 text-lg leading-relaxed">
+      <p className="mb-10 max-w-md text-lg leading-relaxed text-muted-foreground">
         {isAbout ? ui("part1Desc") : ui("part2Desc")}
       </p>
 
@@ -58,7 +58,7 @@ export function QuestionnairePhaseComplete({
 
       <Button
         size="lg"
-        className="w-full max-w-sm h-14 min-h-14 rounded-2xl text-lg font-semibold"
+        className="h-14 min-h-14 w-full max-w-sm text-lg font-semibold"
         onClick={onContinue}
       >
         {isAbout ? ui("continueToPartner") : ui("continueToPhoto")}

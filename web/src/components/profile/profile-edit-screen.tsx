@@ -313,7 +313,7 @@ export function ProfileEditScreen({
               )}
             </div>
             <div className="text-center sm:text-left flex-1 min-w-0">
-              <h1 className="text-2xl font-semibold truncate">{profile.name}</h1>
+              <h1 className="truncate font-display text-2xl font-semibold">{profile.name}</h1>
               {isStaff ? (
                 <div className="mt-2 space-y-1">
                   {currentUser.email && (

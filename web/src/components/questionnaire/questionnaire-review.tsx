@@ -65,7 +65,7 @@ function ReviewSection({
   return (
     <div className="rounded-2xl border border-border bg-muted/50 p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-xl text-foreground">{reviewLabel(title)}</h3>
+        <h3 className="font-display text-xl font-semibold text-foreground">{reviewLabel(title)}</h3>
         <Button variant="outline" size="sm" onClick={onEdit} className="h-9 text-sm">
           <Pencil className="h-3.5 w-3.5 mr-1" />
           {ui("edit")}
@@ -74,7 +74,7 @@ function ReviewSection({
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
         {filled.map((item) => (
           <div key={item.label} className="min-w-0">
-            <dt className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">{reviewLabel(item.label)}</dt>
+            <dt className="font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">{reviewLabel(item.label)}</dt>
             <dd className="font-semibold mt-1 text-foreground break-words text-lg">{optionLabel(item.value)}</dd>
           </div>
         ))}
@@ -222,7 +222,7 @@ export function QuestionnaireReview({
     <Card className="border-border shadow-lg shadow-primary/5 pb-4">
       <CardHeader className="border-b border-border bg-gradient-to-r from-accent/50 to-transparent dark:from-primary/10">
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle className="text-2xl sm:text-3xl font-bold">{isEditMode ? ui("editProfileDetails") : ui("finalReview")}</CardTitle>
+          <CardTitle className="font-display text-2xl sm:text-3xl font-medium">{isEditMode ? ui("editProfileDetails") : ui("finalReview")}</CardTitle>
           {!isEditMode && (
             <Badge variant="outline" className="inline-flex items-center text-primary border-primary/30">
               <Check className="h-3 w-3 mr-1" />
