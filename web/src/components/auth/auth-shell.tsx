@@ -58,7 +58,7 @@ export function AuthShell({
         {/* Brand plane — desktop only */}
         <aside className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between px-10 py-12 xl:px-14 xl:py-14">
           <div
-            className="absolute inset-4 rounded-[2rem] bg-gradient-to-br from-brand-dark via-primary to-[#7a1520]"
+            className="absolute inset-4 rounded-[2rem] bg-gradient-to-br from-brand-dark via-primary to-[#5e1626]"
             aria-hidden
           />
           <div

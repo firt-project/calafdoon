@@ -22,19 +22,23 @@ export function HowItWorksContent() {
   ];
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
+    <div className="max-w-3xl space-y-4">
       {steps.map((step, i) => (
-        <Card key={step.title} className="overflow-hidden rounded-3xl border-border/80 shadow-sm">
-          <CardContent className="flex gap-6 p-6 sm:p-8">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary dark:bg-primary/20">
-              <step.icon className="h-6 w-6" />
+        <Card key={step.title} className="overflow-hidden shadow-sm">
+          <CardContent className="flex gap-5 p-6 sm:gap-6 sm:p-8">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.7rem] border border-border text-primary">
+              <step.icon className="h-5 w-5" />
             </div>
             <div>
-              <div className="mb-1 text-sm font-semibold text-primary">
+              <div className="mb-1 font-mono text-[0.72rem] font-medium uppercase tracking-[0.1em] text-gold">
                 {t("howItWorks.stepLabel", { num: i + 1 })}
               </div>
-              <h3 className="mb-2 text-lg font-bold">{step.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+              <h3 className="mb-2 font-display text-lg font-semibold tracking-tight">
+                {step.title}
+              </h3>
+              <p className="leading-relaxed text-muted-foreground">
+                {step.description}
+              </p>
             </div>
           </CardContent>
         </Card>

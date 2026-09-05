@@ -68,13 +68,13 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold mb-4">{t("common.quickLinks")}</h3>
+            <h3 className="mb-4 font-mono text-[0.68rem] font-medium uppercase tracking-[0.12em] text-white/50">{t("common.quickLinks")}</h3>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-primary transition-colors"
+                    className="text-sm text-white/70 transition-colors hover:text-gold"
                   >
                     {link.label}
                   </Link>
@@ -85,7 +85,7 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="text-sm font-semibold mb-4">{t("common.support")}</h3>
+            <h3 className="mb-4 font-mono text-[0.68rem] font-medium uppercase tracking-[0.12em] text-white/50">{t("common.support")}</h3>
             <ul className="space-y-2">
               {SUPPORT_LINKS.map((link) => {
                 const label =
@@ -102,7 +102,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/70 hover:text-primary transition-colors"
+                      className="text-sm text-white/70 transition-colors hover:text-gold"
                     >
                       {label}
                     </Link>
@@ -114,25 +114,25 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold mb-4">{t("common.contactUs")}</h3>
+            <h3 className="mb-4 font-mono text-[0.68rem] font-medium uppercase tracking-[0.12em] text-white/50">{t("common.contactUs")}</h3>
             <ul className="space-y-3">
               <li>
                 <a
                   href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-white/70 hover:text-primary transition-colors"
+                  className="flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-gold"
                 >
-                  <Phone className="h-4 w-4 text-primary shrink-0" />
+                  <Phone className="h-4 w-4 shrink-0 text-gold" />
                   {WHATSAPP_DISPLAY}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-white/70">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
+                <Mail className="h-4 w-4 shrink-0 text-gold" />
                 {SUPPORT_EMAIL}
               </li>
               <li className="flex items-center gap-2 text-sm text-white/70">
-                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <MapPin className="h-4 w-4 shrink-0 text-gold" />
                 {t("common.locationSomalia")}
               </li>
             </ul>
@@ -140,7 +140,7 @@ export function Footer() {
 
           {/* CTA Box */}
           <div className="rounded-2xl bg-primary p-6 lg:p-8">
-            <h3 className="text-lg font-bold text-white">
+            <h3 className="font-display text-lg font-semibold text-white">
               {t("common.readyToMatch")}
             </h3>
             <p className="mt-2 text-sm text-white/90">
