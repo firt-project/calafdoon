@@ -6,6 +6,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { BackendStatusBanner } from "@/components/layout/backend-status-banner";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
+import { SITE_BRAND_NAME } from "@/lib/constants";
 import { isAuthRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           fallback={
             <header className="sticky top-0 z-50 border-b border-border bg-card px-4 py-4">
               <a href="/" className="font-display text-lg font-semibold text-foreground">
-                Web
+                {SITE_BRAND_NAME}
               </a>
             </header>
           }

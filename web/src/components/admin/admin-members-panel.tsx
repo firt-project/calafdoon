@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { isOwnerRole, isStaffRole } from "@/lib/access";
-import { WHATSAPP_URL } from "@/lib/constants";
+import { APP_NAME, WHATSAPP_URL } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 import type { TranslationPath } from "@/lib/i18n/translations";
 import { resolveReviewStatus, requiresAdminProfileApproval } from "@/lib/review-status";
@@ -1019,7 +1019,7 @@ export function AdminMembersPanel({
                       <Button size="sm" variant="outline" className="h-9 rounded-lg" asChild>
                         <a
                           href={`${WHATSAPP_URL}?text=${encodeURIComponent(
-                            `Hi, I'm contacting you about Web — ${user.name}.`
+                            `Hi, I'm contacting you about ${APP_NAME} — ${user.name}.`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"

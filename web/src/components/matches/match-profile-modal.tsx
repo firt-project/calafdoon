@@ -21,9 +21,12 @@ import {
   ProfileFactChips,
   ValueChips,
 } from "@/components/matches/profile-fact-chips";
+import { SITE_BRAND_NAME } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 import { usePresence } from "@/data/presence/hooks";
 import { cn } from "@/lib/utils";
+import { CompatibilityRing } from "@/components/matches/compatibility-ring";
+import { CompatibilityHighlights } from "@/components/matches/compatibility-highlights";
 
 type MatchLike = {
   userId: string;
@@ -44,6 +47,7 @@ type MatchLike = {
   additionalImageUrls?: string[];
   photoHidden?: boolean;
   score?: number | null;
+  highlightKeys?: string[];
   shortlisted?: boolean;
   liked?: boolean;
   verified?: boolean;
@@ -164,8 +168,8 @@ function MatchProfileModalBody({
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <p className="font-display text-lg font-semibold text-primary tracking-tight">
-            Web
+          <p className="font-display text-lg font-semibold tracking-tight text-primary">
+            {SITE_BRAND_NAME}
           </p>
           <ReportBlockMenu
             userId={match.userId}
@@ -201,11 +205,11 @@ function MatchProfileModalBody({
               )}
             </div>
             <div className="min-w-0 flex-1 pt-1">
-              <h2 className="flex items-center gap-1.5 text-xl font-bold tracking-tight">
+              <h2 className="flex items-center gap-1.5 font-display text-xl font-semibold tracking-tight">
                 <span className="truncate">{name}</span>
                 {match.verified ? (
                   <BadgeCheck
-                    className="h-5 w-5 shrink-0 fill-emerald-500 text-white"
+                    className="h-5 w-5 shrink-0 fill-leaf text-background"
                     aria-label={t("trustBadges.approved")}
                   />
                 ) : null}
@@ -221,6 +225,22 @@ function MatchProfileModalBody({
               />
             </div>
           </div>
+
+          {typeof match.score === "number" ? (
+            <section className="flex items-center gap-4 rounded-xl border border-border bg-muted/50 p-4">
+              <CompatibilityRing score={match.score} size="lg" />
+              <div className="min-w-0">
+                <p className="font-display text-sm font-semibold">
+                  {t("matchesPage.matchPercent", { score: Math.round(match.score) })}
+                </p>
+                <CompatibilityHighlights
+                  keys={match.highlightKeys}
+                  heading={t("premium.compatWhereAlign")}
+                  className="mt-2"
+                />
+              </div>
+            </section>
+          ) : null}
 
           <ProfileFactChips facts={facts} chipClassName="border-primary/30 bg-card px-2.5 py-1.5 text-xs" />
 

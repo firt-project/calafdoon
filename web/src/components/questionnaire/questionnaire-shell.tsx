@@ -87,7 +87,7 @@ export function QuestionnaireShell({
               type="button"
               variant="ghost"
               size="icon"
-              className="shrink-0 rounded-full"
+              className="shrink-0"
               onClick={onBack}
               aria-label={t("common.back")}
             >
@@ -96,20 +96,22 @@ export function QuestionnaireShell({
           ) : (
             <div className="w-10 shrink-0" />
           )}
-          <div className="flex-1 text-center min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">
+          <div className="min-w-0 flex-1 text-center">
+            <p className="truncate font-mono text-[0.66rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               {phaseLabel}
             </p>
             {stepLabel ? (
-              <p className="text-[11px] text-foreground/70 mt-0.5 truncate">{stepLabel}</p>
+              <p className="mt-0.5 truncate font-mono text-[0.7rem] text-foreground/70">
+                {stepLabel}
+              </p>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center justify-end">
-            <LanguageToggle className="h-9 gap-1 rounded-full px-2.5" />
+            <LanguageToggle className="h-9 gap-1 rounded-lg px-2.5" />
           </div>
         </div>
         {(progressHint || timeLabel) && (
-          <div className="border-t border-border/40 py-2 px-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border/40 px-4 py-2 font-mono text-[0.7rem] text-muted-foreground">
             {progressHint ? <span>{progressHint}</span> : null}
             {progressHint && timeLabel ? (
               <span className="text-border" aria-hidden>

@@ -22,6 +22,7 @@ import { DataLoadError } from "@/components/ui/data-load-error";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LazyImage } from "@/components/ui/lazy-image";
 import { CompatibilityHighlights } from "@/components/matches/compatibility-highlights";
+import { CompatibilityRing } from "@/components/matches/compatibility-ring";
 import { cn } from "@/lib/utils";
 
 type HomeFeedData = {
@@ -67,7 +68,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
     return (
       <div className="space-y-4" role="status" aria-busy>
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-48 w-full rounded-3xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-28 w-full rounded-2xl" />
       </div>
@@ -173,22 +174,26 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
         />
       </div>
 
-      <section className="romance-card rounded-3xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+      <section className="romance-card overflow-hidden rounded-2xl">
+        <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
+          <div className="min-w-0">
+            <p className="font-mono text-[0.68rem] font-medium uppercase tracking-[0.12em] text-primary">
               {t("homeFeed.dailyMatch")}
             </p>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {t("homeFeed.dailyMatchDesc")}
             </p>
           </div>
-          <Badge
-            variant="secondary"
-            className="rounded-full border border-gold/30 bg-gold/10 text-gold-foreground"
-          >
-            {t("homeFeed.today")}
-          </Badge>
+          {daily ? (
+            <CompatibilityRing score={daily.score} size="md" className="shrink-0" />
+          ) : (
+            <Badge
+              variant="secondary"
+              className="border border-gold/30 bg-gold/10 text-gold-foreground"
+            >
+              {t("homeFeed.today")}
+            </Badge>
+          )}
         </div>
 
         {daily ? (
@@ -224,10 +229,13 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
                 </Badge>
               </div>
             </div>
-            <CompatibilityHighlights keys={daily.highlightKeys} />
+            <CompatibilityHighlights
+              keys={daily.highlightKeys}
+              heading={t("premium.compatWhereAlign")}
+            />
             <Button
               type="button"
-              className="w-full rounded-full"
+              className="w-full"
               onClick={() => void onDailyMessage()}
             >
               <MessageCircle className="h-4 w-4 mr-1.5" />
@@ -237,7 +245,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1 rounded-full"
+                className="flex-1"
                 onClick={() => void onDailyAction("pass")}
               >
                 {t("matchesPage.pass")}
@@ -245,7 +253,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-full px-4"
+                className="px-4"
                 onClick={() => void onDailyAction("shortlist")}
               >
                 {t("matchesPage.shortlist")}
@@ -253,7 +261,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1 rounded-full"
+                className="flex-1"
                 onClick={() => void onDailyAction("like")}
               >
                 <Heart className="h-4 w-4 mr-1.5" />
@@ -277,14 +285,14 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
             <p className="text-sm text-muted-foreground">
               {t("homeFeed.noDailyMatch")}
             </p>
-            <Button asChild className="mt-3 rounded-full">
+            <Button asChild className="mt-3">
               <Link href="/matches">{t("homeFeed.browseMatches")}</Link>
             </Button>
           </div>
         )}
       </section>
 
-      <section className="romance-card rounded-3xl p-4 space-y-3">
+      <section className="romance-card rounded-2xl p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
@@ -314,7 +322,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
                 />
               ))}
             </div>
-            <Button asChild size="sm" className="rounded-full shrink-0">
+            <Button asChild size="sm" className="shrink-0">
               <Link href="/pricing">{t("homeFeed.unlockLikedYou")}</Link>
             </Button>
           </div>
@@ -347,9 +355,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
                     className="mt-1"
                   />
                 </div>
-                <Badge variant="secondary" className="tabular-nums">
-                  {Math.round(person.score ?? 0)}%
-                </Badge>
+                <CompatibilityRing score={person.score} size="sm" className="shrink-0" />
               </button>
             ))}
             <Button asChild variant="ghost" size="sm" className="w-full">
@@ -357,14 +363,14 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
             </Button>
           </div>
         ) : (
-          <Button asChild variant="outline" className="w-full rounded-full">
+          <Button asChild variant="outline" className="w-full">
             <Link href="/matches">{t("homeFeed.browseMatches")}</Link>
           </Button>
         )}
       </section>
 
       {(feed?.recentMutuals?.length ?? 0) > 0 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-4 space-y-3 shadow-sm">
+        <section className="rounded-2xl border border-border/80 bg-card p-4 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("homeFeed.recentMutuals")}
@@ -408,7 +414,7 @@ export function MemberHomeFeed({ firstName, canQuery }: MemberHomeFeedProps) {
         </section>
       )}
 
-      <Button asChild variant="outline" className="w-full rounded-full h-11">
+      <Button asChild variant="outline" className="h-11 w-full">
         <Link href="/matches">
           <Compass className="h-4 w-4 mr-2" />
           {t("homeFeed.browseMatches")}

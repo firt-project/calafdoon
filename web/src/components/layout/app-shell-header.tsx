@@ -237,7 +237,7 @@ export function AppShellHeader() {
                 </Button>
               </div>
               <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-                <p className="px-3 pt-1 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="px-3 pt-1 pb-2 font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t("nav.websiteSection")}
                 </p>
                 {navLinks.map((link) => (
@@ -246,7 +246,7 @@ export function AppShellHeader() {
                     href={link.href}
                     onClick={() => setSiteMenuOpen(false)}
                     className={cn(
-                      "block rounded-xl px-3 py-3 text-sm font-medium transition-colors",
+                      "block rounded-lg px-3 py-3 text-sm font-medium transition-colors",
                       isMarketingActive(link.href)
                         ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"

@@ -12,23 +12,32 @@ export function FaqPageContent() {
   const { t } = useTranslation();
 
   return (
-    <MarketingPage title={t("faq.title")} subtitle={t("faq.subtitle")}>
+    <MarketingPage
+      eyebrow={t("landing.faqTitle")}
+      title={t("faq.title")}
+      subtitle={t("faq.subtitle")}
+    >
       <FAQAccordion />
 
-      <Card className="mx-auto mt-12 max-w-3xl rounded-3xl border-border/80 bg-card/80">
-        <CardContent className="p-8 text-center">
-          <MessageCircle className="mx-auto h-8 w-8 text-primary" />
-          <h2 className="mt-4 text-xl font-bold">{t("faq.stillHaveQuestions")}</h2>
-          <p className="mt-2 text-muted-foreground leading-relaxed">{t("faq.stillHaveQuestionsDesc")}</p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <Card className="mt-14 max-w-2xl border-l-[3px] border-l-gold bg-card">
+        <CardContent className="p-7">
+          <MessageCircle className="h-7 w-7 text-primary" />
+          <h2 className="mt-3 font-display text-xl font-semibold tracking-tight">
+            {t("faq.stillHaveQuestions")}
+          </h2>
+          <p className="mt-2 leading-relaxed text-muted-foreground">
+            {t("faq.stillHaveQuestionsDesc")}
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <AuthRegisterCta
               registerLabel={t("common.joinNow")}
+              plan="basic"
               className="w-full sm:w-auto"
               size="lg"
             />
             <Link
               href="/contact"
-              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-border px-6 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
+              className="inline-flex h-13 w-full items-center justify-center rounded-lg border border-border px-6 font-mono text-[0.8rem] uppercase tracking-wide transition-colors hover:border-primary hover:text-primary sm:w-auto"
             >
               {t("faq.contactTeam")}
             </Link>

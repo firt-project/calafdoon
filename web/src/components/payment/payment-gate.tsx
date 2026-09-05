@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Check, CreditCard, Lock, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
+import { Check, CreditCard, Lock, ShieldCheck, Smartphone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { REGISTRATION_PRICE, MONTHLY_PRICE } from "@/lib/constants";
@@ -89,23 +89,23 @@ function PaymentProgress() {
   ];
 
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8">
+    <div className="mb-8 flex items-center justify-center gap-2 sm:gap-3">
       {steps.map((step, i) => (
         <div key={step.label} className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5">
             <div
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[0.7rem] font-medium",
                 step.done
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-primary/15 text-primary ring-2 ring-primary/40"
+                  ? "bg-leaf text-leaf-foreground"
+                  : "border border-primary text-primary"
               )}
             >
-              {step.done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+              {step.done ? <Check className="h-3 w-3" /> : i + 1}
             </div>
             <span
               className={cn(
-                "text-xs font-semibold hidden sm:inline",
+                "hidden font-mono text-[0.68rem] uppercase tracking-[0.08em] sm:inline",
                 step.done ? "text-muted-foreground" : "text-foreground"
               )}
             >
@@ -113,7 +113,7 @@ function PaymentProgress() {
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={cn("h-px w-6 sm:w-10", step.done ? "bg-primary/40" : "bg-border")} />
+            <div className={cn("h-px w-6 sm:w-10", step.done ? "bg-leaf/50" : "bg-border")} />
           )}
         </div>
       ))}
@@ -139,20 +139,19 @@ function MethodButton({
   children: ReactNode;
 }) {
   return (
-    <Button
+    <button
       type="button"
-      size="sm"
-      variant={active ? "default" : "secondary"}
-      className={cn(
-        "rounded-xl px-3.5 sm:px-4 h-9 text-[13px] font-semibold transition-all duration-200",
-        active
-          ? "shadow-md shadow-primary/20"
-          : "bg-transparent text-foreground/80 hover:bg-background/80 hover:text-foreground"
-      )}
       onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-md px-3 font-mono text-[0.72rem] uppercase tracking-[0.04em] transition-colors sm:px-3.5",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:text-foreground"
+      )}
     >
       {children}
-    </Button>
+    </button>
   );
 }
 
@@ -178,16 +177,14 @@ export function PaymentGate({
       )}
       {showProgress && <PaymentProgress />}
 
-      <div className="text-center mb-8 space-y-3">
-        <div className="relative mx-auto w-fit mb-2">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary shadow-md shadow-primary/10">
-            <Lock className="h-7 w-7" />
-          </div>
+      <div className="mb-8 space-y-3 text-center">
+        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-xl border border-primary/25 text-primary">
+          <Lock className="h-6 w-6" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h1 className="font-display text-2xl font-medium tracking-tight sm:text-3xl">
           {title ?? t("payment.completeRegistration")}
         </h1>
-        <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto text-sm sm:text-base">
+        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
           {description ??
             t("payment.chooseBasicOnly", {
               basic: formatPrice(basicPrice),
@@ -197,27 +194,20 @@ export function PaymentGate({
       </div>
 
       <div className="mb-7 flex justify-center">
-        <div className="inline-flex flex-wrap justify-center gap-1 rounded-2xl border border-border/80 bg-muted/70 p-1.5 shadow-inner">
+        <div className="inline-flex flex-wrap justify-center gap-0.5 rounded-lg border border-border bg-muted/60 p-1">
           <MethodButton
-            active={payMethod === "card"}
-            onClick={() => setPayMethod("card")}
+            active={payMethod === "mpesa"}
+            onClick={() => setPayMethod("mpesa")}
           >
-            <CreditCard className="h-4 w-4 mr-2" />
-            {t("payment.payWithCard")}
+            <Smartphone className="mr-1.5 h-3.5 w-3.5" />
+            {t("payment.payWithMpesa")}
           </MethodButton>
           <MethodButton
             active={payMethod === "waafi"}
             onClick={() => setPayMethod("waafi")}
           >
-            <Smartphone className="h-4 w-4 mr-2" />
+            <Smartphone className="mr-1.5 h-3.5 w-3.5" />
             {t("payment.payWithWaafi")}
-          </MethodButton>
-          <MethodButton
-            active={payMethod === "mpesa"}
-            onClick={() => setPayMethod("mpesa")}
-          >
-            <Smartphone className="h-4 w-4 mr-2" />
-            {t("payment.payWithMpesa")}
           </MethodButton>
           <MethodButton
             active={payMethod === "evc"}
@@ -225,24 +215,30 @@ export function PaymentGate({
           >
             {t("payment.payWithMobileMoney")}
           </MethodButton>
+          <MethodButton
+            active={payMethod === "card"}
+            onClick={() => setPayMethod("card")}
+          >
+            <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+            {t("payment.payWithCard")}
+          </MethodButton>
         </div>
       </div>
 
       {payMethod === "card" ? (
         <>
-          <Card className="overflow-hidden rounded-3xl border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20">
-            <div className="h-1.5 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
-            <CardContent className="p-6 sm:p-7 space-y-5 flex flex-col h-full">
+          <Card className="overflow-hidden rounded-2xl border-border">
+            <CardContent className="flex h-full flex-col space-y-5 p-6 sm:p-7">
               <div className="space-y-2">
-                <h2 className="text-xl font-bold">{t("payment.basicPlan")}</h2>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-4xl font-bold text-primary">
+                <h2 className="font-display text-xl font-semibold">{t("payment.basicPlan")}</h2>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-display text-4xl font-semibold tabular-nums text-primary">
                     ${formatPrice(basicPrice)}
                   </span>
-                  <span className="text-sm text-muted-foreground font-medium">
+                  <span className="font-mono text-sm text-muted-foreground">
                     {t("common.oneTime")}
                   </span>
-                  <span className="text-sm font-semibold text-primary/90">
+                  <span className="font-mono text-sm text-primary">
                     {t("common.thenMonthly", {
                       monthly: formatPrice(monthlyPrice),
                     })}
@@ -267,11 +263,11 @@ export function PaymentGate({
                 </p>
               </div>
 
-              <ul className="space-y-2.5 text-sm text-muted-foreground flex-1">
+              <ul className="flex-1 space-y-2.5 text-sm">
                 {BASIC_FEATURES.map((key) => (
                   <li key={key} className="flex items-center gap-2.5">
-                    <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-medium text-foreground/80">{t(key)}</span>
+                    <Check className="h-4 w-4 shrink-0 text-leaf" />
+                    <span className="text-foreground/80">{t(key)}</span>
                   </li>
                 ))}
               </ul>
@@ -284,18 +280,18 @@ export function PaymentGate({
             </CardContent>
           </Card>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-            <span className="font-medium">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-gold" />
+            <span>
               {t("payment.stripeNote", {
                 price: formatPrice(basicPrice),
                 monthly: formatPrice(monthlyPrice),
               })}
             </span>
-            <span className="hidden sm:inline text-border">|</span>
-            <span className="font-semibold tracking-wide">VISA</span>
-            <span className="font-semibold tracking-wide">MC</span>
-            <span className="font-semibold tracking-wide">AMEX</span>
+            <span className="hidden text-border sm:inline">|</span>
+            <span className="font-mono tracking-wide">VISA</span>
+            <span className="font-mono tracking-wide">MC</span>
+            <span className="font-mono tracking-wide">AMEX</span>
           </div>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t("payment.stripeNoProofNote")}
