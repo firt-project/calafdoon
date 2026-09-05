@@ -15,7 +15,7 @@ interface BrandLogoProps {
 }
 
 /**
- * Calafdoon wordmark. The mark is a pomegranate (rummaan) — one skin, many
+ * Hel Calafkaaga wordmark. The mark is a pomegranate (rummaan) — one skin, many
  * seeds held together. Pomegranate stroke + a couple of gold seeds.
  */
 function PomegranateMark({ className }: { className?: string }) {
@@ -57,7 +57,8 @@ export function BrandLogo({
   const { t } = useTranslation();
   const iconSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
   const markSize = size === "sm" ? "h-5 w-5" : "h-6 w-6";
-  const textSize = size === "sm" ? "text-lg" : "text-xl sm:text-[1.35rem]";
+  const textSize =
+    size === "sm" ? "text-[0.95rem]" : "text-lg sm:text-xl";
   const isLight = variant === "light";
 
   return (
@@ -79,10 +80,10 @@ export function BrandLogo({
         <PomegranateMark className={markSize} />
       </span>
       {showName && (
-        <span className="flex min-w-0 flex-col leading-none">
+        <span className="flex flex-col leading-none">
           <span
             className={cn(
-              "font-display font-semibold tracking-tight truncate",
+              "whitespace-nowrap font-display font-semibold tracking-tight",
               textSize,
               isLight ? "text-white" : "text-foreground"
             )}

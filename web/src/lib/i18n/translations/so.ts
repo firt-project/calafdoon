@@ -2,9 +2,9 @@ import type { Translations } from "./index";
 
 export const so: Translations = {
   brand: {
-    tagline: "Hel calafkaaga",
+    tagline: "Loo barbardhigay guur, ma aha swipe",
     description:
-      "Calafdoon waa barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid — diinta, qorshaha qoyska iyo hadafyada nolosha — ma aha 'swipe', qofkastana waxaa eega qof dhab ah.",
+      "Hel Calafkaaga waa barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid — diinta, qorshaha qoyska iyo hadafyada nolosha — ma aha 'swipe', qofkastana waxaa eega qof dhab ah.",
   },
   nav: {
     home: "Bogga Hore",
@@ -143,7 +143,7 @@ export const so: Translations = {
     videoTitle: "Eeg sida xubnuhu u isticmaalaan Web",
     videoDesc:
       "Daawo tillin gaaban: samee akoon, dhammaystir profile-kaaga, ka dib bilow raadinta isbarbardhigyada.",
-    videoIframeTitle: "Sida loo isticmaalo Calafdoon",
+    videoIframeTitle: "Sida loo isticmaalo Hel Calafkaaga",
     findMatchTitle: "Hel Lammaanahaaga",
     findMatchIam: "Waxaan ahay",
     findMatchLookingFor: "Waxaan raadinayaa",
@@ -156,7 +156,7 @@ export const so: Translations = {
     findMatchSearch: "Raadi",
     quote:
       "Lammaanaha saxda ah ma aha oo kaliya jacayl, waa in la dhiso mustaqbal qurux badan oo wadajir ah.",
-    quoteAuthor: "Xubin Calafdoon",
+    quoteAuthor: "Xubin Hel Calafkaaga",
     pricingTitle: "Qiimo Fudud",
     pricingSubtitle:
       "Ragga: Basic ${{basic}} ama Premium ${{premium}}. Haweenka: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Isla app-ka; Premium waxay ku daraa WhatsApp iyo raadinta lammaane.",
@@ -201,7 +201,7 @@ export const so: Translations = {
     previewProfile: "Dhammaystir su'aalaha profile-kaaga",
     previewMatches: "Hel isbarbardhigyo iswaafajin leh oo dhibco leh",
     previewChat: "U dir lammaanayaashaada fariimo ammaan ah",
-    howWorks: "Sida Calafdoon U Shaqeyso",
+    howWorks: "Sida Hel Calafkaaga U Shaqeyso",
     step1Title: "Is Diiwaangeli & Dhammaystir Profile-ka",
     step1Desc: "Abuur akoonkaaga oo dhammaystir profile-kaaga guurka oo leh sawir iyo doorbidyo.",
     step2Title: "Dooro Qorshahaaga",
@@ -258,7 +258,7 @@ export const so: Translations = {
     matchRowValueBoth: "labaduba haa",
     matchRowValueYou: "adiga & iyada",
     matchRowValueWelcome: "la soo dhaweeyay",
-    matchReviewedBy: "Profile-ka waxaa eegay kooxda Calafdoon",
+    matchReviewedBy: "Profile-ka waxaa eegay kooxda Hel Calafkaaga",
     matchScoreLabel: "waafaqid",
 
     proofReviewed: "Profile kasta waxaa eega qof dhab ah",
@@ -282,7 +282,7 @@ export const so: Translations = {
     floorNote:
       "Kuma tusino kuwa hoos yimaada qiimaha waafaqidda {{score}}% — xitaa hadday ku jeclaadeen. Waxay ka dhigaysaa is-barid kasta mid qiimo leh, adiga iyo qoyskaagaba.",
 
-    lifeEyebrow: "Maxaad Calafdoon u dooran",
+    lifeEyebrow: "Maxaad Hel Calafkaaga u dooran",
     lifeTitle: "Loo dhisay sida aad dhab u nooltahay.",
     lifeLead:
       "Inta badan apps-ka guurka Muslimka waxaa loo sameeyay taleefan London ku yaal. Kan waxaa loo sameeyay taleefan Islii, Hargeysa ama Minneapolis — mid kasta oo aad haysato.",
@@ -322,9 +322,9 @@ export const so: Translations = {
     priceCompare:
       "Muzz iyo Salams waxay bishii ku qaataan $20 ilaa $45 wax isku mid ah.",
     priceAsideBody:
-      "Calafdoon qiimihiisa waxaa loo dhigay in arday Nairobi jooga iyo kalkaaliye Muqdisho jooga labaduba awoodi karaan — ma aha qurbaha oo kaliya. ${{basic}}-ka hore wuxuu daboolayaa eegistaada; ${{monthly}} bishii ayaa socodsiinaya.",
+      "Hel Calafkaaga qiimihiisa waxaa loo dhigay in arday Nairobi jooga iyo kalkaaliye Muqdisho jooga labaduba awoodi karaan — ma aha qurbaha oo kaliya. ${{basic}}-ka hore wuxuu daboolayaa eegistaada; ${{monthly}} bishii ayaa socodsiinaya.",
 
-    finalEyebrowLine: "Bilow maanta · Hel calafkaaga",
+    finalEyebrowLine: "Bilow maanta",
     finalTitle: "Calafkaaguna wuu raadinayaa.",
     finalLead:
       "Toban daqiiqo si aad u dhisato profile-kaaga. Hal qof dhinaca kale, diyaar sida adiga oo kale.",

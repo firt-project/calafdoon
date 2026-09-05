@@ -1,8 +1,8 @@
 export const en = {
   brand: {
-    tagline: "Hel calafkaaga",
+    tagline: "Matched for marriage, not for swiping",
     description:
-      "Calafdoon is a Somali marriage platform. You are matched by compatibility — faith, family plans and life goals — not by swiping, and every profile is reviewed by a real person.",
+      "Hel Calafkaaga is a Somali marriage platform. You are matched by compatibility — faith, family plans and life goals — not by swiping, and every profile is reviewed by a real person.",
   },
   nav: {
     home: "Home",
@@ -138,10 +138,10 @@ export const en = {
     heroCta: "Register Now — from ${{price}}",
     seeHowItWorks: "See how it works",
     watchHowToUse: "Watch how to use",
-    videoTitle: "See how members use Calafdoon",
+    videoTitle: "See how members use Hel Calafkaaga",
     videoDesc:
       "Watch a short walkthrough: create your account, complete your profile, and start finding matches.",
-    videoIframeTitle: "How to use Calafdoon",
+    videoIframeTitle: "How to use Hel Calafkaaga",
     findMatchTitle: "Find Your Match",
     findMatchIam: "I am a",
     findMatchLookingFor: "Looking for",
@@ -154,7 +154,7 @@ export const en = {
     findMatchSearch: "Search",
     quote:
       "The right partner is not just about love, it's about building a beautiful future together.",
-    quoteAuthor: "Calafdoon member",
+    quoteAuthor: "Hel Calafkaaga member",
     pricingTitle: "Simple Pricing",
     pricingSubtitle:
       "Men: Basic ${{basic}} or Premium ${{premium}}. Women: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Same app features; Premium adds WhatsApp help and match search.",
@@ -199,7 +199,7 @@ export const en = {
     previewProfile: "Complete your profile questionnaire",
     previewMatches: "Discover compatible matches with scores",
     previewChat: "Message matches securely in-app",
-    howWorks: "How Calafdoon works",
+    howWorks: "How Hel Calafkaaga works",
     step1Title: "Register & Complete Profile",
     step1Desc: "Create your account and complete your marriage profile with photo and preferences.",
     step2Title: "Choose Your Plan",
@@ -256,7 +256,7 @@ export const en = {
     matchRowValueBoth: "both yes",
     matchRowValueYou: "you & her",
     matchRowValueWelcome: "welcomed",
-    matchReviewedBy: "Profile checked by the Calafdoon team",
+    matchReviewedBy: "Profile checked by the Hel Calafkaaga team",
     matchScoreLabel: "match",
 
     proofReviewed: "Every profile reviewed by a real person",
@@ -280,7 +280,7 @@ export const en = {
     floorNote:
       "We do not show you matches below a {{score}}% compatibility score — even if they liked you. It keeps every introduction worth your time, and your family's.",
 
-    lifeEyebrow: "Why Calafdoon",
+    lifeEyebrow: "Why Hel Calafkaaga",
     lifeTitle: "Built for how you actually live.",
     lifeLead:
       "Most Muslim marriage apps are made for a phone in London. This one is made for a phone in Eastleigh, Hargeisa or Minneapolis — whichever you are holding.",
@@ -320,9 +320,9 @@ export const en = {
     priceCompare:
       "Muzz and Salams charge $20 to $45 a month for the same thing.",
     priceAsideBody:
-      "Calafdoon is priced so a student in Nairobi and a nurse in Mogadishu can both afford it — not just the diaspora. The first ${{basic}} covers your review; ${{monthly}} a month keeps the lights on.",
+      "Hel Calafkaaga is priced so a student in Nairobi and a nurse in Mogadishu can both afford it — not just the diaspora. The first ${{basic}} covers your review; ${{monthly}} a month keeps the lights on.",
 
-    finalEyebrowLine: "Bilow maanta · Hel calafkaaga",
+    finalEyebrowLine: "Start today",
     finalTitle: "Your calaf is looking too.",
     finalLead:
       "Ten minutes to build your profile. One person on the other side, ready like you are.",
@@ -785,7 +785,7 @@ export const en = {
   },
   faq: {
     title: "Frequently Asked Questions",
-    subtitle: "Everything you need to know about Calafdoon.",
+    subtitle: "Everything you need to know about Hel Calafkaaga.",
     q1: "Is Web halal?",
     a1: "Yes. Web is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
     q2: "How does matching work?",

@@ -16,12 +16,12 @@ export default function AppleIcon() {
           background: "linear-gradient(135deg, #5e1626, #8e2438)",
           borderRadius: 36,
           color: "#fdf4f0",
-          fontSize: 112,
+          fontSize: 82,
           fontWeight: 600,
           fontFamily: "Georgia, 'Times New Roman', serif",
         }}
       >
-        C
+        HC
       </div>
     ),
     { ...size }

@@ -1,7 +1,7 @@
 /** Square brand logo for Google Organization schema (min ~112×112). SVG preferred by Google. */
 export async function GET() {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Calafdoon">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Hel Calafkaaga">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#5e1626"/>
@@ -20,7 +20,7 @@ export async function GET() {
   <g fill="#e6b877">
     <circle cx="226" cy="360" r="13"/><circle cx="286" cy="360" r="13"/>
   </g>
-  <text x="256" y="452" text-anchor="middle" fill="#fdf4f0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="600" letter-spacing="0.5">Calafdoon</text>
+  <text x="256" y="452" text-anchor="middle" fill="#fdf4f0" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="600" letter-spacing="0.3">Hel Calafkaaga</text>
 </svg>`;
 
   return new Response(svg, {

@@ -17,12 +17,12 @@ export default function Icon() {
           background: "linear-gradient(135deg, #5e1626, #8e2438)",
           borderRadius: 10,
           color: "#fdf4f0",
-          fontSize: 30,
+          fontSize: 22,
           fontWeight: 600,
           fontFamily: "Georgia, 'Times New Roman', serif",
         }}
       >
-        C
+        HC
       </div>
     ),
     { ...size }

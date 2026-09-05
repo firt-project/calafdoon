@@ -1,15 +1,11 @@
-// TODO(rebrand): still to confirm before go-live —
-//   PRODUCTION_SITE_URL         — your real domain (replaces web.example.com)
-//   SUPPORT_EMAIL               — your real support inbox
-//   PLAY_STORE_PACKAGE_ID       — your Android application id
-//   WHATSAPP_* / *_PAYEE_*      — your real contact + payout details
-export const APP_NAME = "Calafdoon";
+// TODO(rebrand): confirm PLAY_STORE_PACKAGE_ID matches the Play Console listing.
+export const APP_NAME = "Hel Calafkaaga";
 /** Full brand / business name — used for Google site name & Organization schema. */
-export const SITE_BRAND_NAME = "Calafdoon";
-export const PRODUCTION_SITE_URL = "https://web.example.com";
-export const APP_TAGLINE = "Find the one meant for you";
+export const SITE_BRAND_NAME = "Hel Calafkaaga";
+export const PRODUCTION_SITE_URL = "https://www.helcalafkaaga.com";
+export const APP_TAGLINE = "Matched for marriage, not for swiping";
 export const APP_DESCRIPTION =
-  "Calafdoon is a Somali marriage platform where you are matched by compatibility — faith, family plans and life goals — not by swiping. Every profile is reviewed by a real person.";
+  "Hel Calafkaaga is a Somali marriage platform where you are matched by compatibility — faith, family plans and life goals — not by swiping. Every profile is reviewed by a real person.";
 export const BRAND_PINK = "#8E2438";
 export const BRAND_NAVY = "#1A1214";
 export const WHATSAPP_GREEN = "#25D366";
@@ -20,11 +16,11 @@ export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const ANDROID_INSTALL_PATH = "/download";
 export const ANDROID_INSTALL_URL = `${PRODUCTION_SITE_URL}${ANDROID_INSTALL_PATH}`;
 /** Google Play listing — primary install CTA on the homepage. */
-export const PLAY_STORE_PACKAGE_ID = "com.example.web";
+export const PLAY_STORE_PACKAGE_ID = "com.helcalaf.app";
 export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE_ID}`;
 /** Legacy direct APK (optional sideload); prefer Play Store. */
 export const ANDROID_APK_URL = "/download/web.apk";
-export const SUPPORT_EMAIL = "support@web.example.com";
+export const SUPPORT_EMAIL = "support@helcalafkaaga.com";
 /** Manual EVC / Hormuud mobile-money payee (Somalia). */
 export const EVC_PAYEE_NAME = "Axmed Xaaji";
 export const EVC_PAYEE_PHONE = "+252617975403";

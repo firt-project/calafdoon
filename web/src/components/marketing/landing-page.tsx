@@ -316,7 +316,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Why Calafdoon */}
+      {/* Why Hel Calafkaaga */}
       <section className="marketing-section bg-muted/50">
         <div className="mx-auto max-w-6xl">
           <SectionHead

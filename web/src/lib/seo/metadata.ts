@@ -10,11 +10,11 @@ export const HOME_SEO_TITLE = SITE_BRAND_NAME;
 
 /** Full meta description (search snippets) — slogan + pricing. */
 export const HOME_SEO_DESCRIPTION =
-  "Calafdoon — barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid: diin, qoys iyo hadafyada nolosha — ma aha 'swipe'. Profile kasta qof dhab ah ayaa eega. $4.99 hal mar, ka dibna $1 bishii. Bixi M-Pesa, EVC Plus ama Hormuud.";
+  "Hel Calafkaaga — barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid: diin, qoys iyo hadafyada nolosha — ma aha 'swipe'. Profile kasta qof dhab ah ayaa eega. $4.99 hal mar, ka dibna $1 bishii. Bixi M-Pesa, EVC Plus ama Hormuud.";
 
 /** Shorter social / OG description (no pricing line). */
 export const HOME_OG_DESCRIPTION =
-  "Calafdoon — barta guurka Soomaalida. Loo barbardhigay guur, ma aha 'swipe'. Hel calafkaaga.";
+  "Hel Calafkaaga — barta guurka Soomaalida. Loo barbardhigay guur, ma aha 'swipe'. Profile kasta qof dhab ah ayaa eega.";
 
 /** Primary SEO copy — Somali first (default site language). */
 export const SEO_SO = {
@@ -44,12 +44,12 @@ export const SEO_SO = {
     about: {
       title: "Naga Saabsan",
       description:
-        "Calafdoon waxay ka caawisaa Soomaalida inay helaan lammaane xalaal ah iyadoo lagu saleynayo waafaqid, qoys iyo qiyamka Islaamka.",
+        "Hel Calafkaaga waxay ka caawisaa Soomaalida inay helaan lammaane xalaal ah iyadoo lagu saleynayo waafaqid, qoys iyo qiyamka Islaamka.",
     },
     howItWorks: {
       title: "Sida Uu U Shaqeeyo",
       description:
-        "Buuxi su'aalaha, hel qiimaha waafaqidda, kana kulan kuwa lagugu barbardhigay Calafdoon.",
+        "Buuxi su'aalaha, hel qiimaha waafaqidda, kana kulan kuwa lagugu barbardhigay Hel Calafkaaga.",
     },
     pricing: {
       title: "Qiimaha",
@@ -59,37 +59,37 @@ export const SEO_SO = {
     faq: {
       title: "Su'aalaha Inta Badan La Isweydiiyo",
       description:
-        "Jawaabo ku saabsan Calafdoon — guur xalaal, qiimaha ($4.99 hal mar, $1 bishii), qarsoodiga, iyo sida barbardhigga waafaqiddu u shaqeeyo.",
+        "Jawaabo ku saabsan Hel Calafkaaga — guur xalaal, qiimaha ($4.99 hal mar, $1 bishii), qarsoodiga, iyo sida barbardhigga waafaqiddu u shaqeeyo.",
     },
     contact: {
       title: "Nala Soo Xiriir",
       description:
-        "La xiriir Calafdoon — email ama WhatsApp caawinta diiwaangelinta iyo taageerada shakhsi ahaaneed.",
+        "La xiriir Hel Calafkaaga — email ama WhatsApp caawinta diiwaangelinta iyo taageerada shakhsi ahaaneed.",
     },
     privacy: {
       title: "Siyaasadda Qarsoodiga",
       description:
-        "Sida Calafdoon u ilaaliso xogtaada shakhsi ahaaneed iyo sida aan u maamulno macluumaadka xubnaha.",
+        "Sida Hel Calafkaaga u ilaaliso xogtaada shakhsi ahaaneed iyo sida aan u maamulno macluumaadka xubnaha.",
     },
     terms: {
       title: "Shuruudaha Adeegga",
       description:
-        "Shuruudaha isticmaalka Calafdoon — diiwaangelinta, dhaqanka xubnaha, iyo mabaadi'da guurka xalaal ah.",
+        "Shuruudaha isticmaalka Hel Calafkaaga — diiwaangelinta, dhaqanka xubnaha, iyo mabaadi'da guurka xalaal ah.",
     },
     download: {
       title: "Soo Deg App-ka Android",
       description:
-        "Soo deg oo rakib Calafdoon Android APK — guur xalaal, isbarbardhig, iyo sheekaysi ammaan ah telefoonkaaga.",
+        "Soo deg oo rakib Hel Calafkaaga Android APK — guur xalaal, isbarbardhig, iyo sheekaysi ammaan ah telefoonkaaga.",
     },
     deleteAccount: {
       title: "Tirtir Akoonka",
       description:
-        "Sida loo tirtiro akoonkaaga Calafdoon — website, app, waxa la tirtirayo, iyo sida nala soo xiriirayo.",
+        "Sida loo tirtiro akoonkaaga Hel Calafkaaga — website, app, waxa la tirtirayo, iyo sida nala soo xiriirayo.",
     },
     childSafety: {
       title: "Child Safety Standards (CSAE)",
       description:
-        "Calafdoon child safety standards — adults 18+ only, CSAE prohibition, reporting, and compliance contacts.",
+        "Hel Calafkaaga child safety standards — adults 18+ only, CSAE prohibition, reporting, and compliance contacts.",
     },
   },
 } as const;
