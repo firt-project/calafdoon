@@ -138,10 +138,10 @@ export const en = {
     heroCta: "Register Now — from ${{price}}",
     seeHowItWorks: "See how it works",
     watchHowToUse: "Watch how to use",
-    videoTitle: "See how members use Web",
+    videoTitle: "See how members use Calafdoon",
     videoDesc:
       "Watch a short walkthrough: create your account, complete your profile, and start finding matches.",
-    videoIframeTitle: "How to use Web",
+    videoIframeTitle: "How to use Calafdoon",
     findMatchTitle: "Find Your Match",
     findMatchIam: "I am a",
     findMatchLookingFor: "Looking for",
@@ -154,7 +154,7 @@ export const en = {
     findMatchSearch: "Search",
     quote:
       "The right partner is not just about love, it's about building a beautiful future together.",
-    quoteAuthor: "WEB Member",
+    quoteAuthor: "Calafdoon member",
     pricingTitle: "Simple Pricing",
     pricingSubtitle:
       "Men: Basic ${{basic}} or Premium ${{premium}}. Women: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Same app features; Premium adds WhatsApp help and match search.",
@@ -199,7 +199,7 @@ export const en = {
     previewProfile: "Complete your profile questionnaire",
     previewMatches: "Discover compatible matches with scores",
     previewChat: "Message matches securely in-app",
-    howWorks: "How WEB Works",
+    howWorks: "How Calafdoon works",
     step1Title: "Register & Complete Profile",
     step1Desc: "Create your account and complete your marriage profile with photo and preferences.",
     step2Title: "Choose Your Plan",
@@ -785,7 +785,7 @@ export const en = {
   },
   faq: {
     title: "Frequently Asked Questions",
-    subtitle: "Everything you need to know about Web.",
+    subtitle: "Everything you need to know about Calafdoon.",
     q1: "Is Web halal?",
     a1: "Yes. Web is designed for Muslims seeking marriage in a respectful, halal manner. We prioritize privacy, family values, and Islamic principles.",
     q2: "How does matching work?",

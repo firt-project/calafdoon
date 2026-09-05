@@ -143,7 +143,7 @@ export const so: Translations = {
     videoTitle: "Eeg sida xubnuhu u isticmaalaan Web",
     videoDesc:
       "Daawo tillin gaaban: samee akoon, dhammaystir profile-kaaga, ka dib bilow raadinta isbarbardhigyada.",
-    videoIframeTitle: "Sida loo isticmaalo Web",
+    videoIframeTitle: "Sida loo isticmaalo Calafdoon",
     findMatchTitle: "Hel Lammaanahaaga",
     findMatchIam: "Waxaan ahay",
     findMatchLookingFor: "Waxaan raadinayaa",
@@ -156,7 +156,7 @@ export const so: Translations = {
     findMatchSearch: "Raadi",
     quote:
       "Lammaanaha saxda ah ma aha oo kaliya jacayl, waa in la dhiso mustaqbal qurux badan oo wadajir ah.",
-    quoteAuthor: "Xubin WEB",
+    quoteAuthor: "Xubin Calafdoon",
     pricingTitle: "Qiimo Fudud",
     pricingSubtitle:
       "Ragga: Basic ${{basic}} ama Premium ${{premium}}. Haweenka: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Isla app-ka; Premium waxay ku daraa WhatsApp iyo raadinta lammaane.",
@@ -201,7 +201,7 @@ export const so: Translations = {
     previewProfile: "Dhammaystir su'aalaha profile-kaaga",
     previewMatches: "Hel isbarbardhigyo iswaafajin leh oo dhibco leh",
     previewChat: "U dir lammaanayaashaada fariimo ammaan ah",
-    howWorks: "Sida WEB U Shaqeyso",
+    howWorks: "Sida Calafdoon U Shaqeyso",
     step1Title: "Is Diiwaangeli & Dhammaystir Profile-ka",
     step1Desc: "Abuur akoonkaaga oo dhammaystir profile-kaaga guurka oo leh sawir iyo doorbidyo.",
     step2Title: "Dooro Qorshahaaga",

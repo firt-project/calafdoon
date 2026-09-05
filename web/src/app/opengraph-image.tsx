@@ -41,18 +41,26 @@ export default function OpenGraphImage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 28,
-              fontWeight: 700,
+              fontSize: 40,
+              fontWeight: 600,
+              fontFamily: "Georgia, 'Times New Roman', serif",
             }}
           >
-            HC
+            C
           </div>
-          <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: -2 }}>
+          <div
+            style={{
+              fontSize: 56,
+              fontWeight: 600,
+              letterSpacing: -2,
+              fontFamily: "Georgia, 'Times New Roman', serif",
+            }}
+          >
             {SITE_BRAND_NAME}
           </div>
         </div>
         <div style={{ fontSize: 36, fontWeight: 600, opacity: 0.95 }}>
-          Hel Lammaanaha Noloshaada
+          Hel calafkaaga
         </div>
         <div
           style={{
