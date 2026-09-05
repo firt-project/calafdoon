@@ -548,7 +548,7 @@ export const en = {
       "You can delete your Web account at any time. Deletion removes your profile and account data from our active systems. Some records may be kept where required by law (for example payment records or safety investigations).",
     webTitle: "Delete on the website",
     webSteps:
-      "1. Sign in at web.example.com\n2. Open Profile (or Settings)\n3. Choose Delete account\n4. Enter your password and confirm",
+      "1. Sign in to your account\n2. Open Profile (or Settings)\n3. Choose Delete account\n4. Enter your password and confirm",
     appTitle: "Delete in the Android / iOS app",
     appSteps:
       "1. Open the Web app\n2. Go to Settings\n3. Tap Delete account\n4. Enter your password and confirm",
@@ -795,7 +795,7 @@ export const en = {
     q4: "How is my data protected?",
     a4: "We use industry-standard encryption and never share your personal data with third parties. Your privacy is our priority.",
     q5: "Can I delete my account?",
-    a5: "Yes. Delete anytime from Profile → Delete account, or follow https://web.example.com/delete-account. You can also email support if you cannot sign in.",
+    a5: "Yes. Delete anytime from Profile → Delete account, or open the Delete account page on our website. You can also email support if you cannot sign in.",
     q6: "What is Premium?",
     a6: "Premium includes everything in Basic, plus personal WhatsApp support and staff help searching for your match. New men Premium signup is $20; upgrade from Basic (and all women) is $15.",
     stillHaveQuestions: "Still have questions?",

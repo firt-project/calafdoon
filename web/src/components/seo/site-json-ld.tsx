@@ -25,7 +25,15 @@ export function SiteJsonLd() {
   const siteUrl = getCanonicalSiteUrl();
   const siteOrigin = siteUrl.replace(/\/$/, "");
   const logoUrl = `${siteOrigin}/logo`;
-  const domainFallback = "web.example.com";
+  // Bare host of the configured site URL — the domain-name variant Google may
+  // fall back to when its confidence in the preferred site name is low.
+  const domainFallback = (() => {
+    try {
+      return new URL(siteUrl).hostname;
+    } catch {
+      return siteOrigin;
+    }
+  })();
 
   // WebSite block matches Google's site-name example closely (not only @graph).
   const websiteLd = {

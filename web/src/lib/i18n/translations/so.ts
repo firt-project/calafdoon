@@ -554,7 +554,7 @@ export const so: Translations = {
       "Waad tirtiri kartaa akoonkaaga Web wakhti kasta. Tirtiriddu waxay ka saartaa profile-kaaga iyo xogta akoonka nidaamyada firfircoon. Qaar ka mid ah diiwaannada waa la hayn karaa marka sharcigu u baahan yahay (tusaale lacag-bixinta ama baaritaanka amniga).",
     webTitle: "Ka tirtir website-ka",
     webSteps:
-      "1. Gal web.example.com\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
+      "1. Gal akoonkaaga\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
     appTitle: "Ka tirtir app-ka Android / iOS",
     appSteps:
       "1. Fur app-ka Web\n2. Tag Settings\n3. Taabo Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
@@ -803,7 +803,7 @@ export const so: Translations = {
     q4: "Xogtayda sidee loo ilaaliyaa?",
     a4: "Waxaan isticmaalnaa sir-qarin heer caalami ah oo aanan waligaa la wadaagin xogtaada shakhsi ahaaneed dhinacyada saddexaad. Qarsoodigaaga waa mudnaantayada.",
     q5: "Ma tirtiri karaa akoonkayga?",
-    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama raac https://web.example.com/delete-account. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
+    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama fur bogga Tirtir akoonka ee websbeedkayaga. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
     q6: "Taageerada shakhsi ahaan waa maxay?",
     a6: "Premium waxay ku jirtaa wax kasta oo Basic ah, oo lagu daray taageero WhatsApp iyo raadinta lammaane. Diiwaangelin Premium cusub $20; kor u qaadis Basic $15.",
     stillHaveQuestions: "Weli su'aalo ma haysataa?",
