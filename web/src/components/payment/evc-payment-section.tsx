@@ -120,7 +120,7 @@ export function EvcPaymentSection({
 
   if (latest?.status === "pending") {
     return (
-      <div className="mt-10 rounded-3xl border border-amber-300/60 bg-amber-50/80 p-6 sm:p-8 text-center space-y-3 dark:border-amber-800/60 dark:bg-amber-950/40">
+      <div className="mt-10 rounded-2xl border border-amber-300/60 bg-amber-50/80 p-6 sm:p-8 text-center space-y-3 dark:border-amber-800/60 dark:bg-amber-950/40">
         <Clock className="mx-auto h-8 w-8 text-amber-700 dark:text-amber-400" />
         <h2 className="text-xl font-semibold text-amber-950 dark:text-amber-100">{t("payment.evcPendingTitle")}</h2>
         <p className="text-sm text-amber-900/80 max-w-lg mx-auto leading-relaxed dark:text-amber-200/80">
@@ -145,7 +145,7 @@ export function EvcPaymentSection({
           <Smartphone className="mr-1.5 h-3.5 w-3.5" />
           {t("payment.evcBadge")}
         </Badge>
-        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+        <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">
           {t("payment.evcTitle")}
         </h2>
         <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
@@ -165,7 +165,7 @@ export function EvcPaymentSection({
         </div>
       )}
 
-      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-md space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-md space-y-6">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("payment.evcSendTo")}

@@ -89,7 +89,7 @@ export function DashboardSidebar() {
         <BrandLogo href={isStaff ? "/admin" : homeHref} className="px-2 mb-6" />
 
         {!isLoading && !isStaff && profile && !profileComplete && (
-          <div className="mb-4 space-y-1.5 rounded-xl bg-accent p-3">
+          <div className="mb-4 space-y-1.5 rounded-lg bg-accent p-3">
             <p className="text-xs font-medium text-accent-foreground">
               {t("profileProgress.sidebarProgress", { percent: progress })}
             </p>
@@ -120,7 +120,7 @@ export function DashboardSidebar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                     isActive
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -142,7 +142,7 @@ export function DashboardSidebar() {
             <Link
               href="/profile"
               className={cn(
-                "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                 pathname === "/profile"
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -157,7 +157,7 @@ export function DashboardSidebar() {
             <>
               <div className="flex items-center gap-2 px-4 pb-2 pt-1">
                 <Shield className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t("app.admin")}
                 </span>
               </div>
@@ -170,7 +170,7 @@ export function DashboardSidebar() {
                     key={item.tab}
                     href={`/admin?tab=${item.tab}`}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                      "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                       isActive
                         ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -184,7 +184,7 @@ export function DashboardSidebar() {
               <Link
                 href="/profile"
                 className={cn(
-                  "mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                  "mt-1 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                   pathname === "/profile"
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -196,7 +196,7 @@ export function DashboardSidebar() {
               <Link
                 href="/"
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                   pathname === "/"
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"

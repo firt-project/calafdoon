@@ -88,16 +88,15 @@ export function WaafiPaymentSection() {
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-[1.75rem] border border-border/80",
+        "relative overflow-hidden rounded-2xl border border-border/80",
         "bg-gradient-to-b from-card via-card to-muted/30",
-        "shadow-[0_24px_48px_-28px_rgba(166,27,43,0.35)]"
+        "shadow-[0_24px_48px_-28px_rgba(142,36,56,0.35)]"
       )}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(120%_80%_at_50%_-20%,color-mix(in_srgb,var(--primary)_18%,transparent),transparent)]"
         aria-hidden
       />
-      <div className="h-1 bg-gradient-to-r from-primary via-[#c43a4a] to-primary/70" />
 
       <div className="relative space-y-7 p-6 sm:p-8">
         <header className="space-y-3 text-center sm:text-left">
