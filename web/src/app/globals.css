@@ -3,54 +3,65 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Rummaan palette — the pomegranate. One saturated accent (pomegranate), gold
+ * reserved for trust chrome, leaf reserved for the "verified / positive"
+ * semantic. Warm rose-biased ivory ground. See the redesign direction doc.
+ */
 :root {
-  --background: #faf7f7;
-  --foreground: #1a1214;
+  --background: #fbf6f2;
+  --foreground: #251a1c;
   --card: #ffffff;
-  --card-foreground: #1a1214;
-  --muted: #f4eeee;
-  --muted-foreground: #6b5c5f;
-  --border: #e8dcde;
+  --card-foreground: #251a1c;
+  --muted: #f3eae3;
+  --muted-foreground: #6e5f62;
+  --border: #e8dbd3;
   --input: #ffffff;
-  --ring: #c41e3a;
-  --primary: #a61b2b;
-  --primary-foreground: #ffffff;
-  --accent: #fdf2f3;
-  --accent-foreground: #7a1520;
-  --destructive: #b91c1c;
-  --navy: #1a1214;
-  --brand-dark: #6b1220;
+  --ring: #8e2438;
+  --primary: #8e2438;
+  --primary-foreground: #fdf4f0;
+  --accent: #f5ebe4;
+  --accent-foreground: #5e1626;
+  --destructive: #b3261e;
+  --navy: #251a1c;
+  --brand-dark: #5e1626;
   --whatsapp: #25d366;
-  --gold: #c9a227;
-  --gold-foreground: #3d2e00;
-  --radius: 0.875rem;
+  --gold: #a97b3c;
+  --gold-foreground: #2e2100;
+  /* Semantic positive only — approved, paid, matched. Not decoration. */
+  --leaf: #3e5b4a;
+  --leaf-foreground: #eaf1ec;
+  --radius: 0.75rem;
   --app-header: 4rem;
   --app-tabbar: 3.5rem;
-  --shadow-sm: 0 1px 2px rgba(26, 18, 20, 0.04);
-  --shadow-md: 0 4px 16px rgba(26, 18, 20, 0.07);
-  --shadow-lg: 0 12px 40px rgba(26, 18, 20, 0.09);
+  --shadow-sm: 0 1px 2px rgba(94, 22, 44, 0.05);
+  --shadow-md: 0 8px 26px -12px rgba(94, 22, 44, 0.16);
+  --shadow-lg: 0 26px 60px -24px rgba(94, 22, 44, 0.24);
 }
 
 .dark {
-  --background: #120d0e;
-  --foreground: #faf5f5;
-  --card: #1a1214;
-  --card-foreground: #faf5f5;
+  --background: #160f0e;
+  --foreground: #f2e9e4;
+  --card: #211719;
+  --card-foreground: #f2e9e4;
   --muted: #241a1c;
-  --muted-foreground: #b5a3a6;
-  --border: #3a2a2d;
+  --muted-foreground: #af9b9e;
+  --border: #352629;
   --input: #241a1c;
-  --ring: #fb7185;
-  --primary: #e11d48;
-  --primary-foreground: #ffffff;
-  --accent: #2a1519;
-  --accent-foreground: #fecdd3;
-  --destructive: #f87171;
-  --gold: #d4af37;
+  --ring: #de8393;
+  /* Kept saturated enough that --primary-foreground stays a light tint. */
+  --primary: #be3149;
+  --primary-foreground: #fdf4f0;
+  --accent: #2a1a1d;
+  --accent-foreground: #f0c9cf;
+  --destructive: #f16a5f;
+  --gold: #cda268;
   --gold-foreground: #1a1400;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --leaf: #94bba3;
+  --leaf-foreground: #10201a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 26px 60px -24px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -73,9 +84,13 @@
   --color-whatsapp: var(--whatsapp);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
+  --color-leaf: var(--leaf);
+  --color-leaf-foreground: var(--leaf-foreground);
   --font-sans: var(--font-jakarta);
   --font-serif: var(--font-cormorant);
   --font-display: var(--font-cormorant);
+  --font-mono: var(--font-plex-mono);
+  --radius-sm: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
@@ -111,41 +126,42 @@ h1,
 h2,
 h3,
 .font-display {
-  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-family: var(--font-display), "Georgia", "Times New Roman", serif;
+  font-optical-sizing: auto;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .font-display {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(166, 27, 43, 0.07), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(201, 162, 39, 0.07), transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(166, 27, 43, 0.04), transparent 60%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(142, 36, 56, 0.06), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(169, 123, 60, 0.06), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(142, 36, 56, 0.035), transparent 60%),
     var(--background);
 }
 
 .dark .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(225, 29, 72, 0.12), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(212, 175, 55, 0.08), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(190, 49, 73, 0.11), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(205, 162, 104, 0.07), transparent 50%),
     var(--background);
 }
 
-/* Warm welcome banner on the member home feed (Muzz-style hero) */
+/* Welcome banner on the member home feed — Rummaan pomegranate band */
 .member-hero {
   position: relative;
   overflow: hidden;
-  color: #fff;
-  border-radius: 1.75rem;
+  color: #fdf4f0;
+  border-radius: 1.5rem;
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.22), transparent 42%),
-    radial-gradient(circle at 88% 6%, rgba(201, 162, 39, 0.55), transparent 45%),
-    linear-gradient(135deg, #7a1520 0%, #a61b2b 46%, #c9324a 100%);
-  box-shadow: 0 18px 40px -18px rgba(122, 21, 32, 0.65);
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(169, 123, 60, 0.42), transparent 46%),
+    linear-gradient(135deg, #5e1626 0%, #8e2438 48%, #a83049 100%);
+  box-shadow: 0 22px 44px -22px rgba(94, 22, 44, 0.6);
 }
 
 .member-hero::after {
@@ -162,9 +178,9 @@ h3,
 
 .dark .member-hero {
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.12), transparent 42%),
-    radial-gradient(circle at 88% 6%, rgba(212, 175, 55, 0.4), transparent 45%),
-    linear-gradient(135deg, #4d0d16 0%, #7a1520 50%, #a61b2b 100%);
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.1), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(205, 162, 104, 0.34), transparent 45%),
+    linear-gradient(135deg, #3d0f1a 0%, #5e1626 50%, #8e2438 100%);
 }
 
 /* Bold tappable stat card on the home feed */

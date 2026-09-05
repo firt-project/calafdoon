@@ -80,7 +80,7 @@ export function PendingApprovalGate({ isPremium = false, className }: PendingApp
               )}
             </div>
             <div className="space-y-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+              <h1 className="font-display text-xl sm:text-2xl font-medium tracking-tight">
                 {t("approvalGate.title")}
               </h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -92,7 +92,7 @@ export function PendingApprovalGate({ isPremium = false, className }: PendingApp
           </div>
 
           <div className="rounded-2xl bg-muted/50 p-4 sm:p-5 text-left">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            <p className="mb-3 font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {t("approvalGate.progressLabel")}
             </p>
             <ol className="space-y-3">

@@ -113,8 +113,8 @@ export function GenderSelectCards({
                 <Check className="h-4 w-4" strokeWidth={2.5} />
               </span>
             )}
-            <Illustration className="h-28 w-full max-w-[7.5rem] mb-3" />
-            <span className="text-lg font-semibold text-foreground">{label}</span>
+            <Illustration className="mb-3 h-28 w-full max-w-[7.5rem]" />
+            <span className="font-display text-lg font-semibold text-foreground">{label}</span>
           </button>
         );
       })}

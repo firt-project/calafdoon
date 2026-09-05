@@ -83,7 +83,7 @@ function MessagesEmptyState() {
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-accent-foreground mx-auto mb-5">
           <MessageCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold mb-2">{t("chatPage.noMessages")}</h2>
+        <h2 className="mb-2 font-display text-xl font-semibold">{t("chatPage.noMessages")}</h2>
         <p className="text-muted-foreground text-sm leading-relaxed mb-6">
           {t("chatPage.noMessagesDesc")}
         </p>
@@ -443,7 +443,7 @@ export default function ChatPage() {
           >
             <div className="px-4 py-3.5 border-b border-border space-y-3 shrink-0">
               <div>
-                <h2 className="text-sm font-bold">{t("chatPage.messages")}</h2>
+                <h2 className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">{t("chatPage.messages")}</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {conversations.length}{" "}
                   {conversations.length === 1
@@ -586,7 +586,7 @@ export default function ChatPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        <p className="font-bold text-sm truncate underline-offset-2 group-hover:underline">
+                        <p className="truncate font-display text-sm font-semibold underline-offset-2 group-hover:underline">
                           {activeConv.profile?.name}
                         </p>
                         {typeof activeConv.score === "number" ? (
@@ -610,7 +610,7 @@ export default function ChatPage() {
                           !!activeConv.profile?.isOnline
                         ) ? (
                         <p className="text-xs font-medium text-emerald-600 mt-1 flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                          <span className="h-1.5 w-1.5 rounded-full bg-leaf" aria-hidden />
                           {t("chatPage.online")}
                         </p>
                       ) : (
@@ -689,7 +689,7 @@ export default function ChatPage() {
                       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground mx-auto mb-4">
                         <Lock className="h-7 w-7" />
                       </div>
-                      <h3 className="text-lg font-bold mb-2">{t("chatPage.unlockChat")}</h3>
+                      <h3 className="mb-2 font-display text-lg font-semibold">{t("chatPage.unlockChat")}</h3>
                       <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
                         {t("chatPage.unlockChatDesc", {
                           price: formatMoney(planPricesForGender(profile?.gender).basic),
@@ -852,7 +852,7 @@ export default function ChatPage() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground mx-auto mb-4">
                     <MessageCircle className="h-7 w-7" />
                   </div>
-                  <p className="font-bold mb-1">{t("chatPage.selectConversation")}</p>
+                  <p className="mb-1 font-display font-semibold">{t("chatPage.selectConversation")}</p>
                   <p className="text-sm text-muted-foreground">
                     {t("chatPage.selectConversationDesc")}
                   </p>

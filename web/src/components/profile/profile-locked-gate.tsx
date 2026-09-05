@@ -51,7 +51,7 @@ export function ProfileLockedGate({
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight">{heading}</h1>
+            <h1 className="font-display text-2xl font-medium tracking-tight">{heading}</h1>
             <p className="text-muted-foreground leading-relaxed">{body}</p>
           </div>
 

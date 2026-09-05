@@ -252,7 +252,7 @@ export default function NotificationsPage() {
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="font-display text-2xl font-medium tracking-tight">
             {t("notificationsPage.title")}
           </h1>
           {unreadCount > 0 && (
@@ -265,7 +265,7 @@ export default function NotificationsPage() {
 
         {reminders.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <h2 className="font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {t("notificationsPage.reminders")}
             </h2>
             {reminders.map((reminder) => {
@@ -292,7 +292,7 @@ export default function NotificationsPage() {
         {notifications.length === 0 ? (
           <Card className="p-12 text-center">
             <Bell className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-            <h3 className="text-lg font-bold mb-2">
+            <h3 className="mb-2 font-display text-lg font-semibold">
               {t("notificationsPage.emptyTitle")}
             </h3>
             <p className="text-muted-foreground text-sm">
@@ -304,7 +304,7 @@ export default function NotificationsPage() {
             {sections.map((section) =>
               section.items.length === 0 ? null : (
                 <div key={section.key} className="space-y-3">
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <h2 className="font-mono text-[0.66rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                     {section.label}
                   </h2>
                   {section.items.map((n, i) => renderNotification(n, i))}

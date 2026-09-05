@@ -50,14 +50,15 @@ export default function ContactPage() {
 
   return (
     <MarketingPage
+      eyebrow={t("common.contactUs")}
       title={t("contactPage.title")}
       subtitle={t("contactPage.subtitle")}
     >
-      <div className="grid gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
+      <div className="grid max-w-5xl gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">
-          <Card className="rounded-2xl border-border/80">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="font-bold text-lg">{t("contactPage.quickContact")}</h2>
+          <Card className="border-border/80">
+            <CardContent className="space-y-4 p-6">
+              <h2 className="font-display text-lg font-semibold tracking-tight">{t("contactPage.quickContact")}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {t("contactPage.quickContactDesc")}
               </p>
@@ -89,7 +90,7 @@ export default function ContactPage() {
           </Card>
         </div>
 
-        <Card className="rounded-3xl border-border shadow-lg lg:col-span-2">
+        <Card className="border-border shadow-lg lg:col-span-2">
           <CardContent className="p-6 sm:p-8">
             <form
               onSubmit={handleSubmit(onSubmit)}
