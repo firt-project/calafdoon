@@ -10,7 +10,7 @@ import {
   Shield,
   ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SITE_BRAND_NAME, APP_ID, SUPPORT_EMAIL } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 import type { TranslationPath } from "@/lib/i18n/translations";
@@ -47,6 +47,7 @@ function LegalDocumentPage({
   highlight = false,
 }: LegalDocConfig) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const brand = SITE_BRAND_NAME;
   const email = SUPPORT_EMAIL;
 
@@ -71,7 +72,7 @@ function LegalDocumentPage({
           type="button"
           className="legal-back"
           aria-label={t("legalCommon.back")}
-          onClick={() => window.history.back()}
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft size={20} />
         </button>
@@ -163,6 +164,7 @@ function SimpleLegalPage({
   icon: typeof HelpCircle;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const brand = SITE_BRAND_NAME;
   const email = SUPPORT_EMAIL;
 
@@ -173,7 +175,7 @@ function SimpleLegalPage({
           type="button"
           className="legal-back"
           aria-label={t("legalCommon.back")}
-          onClick={() => window.history.back()}
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft size={20} />
         </button>

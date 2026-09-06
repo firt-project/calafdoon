@@ -6,8 +6,8 @@ export const PRODUCTION_SITE_URL = "https://www.helcalafkaaga.com";
 export const APP_TAGLINE = "Find Your Perfect Match";
 export const APP_DESCRIPTION =
   "We connect serious men and women for marriage based on Islamic values, trust, and respect.";
-export const BRAND_PINK = "#A61B2B";
-export const BRAND_NAVY = "#1A1214";
+export const BRAND_PINK = "#2E5E4E";
+export const BRAND_NAVY = "#20211C";
 /** Support contact — in-app email only (no promotional WhatsApp / social CTAs). */
 export const SUPPORT_EMAIL = "support@helcalafkaaga.com";
 /** Manual EVC / Hormuud mobile-money payee (Somalia). */

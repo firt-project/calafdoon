@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Archive,
@@ -18,6 +18,7 @@ import {
 } from "@/ui/design-system";
 import { useTranslation } from "@/lib/i18n/context";
 import { hapticLight, hapticMedium } from "@/platform/haptics";
+import { useRealtimeRefresh } from "@/platform/useRealtimeRefresh";
 import { cn } from "@/utils/cn";
 
 type ConversationRow = {
@@ -117,33 +118,42 @@ export function MessagesPage() {
   const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const aliveRef = useRef(true);
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const data = await chat.getConversations();
+      if (!aliveRef.current) return;
+      const list = Array.isArray(data)
+        ? (data as ConversationRow[])
+        : data && typeof data === "object" && "items" in data
+          ? (data as { items: ConversationRow[] }).items
+          : [];
+      setItems(list.filter(isActiveChat));
+      setError(null);
+    } catch (e) {
+      if (!aliveRef.current) return;
+      setError(
+        e instanceof ApiClientError ? e.message : "Failed to load conversations"
+      );
+    } finally {
+      if (aliveRef.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let alive = true;
-    chat
-      .getConversations()
-      .then((data) => {
-        if (!alive) return;
-        const list = Array.isArray(data)
-          ? (data as ConversationRow[])
-          : data && typeof data === "object" && "items" in data
-            ? (data as { items: ConversationRow[] }).items
-            : [];
-        setItems(list.filter(isActiveChat));
-      })
-      .catch((e) => {
-        if (!alive) return;
-        setError(
-          e instanceof ApiClientError ? e.message : "Failed to load conversations"
-        );
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+    aliveRef.current = true;
+    void loadConversations();
     return () => {
-      alive = false;
+      aliveRef.current = false;
     };
-  }, []);
+  }, [loadConversations]);
+
+  // Keep the inbox fresh when a message lands or the app resumes.
+  useRealtimeRefresh(
+    ["message:new", "conversation:updated", "unread:update"],
+    () => void loadConversations()
+  );
 
   useEffect(() => {
     const unsub = subscribeRealtime("typing:update", (payload) => {

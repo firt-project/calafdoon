@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Check, CheckCheck, Clock } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 export type ChatListMessage = {
@@ -28,13 +29,18 @@ type Props = {
   showJump: boolean;
 };
 
-function statusText(m: ChatListMessage): string {
-  if (m.failed) return "Failed";
-  if (m.pending) return "Sending…";
-  if (m.read) return "Read";
-  if (m.delivery === "delivered") return "Delivered";
-  if (m.mine) return "Sent";
-  return "";
+function timeLabel(m: ChatListMessage): string {
+  if (!m.createdAt) return "";
+  const d = new Date(m.createdAt);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function Receipt({ m }: { m: ChatListMessage }) {
+  if (m.pending) return <Clock size={12} strokeWidth={2.5} />;
+  if (m.read) return <CheckCheck size={13} strokeWidth={2.5} />;
+  if (m.delivery === "delivered") return <CheckCheck size={13} strokeWidth={2.5} />;
+  return <Check size={13} strokeWidth={2.5} />;
 }
 
 export function VirtualizedMessageList({
@@ -129,17 +135,27 @@ export function VirtualizedMessageList({
                       }}
                     />
                   ) : null}
-                  {m.text}
-                  <span className="status">{statusText(m)}</span>
-                  {m.failed && onRetry && (
-                    <button
-                      type="button"
-                      className="linkish"
-                      onClick={() => onRetry(m.id)}
-                    >
-                      Retry
-                    </button>
-                  )}
+                  {m.text ? <span className="bubble-text">{m.text}</span> : null}
+                  <span
+                    className={cn("bubble-meta", m.read && "is-read")}
+                  >
+                    <span className="bubble-time">{timeLabel(m)}</span>
+                    {m.mine && !m.failed && (
+                      <span className="bubble-receipt">
+                        <Receipt m={m} />
+                      </span>
+                    )}
+                    {m.failed && <span className="bubble-failed">Failed</span>}
+                    {m.failed && onRetry && (
+                      <button
+                        type="button"
+                        className="linkish"
+                        onClick={() => onRetry(m.id)}
+                      >
+                        Retry
+                      </button>
+                    )}
+                  </span>
                 </div>
               </div>
             );

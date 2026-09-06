@@ -135,6 +135,9 @@ export const apiAdmin: AdminAdapter = {
     async stats() {
       return apiClient.get("/admin/payments/stats");
     },
+    async dashboard(opts) {
+      return apiClient.get(`/admin/payments/dashboard${q(opts)}`);
+    },
     async quarantine() {
       return apiClient.get("/admin/payments/quarantine-summary");
     },

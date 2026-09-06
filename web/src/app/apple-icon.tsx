@@ -13,12 +13,12 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #6b1220, #a61b2b)",
+          background: "linear-gradient(135deg, #5e1626, #8e2438)",
           borderRadius: 36,
-          color: "#ffffff",
-          fontSize: 64,
-          fontWeight: 700,
-          fontFamily: "system-ui, sans-serif",
+          color: "#fdf4f0",
+          fontSize: 82,
+          fontWeight: 600,
+          fontFamily: "Georgia, 'Times New Roman', serif",
         }}
       >
         HC

@@ -606,6 +606,26 @@ type PaymentStats = {
   byStatus?: Record<string, { count?: number; amountCents?: number }>;
 };
 
+type GatewayBucket = {
+  completedCount: number;
+  completedRevenueCents: number;
+  pendingCount: number;
+  failedCount: number;
+};
+
+type PaymentsDashboard = {
+  byGateway?: Partial<Record<"stripe" | "waafi" | "paystack" | "manual", GatewayBucket>>;
+  totals?: { completedCount?: number; completedRevenueCents?: number };
+  evc?: { pending?: number; approved?: number; rejected?: number };
+};
+
+const GATEWAY_LABELS: Record<string, string> = {
+  waafi: "WaafiPay",
+  paystack: "M-Pesa · card (Paystack)",
+  stripe: "Card (Stripe)",
+  manual: "Manual · EVC",
+};
+
 function paymentChannel(p: PaymentRow): "Card" | "EVC / M-PESA" {
   const sid = String(p.stripeSessionIdPrefix ?? "");
   if (sid.startsWith("evc:") || sid.startsWith("evc")) return "EVC / M-PESA";
@@ -655,9 +675,10 @@ function statusPillClass(status: string | undefined): string {
 export function AdminPaymentsPage() {
   const [items, setItems] = useState<PaymentRow[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [dashboard, setDashboard] = useState<PaymentsDashboard | null>(null);
   const [evcProofs, setEvcProofs] = useState<EvcProofRow[]>([]);
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "completed" | "pending" | "failed"
+    "all" | "completed" | "pending"
   >("all");
   const [tierFilter, setTierFilter] = useState<"all" | "basic" | "premium">(
     "all"
@@ -694,7 +715,10 @@ export function AdminPaymentsPage() {
           limit: 50,
           cursor: opts.pageCursor || undefined,
         })) as { items?: PaymentRow[]; nextCursor?: string | null };
-        const page = Array.isArray(res?.items) ? res.items : [];
+        // Failed payments are noise for the admin — never surface them.
+        const page = (Array.isArray(res?.items) ? res.items : []).filter(
+          (row) => (row.status ?? "").toLowerCase() !== "failed"
+        );
         setItems((prev) => (opts.append ? [...prev, ...page] : page));
         setNextCursor(res?.nextCursor ?? null);
       } catch (e) {
@@ -726,6 +750,14 @@ export function AdminPaymentsPage() {
       })
       .catch(() => {
         if (!cancelled) setStats(null);
+      });
+    void admin.payments
+      .dashboard()
+      .then((d) => {
+        if (!cancelled) setDashboard(d as PaymentsDashboard);
+      })
+      .catch(() => {
+        if (!cancelled) setDashboard(null);
       });
     return () => {
       cancelled = true;
@@ -759,7 +791,6 @@ export function AdminPaymentsPage() {
 
   const completed = stats?.byStatus?.completed;
   const pending = stats?.byStatus?.pending;
-  const failed = stats?.byStatus?.failed;
 
   return (
     <div className="screen pad-tab">
@@ -771,8 +802,8 @@ export function AdminPaymentsPage() {
       </header>
 
       <p className="muted small" style={{ margin: "0 0 0.85rem" }}>
-        Card (Stripe) payments and EVC / M-PESA screenshot proofs. Approve
-        screenshots here; review member profiles from Members when needed.
+        Revenue across WaafiPay, M-Pesa / card (Paystack) and manual EVC. Approve
+        EVC screenshots below; review member profiles from Members when needed.
       </p>
 
       <div className="admin-stat-grid">
@@ -789,10 +820,49 @@ export function AdminPaymentsPage() {
           <span>EVC waiting</span>
         </div>
         <div className="admin-stat">
-          <strong>{(pending?.count ?? 0) + (failed?.count ?? 0)}</strong>
-          <span>Pending / failed</span>
+          <strong>{pending?.count ?? 0}</strong>
+          <span>Pending</span>
         </div>
       </div>
+
+      <h2 className="admin-section-title">Revenue by method</h2>
+      {dashboard?.byGateway ? (
+        <div className="admin-gateway-list">
+          {(["waafi", "paystack", "stripe", "manual"] as const).map((g) => {
+            const b = dashboard.byGateway?.[g];
+            const rev = b?.completedRevenueCents ?? 0;
+            const done = b?.completedCount ?? 0;
+            const waiting = b?.pendingCount ?? 0;
+            return (
+              <div key={g} className="admin-gateway-row">
+                <div className="admin-gateway-name">{GATEWAY_LABELS[g]}</div>
+                <div className="admin-gateway-figures">
+                  <strong>{formatCents(rev)}</strong>
+                  <span className="muted small">
+                    {done} paid
+                    {waiting > 0 ? ` · ${waiting} pending` : ""}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+          <div className="admin-gateway-row admin-gateway-total">
+            <div className="admin-gateway-name">All methods</div>
+            <div className="admin-gateway-figures">
+              <strong>
+                {formatCents(dashboard.totals?.completedRevenueCents)}
+              </strong>
+              <span className="muted small">
+                {dashboard.totals?.completedCount ?? 0} paid
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="muted small" style={{ margin: "0 0 1rem" }}>
+          Payment breakdown unavailable.
+        </p>
+      )}
 
       <h2 className="admin-section-title">EVC / M-PESA proofs</h2>
       {evcProofs.length === 0 ? (
@@ -879,7 +949,6 @@ export function AdminPaymentsPage() {
             ["all", "All"],
             ["completed", "Completed"],
             ["pending", "Pending"],
-            ["failed", "Failed"],
           ] as const
         ).map(([key, label]) => (
           <button

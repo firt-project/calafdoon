@@ -4,81 +4,79 @@ import Link from "next/link";
 import { Check, ShieldCheck } from "lucide-react";
 import { MarketingPage } from "@/components/marketing/marketing-page";
 import { AuthRegisterCta } from "@/components/auth/auth-register-cta";
-import { Card, CardContent } from "@/components/ui/card";
-import { REGISTRATION_PRICE, MONTHLY_PRICE, formatMoney } from "@/lib/constants";
+import { MONTHLY_PRICE, REGISTRATION_PRICE, formatMoney } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 
 export function PricingPageContent() {
   const { t } = useTranslation();
+  const price = formatMoney(REGISTRATION_PRICE);
+  const monthly = formatMoney(MONTHLY_PRICE);
 
-  const basicFeatures = [
-    t("pricing.feature1"),
-    t("pricing.feature2"),
-    t("pricing.feature3"),
-    t("pricing.feature4"),
-    t("pricing.feature5"),
+  const features = [
+    t("landing.priceFeatureProfile"),
+    t("landing.priceFeatureMatches"),
+    t("landing.priceFeatureChat"),
+    t("landing.priceFeatureLikes"),
+    t("landing.priceFeatureWali"),
   ];
 
   return (
     <MarketingPage
-      title={t("pricing.title")}
-      subtitle={t("pricing.subtitleBasicOnly")}
+      eyebrow={t("landing.priceEyebrow")}
+      title={t("landing.priceTitle")}
+      subtitle={t("landing.priceLead")}
     >
-      <div className="mx-auto max-w-md">
-        <Card className="rounded-3xl border-primary/30 bg-gradient-to-b from-primary/10 via-card to-card shadow-xl shadow-primary/10 ring-2 ring-primary/30">
-          <CardContent className="p-8">
-            <h2 className="text-xl font-bold text-center">{t("pricing.membership")}</h2>
-            <div className="mt-3 text-center space-y-1">
-              <div>
-                <span className="text-4xl font-bold">${formatMoney(REGISTRATION_PRICE)}</span>
-                <span className="text-muted-foreground ml-2">{t("common.oneTime")}</span>
-              </div>
-              <p className="text-sm font-semibold text-primary">
-                {t("common.thenMonthly", {
-                  monthly: formatMoney(MONTHLY_PRICE),
-                })}
-              </p>
-            </div>
-            <p className="text-muted-foreground mt-3 text-center text-sm leading-relaxed">
-              {t("pricing.basicDesc")}
-            </p>
-            <p className="text-center text-xs font-medium text-primary mt-2">
-              {t("landing.samePriceNote")}
-            </p>
-            <ul className="mt-8 space-y-3">
-              {basicFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-3 text-sm">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <AuthRegisterCta
-              registerLabel={t("common.joinNow")}
-              plan="basic"
-              className="mt-8 w-full"
-              size="lg"
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <div className="flex flex-wrap items-start gap-10">
+        <div className="w-full max-w-[360px] flex-1 rounded-2xl border border-border bg-card p-8 shadow-md">
+          <div className="font-display text-[3rem] font-semibold leading-none tracking-tight tabular-nums">
+            ${price}{" "}
+            <span className="text-base font-medium text-muted-foreground">
+              {t("landing.priceOnce")}
+            </span>
+          </div>
+          <p className="mt-2.5 text-[0.9rem] font-medium text-primary">
+            {t("landing.priceThen", { monthly })}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            {t("landing.samePriceNote")}
+          </p>
+          <ul className="my-6 flex flex-col gap-2.5">
+            {features.map((f) => (
+              <li key={f} className="flex gap-2.5 text-[0.96rem]">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <AuthRegisterCta
+            registerLabel={t("common.joinNow")}
+            plan="basic"
+            size="lg"
+            className="w-full"
+          />
+        </div>
 
-      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground leading-relaxed">
-        {t("pricing.payOnceBasicOnly")}
-      </p>
-
-      <div className="mx-auto mt-8 flex max-w-xl flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          {t("payment.secureStripe")}
-        </span>
-      </div>
-
-      <div className="mx-auto mt-10 max-w-xl text-center">
-        <p className="text-sm text-muted-foreground">{t("pricing.questions")}</p>
-        <Link href="/faq" className="mt-2 inline-block text-sm font-semibold text-primary">
-          {t("pricing.viewFaq")}
-        </Link>
+        <div className="max-w-[40ch] flex-1 space-y-5">
+          <p className="font-display text-[1.5rem] font-medium italic leading-snug tracking-tight text-balance">
+            {t("landing.priceCompare")}
+          </p>
+          <p className="text-[0.98rem] leading-relaxed text-muted-foreground">
+            {t("landing.priceAsideBody", { basic: price, monthly })}
+          </p>
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-gold" />
+            {t("payment.secureStripe")}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t("pricing.questions")}{" "}
+            <Link
+              href="/faq"
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              {t("pricing.viewFaq")}
+            </Link>
+          </p>
+        </div>
       </div>
     </MarketingPage>
   );

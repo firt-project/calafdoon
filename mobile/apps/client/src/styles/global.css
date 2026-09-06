@@ -1,54 +1,57 @@
 :root {
-  --background: #faf7f6;
-  --foreground: #1a1214;
-  --card: #ffffff;
-  --card-foreground: #1a1214;
-  --muted: #f4eeee;
-  --muted-foreground: #6a5b5e;
-  --border: #ebe0e2;
-  --input: #ffffff;
-  --ring: #a61b2b;
-  --primary: #a61b2b;
-  --primary-foreground: #ffffff;
-  --accent: #f8e9eb;
-  --accent-foreground: #7a1520;
-  --destructive: #b42318;
-  --navy: #1a1214;
-  --brand-dark: #6b1220;
-  --gold: #c9a227;
-  --gold-foreground: #3d2e00;
+  /* "Xeedho" — frankincense green on raw woven cotton */
+  --background: #ede7da;
+  --foreground: #20211c;
+  --card: #f6f2e9;
+  --card-foreground: #20211c;
+  --muted: #eae3d3;
+  --muted-foreground: #5c5a4e;
+  --border: #d8d0bf;
+  --input: #f6f2e9;
+  --ring: #2e5e4e;
+  --primary: #2e5e4e;
+  --primary-foreground: #f6f2e9;
+  --accent: #e4ebe3;
+  --accent-foreground: #1f4a3c;
+  --destructive: #a8402e;
+  --navy: #20211c;
+  --brand-dark: #1f4a3c;
+  --gold: #9a6a3c;
+  --gold-foreground: #2a1c0c;
   --radius: 0.875rem;
   --radius-sm: 0.625rem;
-  --shadow-sm: 0 1px 2px rgba(26, 18, 20, 0.04);
-  --shadow-md: 0 6px 18px rgba(26, 18, 20, 0.07);
-  --shadow-lg: 0 14px 36px rgba(26, 18, 20, 0.1);
-  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --shadow-sm: 0 1px 2px rgba(31, 38, 30, 0.05);
+  --shadow-md: 0 6px 18px rgba(31, 38, 30, 0.08);
+  --shadow-lg: 0 14px 36px rgba(31, 38, 30, 0.12);
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Spectral", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --header-h: 4rem;
   --tabbar-h: 4rem;
   --max: 72rem;
 }
 
 .dark {
-  --background: #120d0e;
-  --foreground: #faf5f5;
-  --card: #1a1214;
-  --card-foreground: #faf5f5;
-  --muted: #241a1c;
-  --muted-foreground: #b5a3a6;
-  --border: #3a2a2d;
-  --input: #241a1c;
-  --ring: #fb7185;
-  --primary: #e11d48;
-  --primary-foreground: #ffffff;
-  --accent: #2a1519;
-  --accent-foreground: #fecdd3;
-  --destructive: #f87171;
-  --gold: #d4af37;
-  --gold-foreground: #1a1400;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --background: #16180f;
+  --foreground: #ece7d7;
+  --card: #20231a;
+  --card-foreground: #ece7d7;
+  --muted: #272b20;
+  --muted-foreground: #a29e8b;
+  --border: #343829;
+  --input: #20231a;
+  --ring: #63ad8f;
+  --primary: #63ad8f;
+  --primary-foreground: #16180f;
+  --accent: #22301f;
+  --accent-foreground: #bfe0cf;
+  --destructive: #e07a5f;
+  --gold: #c79461;
+  --gold-foreground: #16180f;
+  --brand-dark: #4c9277;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.46);
 }
 
 *,
@@ -138,9 +141,9 @@ button {
 
 .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(166, 27, 43, 0.08), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(166, 27, 43, 0.05), transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(107, 18, 32, 0.04), transparent 60%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(46, 94, 78, 0.08), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(46, 94, 78, 0.05), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(154, 106, 60, 0.04), transparent 60%),
     var(--background);
   min-height: 100%;
   padding-bottom: calc(var(--tabbar-h) + 1.5rem);
@@ -148,22 +151,22 @@ button {
 
 .dark .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(225, 29, 72, 0.12), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(166, 27, 43, 0.1), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(99, 173, 143, 0.1), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(99, 173, 143, 0.07), transparent 50%),
     var(--background);
 }
 
 .member-hero {
   position: relative;
   overflow: hidden;
-  color: #fff;
+  color: #f6f2e9;
   border-radius: 1.75rem;
   padding: 1.75rem;
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.22), transparent 42%),
-    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.12), transparent 45%),
-    linear-gradient(135deg, #6b1220 0%, #a61b2b 48%, #c41e3a 100%);
-  box-shadow: 0 18px 40px -18px rgba(122, 21, 32, 0.55);
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.12), transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.07), transparent 45%),
+    linear-gradient(135deg, #1f4a3c 0%, #2e5e4e 55%, #3a7a63 100%);
+  box-shadow: 0 18px 40px -18px rgba(20, 40, 32, 0.5);
 }
 
 .stat-card,
@@ -427,9 +430,9 @@ button {
   min-height: min(92vh, 52rem);
   display: grid;
   align-items: end;
-  color: #fff;
+  color: #f6f2e9;
   overflow: hidden;
-  background: #120d0e;
+  background: #141610;
 }
 
 .hero-media {
@@ -657,9 +660,9 @@ button {
   height: 100%;
   background: linear-gradient(
     90deg,
-    var(--brand-dark, #6b1220),
+    var(--brand-dark, #1f4a3c),
     var(--primary),
-    color-mix(in srgb, var(--primary) 70%, #e11d48)
+    color-mix(in srgb, var(--primary) 65%, var(--gold))
   );
 }
 
@@ -704,7 +707,7 @@ button {
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 13, 14, 0.55);
+  background: rgba(16, 18, 12, 0.55);
   display: grid;
   place-items: center;
   z-index: 60;

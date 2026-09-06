@@ -277,6 +277,11 @@ export function PeerProfileSheet({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Extracted so the effect dep array stays statically checkable.
+  const peerKey =
+    source.type === "discover" ? source.userId : source.conversationId;
+  const chatUserId = source.type === "chat" ? source.userId : null;
+
   useEffect(() => {
     if (!open) return;
     let alive = true;
@@ -317,12 +322,7 @@ export function PeerProfileSheet({
     };
     // seed is captured at open; avoid refetch loops from new object identity
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    open,
-    source.type,
-    source.type === "discover" ? source.userId : source.conversationId,
-    source.type === "chat" ? source.userId : null,
-  ]);
+  }, [open, source.type, peerKey, chatUserId]);
 
   useEffect(() => {
     if (!open) return;

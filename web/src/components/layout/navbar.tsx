@@ -130,7 +130,7 @@ export function Navbar() {
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "block px-4 py-3 text-sm font-medium rounded-xl transition-colors",
+                  "block rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                   isActive(link.href)
                     ? "bg-accent text-primary"
                     : "hover:bg-muted"

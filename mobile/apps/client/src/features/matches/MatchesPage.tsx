@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { EmptyState, SkeletonCard } from "@/ui/mobile-kit";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 import { userFacingError } from "@/platform/errors";
+import { useRealtimeRefresh } from "@/platform/useRealtimeRefresh";
 import {
   CompatBadge,
   FilterChip,
@@ -125,8 +126,8 @@ export function MatchesPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     setError(null);
     try {
       const [mutualData, listData] = await Promise.all([
@@ -151,6 +152,12 @@ export function MatchesPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Someone likes back / a new match forms → silently refresh the lists.
+  useRealtimeRefresh(
+    ["notification:new", "unread:update"],
+    () => void load(false)
+  );
 
   const counts = useMemo(
     () => ({

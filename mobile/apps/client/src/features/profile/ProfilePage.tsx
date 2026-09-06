@@ -99,8 +99,16 @@ export function ProfilePage() {
       return;
     }
     try {
-      const { pickProfilePhoto } = await import("@/platform/camera");
-      const picked = await pickProfilePhoto(source);
+      const { pickProfilePhoto, isPhotoPickCancelled } = await import(
+        "@/platform/camera"
+      );
+      let picked;
+      try {
+        picked = await pickProfilePhoto(source);
+      } catch (e) {
+        if (isPhotoPickCancelled(e)) return;
+        throw e;
+      }
       if (editorSrc) URL.revokeObjectURL(editorSrc);
       const url = URL.createObjectURL(picked.blob);
       setPendingSlot(gallery.length === 0 ? "main" : "additional");

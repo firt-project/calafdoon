@@ -4,6 +4,25 @@ import { Capacitor } from "@capacitor/core";
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/** Sentinel thrown when the user backs out of the camera / gallery picker. */
+export class PhotoPickCancelled extends Error {
+  constructor() {
+    super("Photo selection cancelled");
+    this.name = "PhotoPickCancelled";
+  }
+}
+
+export function isPhotoPickCancelled(e: unknown): boolean {
+  if (e instanceof PhotoPickCancelled) return true;
+  const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+  return (
+    msg.includes("cancel") ||
+    msg.includes("no photo") ||
+    msg.includes("no image") ||
+    msg.includes("no file")
+  );
+}
+
 export type PickedPhoto = {
   blob: Blob;
   fileName: string;
@@ -29,14 +48,22 @@ export async function pickProfilePhoto(
   source: "camera" | "library"
 ): Promise<PickedPhoto> {
   if (Capacitor.isNativePlatform()) {
-    const photo = await Camera.getPhoto({
-      quality: 85,
-      allowEditing: false,
-      resultType: CameraResultType.DataUrl,
-      source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
-      correctOrientation: true,
-    });
-    if (!photo.dataUrl) throw new Error("No photo returned");
+    let photo;
+    try {
+      photo = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
+        correctOrientation: true,
+      });
+    } catch (e) {
+      // Capacitor throws on back-out ("User cancelled photos app"). Normalize
+      // so the caller can stay on the chat screen without an error toast.
+      if (isPhotoPickCancelled(e)) throw new PhotoPickCancelled();
+      throw e;
+    }
+    if (!photo.dataUrl) throw new PhotoPickCancelled();
     const blob = await dataUrlToBlob(photo.dataUrl);
     validateBlob(blob);
     return {
@@ -53,10 +80,11 @@ export async function pickProfilePhoto(
     if (source === "camera") {
       input.setAttribute("capture", "environment");
     }
+    input.oncancel = () => reject(new PhotoPickCancelled());
     input.onchange = () => {
       const file = input.files?.[0];
       if (!file) {
-        reject(new Error("No file selected"));
+        reject(new PhotoPickCancelled());
         return;
       }
       try {

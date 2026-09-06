@@ -23,33 +23,36 @@ function amountCentsToWaafi(amountCents: number): string {
   return (amountCents / 100).toFixed(2);
 }
 
-/** Resolve the wallet that may be charged — must match profile/account phone. */
+/**
+ * Resolve the wallet to charge. Any valid mobile-money number the member types
+ * is accepted — people routinely pay from a spouse's / relative's wallet, not
+ * the number on their dating profile. When the field is left blank we fall back
+ * to the phone on file so the UI can still omit it.
+ */
 export function resolveWaafiPayerAccount(opts: {
   submittedAccountNo?: string | null;
   profilePhone?: string | null;
   userPhone?: string | null;
 }):
   | { ok: true; accountNo: string }
-  | { ok: false; reason: "no_profile_phone" | "mismatch" | "invalid" } {
-  const profileAccount =
-    normalizeWaafiAccountNo(opts.profilePhone ?? "") ??
-    normalizeWaafiAccountNo(opts.userPhone ?? "");
-  if (!profileAccount) {
-    return { ok: false, reason: "no_profile_phone" };
+  | { ok: false; reason: "missing" | "invalid" } {
+  const rawSubmitted = (opts.submittedAccountNo ?? "").trim();
+  if (rawSubmitted) {
+    const submitted = normalizeWaafiAccountNo(rawSubmitted);
+    if (!submitted) {
+      return { ok: false, reason: "invalid" };
+    }
+    return { ok: true, accountNo: submitted };
   }
 
-  const rawSubmitted = (opts.submittedAccountNo ?? "").trim();
-  // Empty body → charge the profile phone (UI can omit the field).
-  const submitted = rawSubmitted
-    ? normalizeWaafiAccountNo(rawSubmitted)
-    : profileAccount;
-  if (!submitted) {
-    return { ok: false, reason: "invalid" };
+  // No wallet entered — charge the phone on file, if there is a usable one.
+  const fallback =
+    normalizeWaafiAccountNo(opts.profilePhone ?? "") ??
+    normalizeWaafiAccountNo(opts.userPhone ?? "");
+  if (!fallback) {
+    return { ok: false, reason: "missing" };
   }
-  if (submitted !== profileAccount) {
-    return { ok: false, reason: "mismatch" };
-  }
-  return { ok: true, accountNo: submitted };
+  return { ok: true, accountNo: fallback };
 }
 
 @Injectable()
@@ -102,14 +105,9 @@ export class WaafiPaymentsService {
       userPhone: user.phone,
     });
     if (!resolved.ok) {
-      if (resolved.reason === "no_profile_phone") {
+      if (resolved.reason === "missing") {
         throw new BadRequestException(
-          "Add a valid phone number to your profile before paying with WaafiPay"
-        );
-      }
-      if (resolved.reason === "mismatch") {
-        throw new BadRequestException(
-          "Wallet number must match the phone number on your profile"
+          "Enter the mobile wallet number you want to pay from"
         );
       }
       throw new BadRequestException(

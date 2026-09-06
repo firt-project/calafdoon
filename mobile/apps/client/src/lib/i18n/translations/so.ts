@@ -1676,7 +1676,7 @@ export const so: Translations = {
     mute: "Aamus",
     unmute: "Fur codka",
     muted: "La aamusay",
-    delete: "Tirtir",
+    delete: "Qari",
     filters: "Shaandheynta fariimaha",
     actionFailed: "Sheekaysigan lama cusboonayn karin.",
     tapForInfo: "Taabo macluumaad",
@@ -1693,6 +1693,8 @@ export const so: Translations = {
     uploading: "Waa la soo gelinayaa…",
     newMessages: "Fariimo cusub",
     offlineDraft: "Offline — diristu waxay u baahan tahay xiriir. Qoraaladu waa kaydsan yihiin.",
+    call: "Wac",
+    callSoon: "Wicitaannada codka ah dhawaan ayaa la heli doonaa.",
   },
   safety: {
     reportOrBlock: "Soo sheeg / Jooji",

@@ -1,0 +1,107 @@
+# Codemagic CI — builds the HelCalaf Capacitor iOS app on a cloud Mac and
+# uploads it to TestFlight / App Store Connect. No local Mac required.
+#
+# One-time setup in the Codemagic UI (see mobile/store/appstore/APP_STORE_SUBMISSION.md):
+#   1. Add this repo to Codemagic.
+#   2. Teams → Integrations → App Store Connect: add an API key (Issuer ID, Key ID,
+#      .p8). Name the integration exactly:  HelCalaf ASC API key
+#   3. Environment variables → create group  helcalaf_client_env  with:
+#        VITE_API_URL        = https://tel-calafkaaga-1.onrender.com   (your prod API, https)
+#        VITE_SOCKET_URL     = https://tel-calafkaaga-1.onrender.com   (optional; defaults to API)
+#        VITE_APP_URL        = https://tel-calafkaaga-1.onrender.com   (optional)
+#        VITE_STRIPE_PUBLISHABLE_KEY = pk_live_or_test_...             (optional; unused if empty)
+#   4. Register the App ID  com.helcalaf.app  (Codemagic can auto-create it during
+#      "fetch-signing-files --create", or do it in the Apple Developer portal).
+
+workflows:
+  ios-appstore:
+    name: HelCalaf iOS — TestFlight / App Store
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: HelCalaf ASC API key
+    environment:
+      groups:
+        - helcalaf_client_env
+      vars:
+        BUNDLE_ID: "com.helcalaf.app"
+        XCODE_PROJECT_DIR: "mobile/apps/client/ios/App"
+        XCODE_SCHEME: "App"
+      node: 22
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $CM_BUILD_DIR/mobile/node_modules
+        - $HOME/Library/Caches/CocoaPods
+        - $CM_BUILD_DIR/mobile/apps/client/ios/App/Pods
+    scripts:
+      - name: Install JS dependencies (workspace root)
+        script: |
+          cd mobile
+          npm ci
+
+      - name: Write client production env
+        script: |
+          cd mobile/apps/client
+          cat > .env.production <<EOF
+          VITE_API_URL=${VITE_API_URL}
+          VITE_SOCKET_URL=${VITE_SOCKET_URL:-$VITE_API_URL}
+          VITE_APP_URL=${VITE_APP_URL:-$VITE_API_URL}
+          VITE_USE_LOCAL_DEMO=false
+          VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY:-pk_test_unused}
+          EOF
+          echo "wrote apps/client/.env.production:"
+          sed 's/=.*/=<set>/' .env.production
+
+      - name: Build web assets (@hel/client)
+        script: |
+          cd mobile
+          npm run build -w @hel/client
+
+      - name: Capacitor sync iOS
+        script: |
+          cd mobile/apps/client
+          npx cap sync ios
+
+      - name: CocoaPods install
+        script: |
+          cd "$XCODE_PROJECT_DIR"
+          pod install
+
+      - name: Set build number (Codemagic auto-increments)
+        script: |
+          cd "$XCODE_PROJECT_DIR"
+          agvtool new-version -all "$BUILD_NUMBER"
+
+      - name: Fetch signing files (auto-creates profile + App ID)
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build .ipa
+        script: |
+          cd "$XCODE_PROJECT_DIR"
+          xcode-project build-ipa \
+            --workspace "App.xcworkspace" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - $CM_BUILD_DIR/**/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $CM_BUILD_DIR/**/*.dSYM
+    publishing:
+      # Codemagic emails the committer by default. Add explicit recipients in the
+      # Codemagic UI or here if you want more.
+      app_store_connect:
+        auth: integration
+        # Uploads the build to TestFlight. The FIRST public App Store release must
+        # still be submitted by hand in App Store Connect (metadata + screenshots +
+        # age rating + review). After that first release you can flip
+        # submit_to_app_store: true for hands-off releases.
+        submit_to_testflight: true
+        # submit_to_app_store: true
+        # release_type: MANUAL

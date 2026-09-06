@@ -6,20 +6,21 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  /* Brand — burgundy + warm paper */
-  --brand: #a61b2b;
-  --brand-deep: #6b1220;
-  --ink: #1a1214;
-  --paper: #faf7f6;
-  --surface: #ffffff;
-  --surface-2: #f4eeee;
-  --line: #ebe0e2;
-  --muted: #f4eeee;
-  --muted-foreground: #6a5b5e;
-  --success: #0f766e;
-  --warning: #b45309;
-  --danger: #b42318;
-  --online: #12b76a;
+  /* Brand — "Xeedho": frankincense green on raw woven cotton */
+  --brand: #2e5e4e;
+  --brand-deep: #1f4a3c;
+  --ink: #20211c;
+  --paper: #ede7da;
+  --surface: #f6f2e9;
+  --surface-2: #eae3d3;
+  --line: #d8d0bf;
+  --muted: #eae3d3;
+  --muted-foreground: #5c5a4e;
+  --cord: #9a6a3c; /* camel-leather / woven cord — chrome only */
+  --success: #3e7a5f;
+  --warning: #9a6a3c;
+  --danger: #a8402e;
+  --online: #3e7a5f;
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -27,11 +28,13 @@
   --card-foreground: var(--ink);
   --border: var(--line);
   --primary: var(--brand);
-  --primary-foreground: #ffffff;
-  --accent: #f8e9eb;
-  --accent-foreground: #7a1520;
+  --primary-foreground: #f6f2e9;
+  --accent: #e4ebe3;
+  --accent-foreground: #1f4a3c;
+  --gold: var(--cord);
+  --gold-foreground: #2a1c0c;
   --destructive: var(--danger);
-  --input: #ffffff;
+  --input: #f6f2e9;
   --ring: var(--brand);
 
   /* Spacing scale (4px base) */
@@ -63,16 +66,17 @@
   --text-eyebrow: 0.75rem;
 
   /* Shadows — soft, premium, non-glow */
-  --shadow-sm: 0 1px 2px rgba(26, 18, 20, 0.04);
-  --shadow-md: 0 6px 18px rgba(26, 18, 20, 0.07);
-  --shadow-lg: 0 14px 36px rgba(26, 18, 20, 0.1);
+  --shadow-sm: 0 1px 2px rgba(31, 38, 30, 0.05);
+  --shadow-md: 0 6px 18px rgba(31, 38, 30, 0.08);
+  --shadow-lg: 0 14px 36px rgba(31, 38, 30, 0.12);
   --elevation-card: var(--shadow-sm),
     0 0 0 1px color-mix(in srgb, var(--line) 85%, transparent);
   --elevation-raised: var(--shadow-md),
     0 0 0 1px color-mix(in srgb, var(--line) 75%, transparent);
 
-  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Spectral", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --tabbar-h: 3.75rem;
   --tabbar-inset: 0.65rem;
@@ -91,30 +95,39 @@
   --screen-pad-top: 1.1rem;
   --content-max: 40rem;
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 28%, transparent);
+
+  /* Keep native form controls (and WebView auto-dark) on our own palette */
+  color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --paper: #120d0e;
-  --ink: #faf5f5;
-  --surface: #1c1416;
-  --surface-2: #261c1e;
-  --line: #3a2a2d;
-  --muted: #241a1c;
-  --muted-foreground: #cbb8bb;
-  --brand: #e11d48;
-  --brand-deep: #9f1239;
+  color-scheme: dark;
+  --paper: #16180f;
+  --ink: #ece7d7;
+  --surface: #20231a;
+  --surface-2: #272b20;
+  --line: #343829;
+  --muted: #272b20;
+  --muted-foreground: #a29e8b;
+  --brand: #63ad8f;
+  --brand-deep: #4c9277;
+  --cord: #c79461;
+  --success: #6fb894;
+  --online: #6fb894;
   --background: var(--paper);
   --foreground: var(--ink);
   --card: var(--surface);
   --card-foreground: var(--ink);
   --border: var(--line);
   --primary: var(--brand);
-  --primary-foreground: #ffffff;
-  --accent: #2a1519;
-  --accent-foreground: #fecdd3;
-  --input: #241a1c;
-  --destructive: #f87171;
-  --ring: #fb7185;
+  --primary-foreground: #16180f;
+  --accent: #22301f;
+  --accent-foreground: #bfe0cf;
+  --gold: var(--cord);
+  --gold-foreground: #16180f;
+  --input: #20231a;
+  --destructive: #e07a5f;
+  --ring: #63ad8f;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
@@ -156,7 +169,7 @@ body {
   background:
     radial-gradient(120% 70% at 10% -10%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 55%),
     radial-gradient(90% 55% at 100% 0%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 48%),
-    linear-gradient(180deg, #160f11 0%, var(--background) 45%, #1a1214 100%);
+    linear-gradient(180deg, #12140d 0%, var(--background) 45%, #181a12 100%);
 }
 
 a {
@@ -269,10 +282,10 @@ img {
   place-content: center;
   gap: 0.75rem;
   text-align: center;
-  color: #fff;
+  color: #f6f2e9;
   background:
-    radial-gradient(80% 60% at 20% 10%, rgba(255, 255, 255, 0.16), transparent 55%),
-    linear-gradient(160deg, #be123c 0%, var(--brand-deep) 52%, #1c1416 100%);
+    radial-gradient(80% 60% at 20% 10%, rgba(255, 255, 255, 0.1), transparent 55%),
+    linear-gradient(160deg, #3a7a63 0%, var(--brand-deep) 52%, #141610 100%);
   padding: calc(var(--safe-top) + 1.5rem) 1.5rem calc(var(--safe-bottom) + 1.5rem);
 }
 
@@ -301,7 +314,8 @@ img {
   height: var(--tabbar-h);
   padding: 0.3rem;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.15rem;
   background: color-mix(in srgb, var(--card) 92%, transparent);
   backdrop-filter: blur(18px) saturate(1.2);
@@ -342,6 +356,32 @@ img {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tab .tab-icon {
+  position: relative;
+  overflow: visible;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -0.4rem;
+  left: 60%;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.22rem;
+  border-radius: 999px;
+  background: var(--destructive);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  line-height: 1rem;
+  text-align: center;
+  border: 1.5px solid var(--card);
 }
 
 .tab.active {
@@ -616,9 +656,9 @@ img {
 
 .auth-layout-hero {
   padding: 0;
-  color: #fff;
+  color: #f6f2e9;
   /* Fallback when hero image is slow/missing — avoids white-on-white blank screen */
-  background: #1a1214;
+  background: #141610;
 }
 
 .auth-hero-media {
@@ -653,7 +693,7 @@ img {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(165deg, #faf7f6 0%, #f4eeee 48%, #f8e9eb 100%);
+  background: linear-gradient(165deg, var(--surface) 0%, var(--surface-2) 48%, var(--accent) 100%);
 }
 
 .auth-orb {
@@ -928,6 +968,24 @@ img {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
+/* Browser autofill (email / password) — force our field colors, not the
+   UA's pale-blue background + black text that turns invisible in dark mode. */
+.auth-field-shell input:-webkit-autofill,
+.auth-field-shell input:-webkit-autofill:hover,
+.auth-field-shell input:-webkit-autofill:focus,
+.auth-field-shell input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+  border-color: var(--border);
+  -webkit-box-shadow: 0 0 0 100px var(--input) inset;
+  box-shadow: 0 0 0 100px var(--input) inset;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.auth-field-shell input:-webkit-autofill:focus {
+  border-color: var(--primary);
+}
+
 .auth-field-leading,
 .auth-field-toggle {
   position: absolute;
@@ -988,6 +1046,17 @@ img {
   background: #2a1f22;
   border-color: #4a383c;
   color: #faf5f5;
+}
+
+[data-theme="dark"] .auth-field-shell input:-webkit-autofill,
+[data-theme="dark"] .auth-field-shell input:-webkit-autofill:hover,
+[data-theme="dark"] .auth-field-shell input:-webkit-autofill:focus,
+[data-theme="dark"] .auth-field-shell input:-webkit-autofill:active {
+  -webkit-text-fill-color: #faf5f5;
+  caret-color: #faf5f5;
+  border-color: #4a383c;
+  -webkit-box-shadow: 0 0 0 100px #2a1f22 inset;
+  box-shadow: 0 0 0 100px #2a1f22 inset;
 }
 
 [data-theme="dark"] .auth-steps li:not(.active) {
@@ -1369,7 +1438,7 @@ button.stat-card {
   min-height: 280px;
   background:
     linear-gradient(180deg, transparent 40%, rgba(26, 18, 20, 0.78) 100%),
-    linear-gradient(135deg, #7a1520, #2a1519);
+    linear-gradient(135deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
   color: #fff;
   display: grid;
   place-items: end start;
@@ -1469,7 +1538,7 @@ button.stat-card {
   color: #fff;
   background:
     linear-gradient(180deg, transparent 42%, rgba(26, 18, 20, 0.88) 100%),
-    linear-gradient(135deg, #7a1520, #2a1519);
+    linear-gradient(135deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
   background-size: cover;
   background-position: center;
   cursor: pointer;
@@ -2008,25 +2077,31 @@ button.chip {
 }
 
 .bubble {
-  max-width: 78%;
-  padding: 0.7rem 0.9rem;
-  border-radius: 1.05rem;
+  width: fit-content;
+  max-width: 82%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 1.15rem;
   line-height: 1.4;
   animation: bubble-in 160ms ease both;
+  word-break: break-word;
 }
 
 .bubble.me {
+  margin-left: auto;
+  margin-right: 0;
   align-self: flex-end;
   background: var(--primary);
-  color: #fff;
-  border-bottom-right-radius: 0.3rem;
+  color: var(--primary-foreground);
+  border-bottom-right-radius: 0.35rem;
 }
 
 .bubble.peer {
+  margin-right: auto;
+  margin-left: 0;
   align-self: flex-start;
   background: var(--card);
   border: 1px solid var(--border);
-  border-bottom-left-radius: 0.3rem;
+  border-bottom-left-radius: 0.35rem;
 }
 
 .bubble.failed {
@@ -2165,7 +2240,7 @@ button.chip {
   width: 100%;
   animation: screen-in var(--motion) both;
   background:
-    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(166, 27, 43, 0.09), transparent 55%),
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(46, 94, 78, 0.1), transparent 55%),
     var(--background);
 }
 
@@ -2556,6 +2631,30 @@ button.chip {
   padding-bottom: calc(var(--safe-bottom) + 5.75rem);
 }
 
+.onboard-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.onboard-photo-thumb {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.onboard-photo-add {
+  aspect-ratio: 3 / 4;
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--primary) 6%, var(--card));
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .q-progress {
   display: flex;
   flex-direction: column;
@@ -2812,7 +2911,7 @@ button.chip {
     90deg,
     var(--brand-deep),
     var(--primary),
-    color-mix(in srgb, var(--primary) 70%, #e11d48)
+    color-mix(in srgb, var(--primary) 65%, var(--cord))
   );
   transition: width 280ms var(--motion);
 }
@@ -2941,6 +3040,200 @@ button.chip {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+/* ---- Xeedho payment screen ---- */
+.pay-plan {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 1.15rem 1.2rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.pay-plan-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.pay-plan-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  margin-top: 0.3rem;
+}
+
+.pay-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.pay-plan-amount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2.35rem;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+.pay-plan-per {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.pay-method {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 1rem 1.1rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.pay-method-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.6rem;
+}
+
+.pay-method-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+
+.pay-method-tag {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+.pay-field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.pay-phone-input {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input);
+  overflow: hidden;
+}
+
+.pay-phone-cc {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, var(--input));
+  border-right: 1px solid var(--border);
+}
+
+.pay-phone-input .input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0.8rem 0.85rem;
+  font-size: 1rem;
+  color: var(--foreground);
+  outline: none;
+}
+
+.pay-phone-input:focus-within {
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+
+/* In-app Paystack sheet */
+.pay-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.pay-sheet-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--safe-top) + 0.7rem) var(--screen-pad-x) 0.7rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.pay-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  color: var(--muted-foreground);
+}
+
+.pay-sheet-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--success);
+}
+
+.pay-sheet-close {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pay-sheet-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--background);
+}
+
+.pay-sheet-foot {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem var(--screen-pad-x) calc(var(--safe-bottom) + 0.9rem);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+
+.pay-sheet-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+.pay-sheet-hint {
+  margin: 0;
+  text-align: center;
 }
 
 .pay-method-tabs {
@@ -3272,13 +3565,39 @@ button.chip {
   gap: 0.75rem;
   padding: 0.5rem 0.85rem;
   border-top: 1px solid var(--border);
+  background: var(--surface-2);
 }
 
 .attach-preview img {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
   border-radius: 10px;
+  flex: none;
+}
+
+.attach-preview-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attach-preview-remove {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: var(--radius-pill);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .jump-new {
@@ -4120,9 +4439,20 @@ button.chip {
   place-items: center;
 }
 
-/* WhatsApp-style Messages inbox */
+/* WhatsApp-style Messages inbox — flat, full-bleed list */
+.screen.wa-inbox {
+  padding-inline: 0;
+}
 .wa-inbox .screen-inner {
   gap: var(--space-2);
+}
+/* keep the search + filter controls inset; the list runs edge to edge */
+.wa-inbox .screen-inner > .ds-page-header,
+.wa-inbox .screen-inner > .ds-search,
+.wa-inbox .screen-inner > .wa-filters,
+.wa-inbox .screen-inner > .form-error,
+.wa-inbox .screen-inner > .empty-state {
+  margin-inline: calc(var(--safe-left) + var(--screen-pad-x));
 }
 
 .wa-filters {
@@ -4141,11 +4471,10 @@ button.chip {
 
 .wa-list {
   list-style: none;
-  margin: 0 -0.15rem;
+  margin: 0;
   padding: 0;
   background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--elevation-card);
+  border-block: 1px solid var(--line);
   overflow: hidden;
 }
 
@@ -4171,7 +4500,7 @@ button.chip {
 .wa-action {
   appearance: none;
   border: 0;
-  color: #fff;
+  color: #f6f2e9;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4185,11 +4514,11 @@ button.chip {
 }
 
 .wa-action-archive {
-  background: #128c7e;
+  background: var(--brand-deep);
 }
 
 .wa-action-mute {
-  background: #54656f;
+  background: #6b6a5f;
 }
 
 .wa-action-mute.is-on {
@@ -4197,7 +4526,7 @@ button.chip {
 }
 
 .wa-action-delete {
-  background: #e11d48;
+  background: #7a7768;
 }
 
 .wa-swipe-front {
@@ -4248,9 +4577,10 @@ button.chip {
 
 .wa-row-name {
   margin: 0;
-  font-size: 1.02rem;
-  font-weight: 600;
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-size: 1.06rem;
+  font-weight: 500;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4334,27 +4664,92 @@ button.chip {
   color: var(--primary);
 }
 
-/* Conversation thread */
+/* Conversation thread — immersive dark-green "Xeedho" messaging surface.
+   This screen is intentionally always dark, independent of the app theme. */
 .wa-chat {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding-bottom: calc(var(--safe-bottom) + 4.75rem);
+  /* Full-bleed messaging layout — override the generic .screen inset + gap. */
+  gap: 0;
+  padding: 0 0 calc(var(--safe-bottom) + 4.75rem);
   background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--primary) 4%, var(--background)) 0%,
-      var(--background) 28%
-    );
+    radial-gradient(120% 60% at 15% 0%, #1a4034 0%, transparent 55%),
+    linear-gradient(168deg, #122d23 0%, #0b1a14 46%, #060d0a 100%);
+  color: #f2ede2;
+  --wa-ink: #f4efe6;
+  --wa-ink-soft: rgba(244, 239, 230, 0.62);
+  --wa-line: rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle white abstract curved-line artwork over the gradient */
+.wa-chat-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='900' viewBox='0 0 420 900' fill='none'%3E%3Cg stroke='%23ffffff' stroke-width='1.4' stroke-linecap='round' opacity='0.5'%3E%3Cpath d='M-60 120 C 120 20 300 210 480 90'/%3E%3Cpath d='M-60 190 C 140 110 280 300 480 180'/%3E%3Cpath d='M-60 260 C 120 200 320 360 480 270'/%3E%3Cpath d='M-60 660 C 130 560 300 760 480 620'/%3E%3Cpath d='M-60 730 C 160 660 260 850 480 720'/%3E%3Cpath d='M-60 800 C 120 740 340 900 480 820'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='1' opacity='0.28'%3E%3Ccircle cx='60' cy='430' r='120'/%3E%3Ccircle cx='380' cy='470' r='90'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .wa-chat-header {
+  display: flex;
+  align-items: center;
   gap: 0.35rem;
-  background: var(--card);
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: linear-gradient(
+    180deg,
+    rgba(9, 22, 17, 0.92) 0%,
+    rgba(9, 22, 17, 0.78) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.1);
+  border-bottom: 1px solid var(--wa-line);
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 6;
+  padding: calc(var(--safe-top) + 0.45rem) 0.55rem 0.55rem;
+}
+
+.wa-chat-icon-btn {
+  flex: none;
+  width: var(--touch);
+  height: var(--touch);
+  min-width: var(--touch);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wa-ink);
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+
+.wa-chat-icon-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wa-chat-icon-btn:disabled {
+  opacity: 0.4;
+}
+
+.wa-chat .chat-thread {
+  padding: 0.5rem 0.7rem 1rem;
+}
+
+.wa-chat .chat-thread .muted,
+.wa-chat .chat-thread .muted.small,
+.wa-chat .chat-thread .center {
+  color: var(--wa-ink-soft);
+}
+
+.wa-chat > .form-error,
+.wa-chat > [role="status"] {
+  margin-inline: 0.7rem;
 }
 
 .wa-chat-peer {
@@ -4374,8 +4769,12 @@ button.chip {
   border-radius: var(--radius);
 }
 
+.wa-chat-peer {
+  padding-inline: 0.15rem;
+}
+
 .wa-chat-peer:active {
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .wa-chat-peer-meta {
@@ -4386,9 +4785,11 @@ button.chip {
 }
 
 .wa-chat-peer-meta strong {
-  font-size: 1.02rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 600;
   line-height: 1.2;
+  color: var(--wa-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4396,37 +4797,177 @@ button.chip {
 
 .wa-chat-status {
   font-size: 0.75rem;
-  color: var(--muted-foreground);
+  color: var(--wa-ink-soft);
   line-height: 1.2;
 }
 
 .wa-chat-status.is-typing {
-  color: var(--primary);
+  color: #7fd3b3;
   font-weight: 600;
 }
 
-.wa-chat-more {
-  min-width: var(--touch);
-  min-height: var(--touch);
-  width: var(--touch);
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-  color: var(--foreground);
-}
-
+/* Composer — rounded input + green circular send button, nothing else */
 .wa-composer {
-  gap: 0.35rem;
-  background: color-mix(in srgb, var(--card) 96%, transparent);
+  gap: 0.5rem;
+  align-items: flex-end;
+  background: linear-gradient(
+    180deg,
+    rgba(9, 22, 17, 0.82) 0%,
+    rgba(9, 22, 17, 0.95) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.1);
+  border-top: 1px solid var(--wa-line);
+  padding: 0.6rem calc(var(--safe-right) + 0.75rem)
+    calc(var(--safe-bottom) + 0.6rem) calc(var(--safe-left) + 0.75rem);
 }
 
 .wa-composer .composer-input {
-  background: color-mix(in srgb, var(--background) 70%, var(--card));
+  flex: 1;
+  min-width: 0;
+  color: var(--wa-ink);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--wa-line);
+  border-radius: 1.4rem;
+  padding: 0.7rem 1rem;
+  min-height: 2.85rem;
+  line-height: 1.35;
+}
+
+.wa-composer .composer-input::placeholder {
+  color: rgba(244, 239, 230, 0.45);
+}
+
+.wa-composer .composer-input:focus,
+.wa-composer .composer-input:focus-visible {
+  outline: none;
+  border-color: rgba(127, 211, 179, 0.55);
+  box-shadow: 0 0 0 3px rgba(127, 211, 179, 0.15);
+}
+
+.wa-send-btn {
+  flex: none;
+  width: 2.85rem;
+  height: 2.85rem;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(140deg, #3a7a63 0%, #2e5e4e 55%, #1f4a3c 100%);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform var(--motion-fast), opacity var(--motion-fast);
+}
+
+.wa-send-btn:active {
+  transform: scale(0.92);
+}
+
+.wa-send-btn:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.wa-send-btn svg {
+  transform: translateX(1px);
+}
+
+/* Transient "coming soon" note above the composer */
+.chat-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-bottom) + 4.75rem);
+  z-index: 7;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--wa-ink);
+  background: rgba(9, 22, 17, 0.92);
+  border: 1px solid var(--wa-line);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  animation: bubble-in 180ms ease both;
+}
+
+/* Message bubbles on the immersive surface */
+.wa-chat .chat-thread {
+  gap: 0.3rem;
+}
+
+.wa-chat .bubble {
+  max-width: 80%;
+  padding: 0.5rem 0.7rem 0.4rem;
   border-radius: 1.25rem;
-  padding: 0.55rem 0.85rem;
-  min-height: 2.55rem;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.wa-chat .bubble.peer {
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--wa-line);
+  color: var(--wa-ink);
+  border-bottom-left-radius: 0.4rem;
+}
+
+.wa-chat .bubble.me {
+  background: linear-gradient(140deg, #327a62 0%, #285442 100%);
+  border: 0;
+  color: #fdfdfb;
+  border-bottom-right-radius: 0.4rem;
+}
+
+.wa-chat .bubble.failed {
+  outline: 1px dashed rgba(224, 122, 95, 0.8);
+}
+
+.bubble-text {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: 0.15rem;
+  font-size: 0.64rem;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.bubble.peer .bubble-meta {
+  color: var(--wa-ink-soft);
+  opacity: 1;
+}
+
+.bubble-receipt {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bubble-meta.is-read .bubble-receipt {
+  color: #8fe0c1;
+  opacity: 1;
+}
+
+.bubble-failed {
+  color: #f0b8a8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wa-chat .bubble .linkish {
+  color: #8fe0c1;
+  font-weight: 700;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .wa-composer.is-recording {
@@ -4647,7 +5188,7 @@ button.chip {
   cursor: pointer;
   overflow: hidden;
   background:
-    linear-gradient(135deg, #7a1520, #2a1519);
+    linear-gradient(135deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
   background-size: cover;
   background-position: center;
   font: inherit;
@@ -4925,7 +5466,7 @@ button.chip {
   height: 6.25rem;
   border-radius: 1rem;
   overflow: hidden;
-  background: linear-gradient(135deg, #7a1520, #2a1519);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
   color: #fff;
   flex-shrink: 0;
 }
@@ -5171,7 +5712,7 @@ button.chip {
   aspect-ratio: 4 / 5;
   max-height: min(68vh, 34rem);
   overflow: hidden;
-  background: linear-gradient(145deg, #7a1520, #2a1519);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
 }
 
 .fp-gallery-frame img {
@@ -5495,7 +6036,6 @@ button.chip {
   border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
 }
 
-.dark .wa-chat-more,
 .dark .fp-icon-btn {
   background: color-mix(in srgb, var(--card) 88%, #000 12%);
   border-color: color-mix(in srgb, var(--border) 90%, #000 10%);
@@ -5773,7 +6313,7 @@ button.chip {
   height: 3.75rem;
   border-radius: 999px;
   overflow: hidden;
-  background: linear-gradient(135deg, #7a1520, #2a1519);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 42%, var(--surface-2)), var(--surface-2));
   color: #fff;
   display: grid;
   place-items: center;
@@ -5848,7 +6388,6 @@ button.chip {
 .feed-card,
 .daily-match-card,
 .ios-settings-card,
-.wa-list,
 .home-greeting,
 .peer-section,
 .dv2-card {

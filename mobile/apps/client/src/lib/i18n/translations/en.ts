@@ -1666,7 +1666,7 @@ export const en = {
     mute: "Mute",
     unmute: "Unmute",
     muted: "Muted",
-    delete: "Delete",
+    delete: "Hide",
     filters: "Message filters",
     actionFailed: "Could not update this conversation.",
     tapForInfo: "Tap for info",
@@ -1683,6 +1683,8 @@ export const en = {
     uploading: "Uploading…",
     newMessages: "New messages",
     offlineDraft: "Offline — sending needs a connection. Drafts stay on this device.",
+    call: "Call",
+    callSoon: "Voice calls are coming soon.",
   },
   safety: {
     reportOrBlock: "Report / Block",

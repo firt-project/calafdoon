@@ -2,9 +2,9 @@ import type { Translations } from "./index";
 
 export const so: Translations = {
   brand: {
-    tagline: "Hel Lammaanahaaga Ugu Fiican",
+    tagline: "Loo sameeyay guur, ma aha swipe",
     description:
-      "Waxaan isku xirnaa rag iyo dumar dhab u ah guurka oo doonaya guur iyadoo lagu saleynayo qiyamka Islaamka, kalsoonida, iyo ixtiraam.",
+      "Hel Calafkaaga waa barta guurka Soomaalida. Waxaa lagugu barbardhigaa waafaqid — diinta, qorshaha qoyska iyo hadafyada nolosha — ma aha 'swipe', qofkastana waxaa eega qof dhab ah.",
   },
   nav: {
     home: "Bogga Hore",
@@ -143,7 +143,7 @@ export const so: Translations = {
     videoTitle: "Eeg sida xubnuhu u isticmaalaan Web",
     videoDesc:
       "Daawo tillin gaaban: samee akoon, dhammaystir profile-kaaga, ka dib bilow raadinta isbarbardhigyada.",
-    videoIframeTitle: "Sida loo isticmaalo Web",
+    videoIframeTitle: "Sida loo isticmaalo Hel Calafkaaga",
     findMatchTitle: "Hel Lammaanahaaga",
     findMatchIam: "Waxaan ahay",
     findMatchLookingFor: "Waxaan raadinayaa",
@@ -156,7 +156,7 @@ export const so: Translations = {
     findMatchSearch: "Raadi",
     quote:
       "Lammaanaha saxda ah ma aha oo kaliya jacayl, waa in la dhiso mustaqbal qurux badan oo wadajir ah.",
-    quoteAuthor: "Xubin WEB",
+    quoteAuthor: "Xubin Hel Calafkaaga",
     pricingTitle: "Qiimo Fudud",
     pricingSubtitle:
       "Ragga: Basic ${{basic}} ama Premium ${{premium}}. Haweenka: Basic ${{womenBasic}} — Premium ${{womenPremium}}. Isla app-ka; Premium waxay ku daraa WhatsApp iyo raadinta lammaane.",
@@ -201,7 +201,7 @@ export const so: Translations = {
     previewProfile: "Dhammaystir su'aalaha profile-kaaga",
     previewMatches: "Hel isbarbardhigyo iswaafajin leh oo dhibco leh",
     previewChat: "U dir lammaanayaashaada fariimo ammaan ah",
-    howWorks: "Sida WEB U Shaqeyso",
+    howWorks: "Sida Hel Calafkaaga U Shaqeyso",
     step1Title: "Is Diiwaangeli & Dhammaystir Profile-ka",
     step1Desc: "Abuur akoonkaaga oo dhammaystir profile-kaaga guurka oo leh sawir iyo doorbidyo.",
     step2Title: "Dooro Qorshahaaga",
@@ -239,6 +239,95 @@ export const so: Translations = {
     trust1: "Qarsoodigaaga Waa Mudnaantayada",
     trust2: "Qiyamka Islaamka & Ixtiraamka",
     trust3: "Platform Amaan & La Hubo",
+
+    // --- Rummaan landing (v2) ---
+    heroEyebrow: "Guurka Soomaalida · barbardhig waafaqid, ma aha muuqaal",
+    heroLine1: "Loo sameeyay guur.",
+    heroLine2: "Ma aha 'swipe'.",
+    heroLead:
+      "Hal mar buuxi su'aalaha. Waxaan kugu barbardhignaa diinta, qorshaha qoyska iyo hadafyada nolosha — ka dibna qof dhab ah ayaa profile kasta eega ka hor inta aan qofna kula soo xiriirin.",
+    heroAssurance:
+      "Ma jirto daawasho madadaalo ah. Qof kasta halkan wuxuu diyaar u yahay guur.",
+    matchExampleName: "Aamina, 26",
+    matchExampleMeta: "Nairobi · la xaqiijiyay",
+    matchRowDeen: "Diin iyo camal",
+    matchRowChildren: "Raba carruur",
+    matchRowRelocate: "U furan guuritaan",
+    matchRowFamily: "Ka-qaybgalka qoyska",
+    matchRowValueAligned: "waafaqsan",
+    matchRowValueBoth: "labaduba haa",
+    matchRowValueYou: "adiga iyo iyada",
+    matchRowValueWelcome: "la soo dhaweeyay",
+    matchReviewedBy: "Profile-ka waxaa eegay kooxda Hel Calafkaaga",
+    matchScoreLabel: "waafaqid",
+
+    proofReviewed: "Profile kasta waxaa eega qof dhab ah",
+    proofReach: "Xubno Kenya, Soomaaliya iyo qurbaha ku nool",
+    proofPayWith: "Ku bixi",
+
+    howEyebrow: "Sida ay u shaqeyso",
+    howTitle: "Waxaa lagugu barbardhigaa waxa guur u baahan yahay — ma aha sawir.",
+    howLead:
+      "Saddex tallaabo. Su'aaluhu shaqada way qabtaan, sidaas darteed kuwa lagugu barbardhigo waa dad aad dhab ula wada nooli karto.",
+    howStep1Title: "Buuxi su'aalaha",
+    howStep1Desc:
+      "Diin iyo camal, qoys iyo carruur, shaqo, goobta, waxa aad tanaasuli karto iyo waxaadan tanaasuli karin. Toban daqiiqo, kaydi oo dhammee markale.",
+    howStep2Title: "Hel qiimaha waafaqidda",
+    howStep2Desc:
+      "Qof kasta oo suurtagal ah waxaa lagu qiimeeyaa jawaabahaaga. Waxaad aragtaa halka aad ku waafaqsan tihiin iyo halka aad ku kala duwan tihiin, ka hor inta aadan salaamin.",
+    howStep3Title: "La kulan kuwa lagugu barbardhigay",
+    howStep3Desc:
+      "Maalin kasta mid cusub, iyo qof kasta oo ka sarreeyay xadka. Jeclow, hadday iyaguna ku jeclaadaan, wadahadalku waa furmaa.",
+    floorLabel: "Xadka 40%",
+    floorNote:
+      "Kuma tusino kuwa ka hooseeya qiimaha waafaqidda {{score}}% — xitaa hadday ku jeclaadeen. Sidaas, is-barid kastaa wuxuu noqonayaa mid qiimo leh — adiga iyo qoyskaagaba.",
+
+    lifeEyebrow: "Sababaha aad u doorato",
+    lifeTitle: "Loo dhisay sida aad dhab u nooshahay.",
+    lifeLead:
+      "Inta badan apps-ka guurka Muslimka waxaa loo sameeyay taleefan London ku yaal. Kan waxaa loo sameeyay taleefan Islii, Hargeysa ama Minneapolis — mid kasta oo aad haysato.",
+    lifeFamilyTitle: "Qoyska waa la soo dhaweeyay",
+    lifeFamilyDesc:
+      "Ku dar wali ama xiriirka qoyska akoonkaaga. Waxba halkan kuma malaynayaan inaad kaligaa ama qarsoodi ku sameyneyso.",
+    lifePayTitle: "Ku bixi sida aad caadiyan wax u bixiso",
+    lifePayDesc:
+      "M-Pesa, EVC Plus iyo Hormuud oo ay weheliyaan kaadhka. Laguma qasbayo Visa aadan haysan.",
+    lifePhoneTitle: "Wuu ku shaqeeyaa taleefan kasta, xawaare kasta",
+    lifePhoneDesc:
+      "Bogag fudud, sawirro yaryar, app la rakibi karo. Waxaa loo dhisay inuu ku shaqeeyo xiriir gaabis ah.",
+    lifeLangTitle: "Af Ingiriisi iyo Af Soomaali, meel kasta",
+    lifeLangDesc:
+      "Bog kasta, iimayl iyo ogeysiis labada luqadood. Bedel goortaad rabto — qoyskaaguna way akhriyi karaan.",
+
+    safetyEyebrow: "Amniga",
+    safetyTitle: "Qof dhab ah ayaa u dhexeeya adiga iyo qof aanad aqoon.",
+    safetyLead:
+      "Xaqiijintu ma aha sanduuq la calaamadeeyo. Waa tallaabo profile kastaa maro ka hor inta aan cidina arkin.",
+    safe1: "Eegis dad ah oo profile iyo sawir cusub kasta ka hor intaan la daabicin",
+    safe2: "Ka-warbixin iyo xannib oo hal taabasho ah — profile iyo wada-hadal kasta",
+    safe3: "Sawiradaadu waa qarsoodi ilaa aad go'aansato inaad la wadaagto qof",
+    safe4: "Ma jirto daawasho dadweyne — profile-yada waxaa la tusaa xubnaha la barbardhigay oo kaliya",
+
+    priceEyebrow: "Qiimaha",
+    priceTitle: "Hal qorshe. Qiimo la awoodi karo.",
+    priceLead:
+      "Wax walba waa ku jira. Ma jirto lacag-farriin, ma jirto lacag lagu furo cidda ku jeclaatay, ma jirto cusbooneysiin lama filaan ah.",
+    priceOnce: "hal mar",
+    priceThen: "ka dibna ${{monthly}} bishiiba · goor kasta waad joojin kartaa",
+    priceFeatureProfile: "Profile buuxa, su'aalo iyo sawirro",
+    priceFeatureMatches: "Maalin kasta kuwo lagugu barbardhigo iyo jaclayn aan xad lahayn",
+    priceFeatureChat: "Farriin qof kasta oo labada dhinac isku jecel",
+    priceFeatureLikes: "Arag cidda ku jeclaatay",
+    priceFeatureWali: "Ku dar wali / xiriirka qoyska",
+    priceCompare:
+      "Muzz iyo Salams waxay bishii ku qaataan $20 ilaa $45 wax isku mid ah.",
+    priceAsideBody:
+      "Qiimaha waxaa loo dhigay in arday Nairobi jooga iyo kalkaaliye Muqdisho jooga labaduba ay awoodaan — ma aha qurbaha oo kaliya. ${{basic}}-ka hore wuxuu daboolayaa eegista profile-kaaga; ${{monthly}} bishiiba ayaa adeegga socodsiinaya.",
+
+    finalEyebrowLine: "Bilow maanta",
+    finalTitle: "Calafkaaguna wuu raadinayaa.",
+    finalLead:
+      "Toban daqiiqo si aad u dhisato profile-kaaga. Hal qof dhinaca kale, diyaar sida adiga oo kale.",
   },
   auth: {
     welcomeBack: "Ku soo dhawoow mar kale",
@@ -465,7 +554,7 @@ export const so: Translations = {
       "Waad tirtiri kartaa akoonkaaga Web wakhti kasta. Tirtiriddu waxay ka saartaa profile-kaaga iyo xogta akoonka nidaamyada firfircoon. Qaar ka mid ah diiwaannada waa la hayn karaa marka sharcigu u baahan yahay (tusaale lacag-bixinta ama baaritaanka amniga).",
     webTitle: "Ka tirtir website-ka",
     webSteps:
-      "1. Gal web.example.com\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
+      "1. Gal akoonkaaga\n2. Fur Profile (ama Settings)\n3. Dooro Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
     appTitle: "Ka tirtir app-ka Android / iOS",
     appSteps:
       "1. Fur app-ka Web\n2. Tag Settings\n3. Taabo Tirtir akoonka\n4. Geli furahaaga oo xaqiiji",
@@ -714,7 +803,7 @@ export const so: Translations = {
     q4: "Xogtayda sidee loo ilaaliyaa?",
     a4: "Waxaan isticmaalnaa sir-qarin heer caalami ah oo aanan waligaa la wadaagin xogtaada shakhsi ahaaneed dhinacyada saddexaad. Qarsoodigaaga waa mudnaantayada.",
     q5: "Ma tirtiri karaa akoonkayga?",
-    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama raac https://web.example.com/delete-account. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
+    a5: "Haa. Tirtir wakhti kasta Profile → Tirtir akoonka, ama fur bogga Tirtir akoonka ee websbeedkayaga. Waxaad sidoo kale u diri kartaa email taageerada haddii aadan geli karin.",
     q6: "Taageerada shakhsi ahaan waa maxay?",
     a6: "Premium waxay ku jirtaa wax kasta oo Basic ah, oo lagu daray taageero WhatsApp iyo raadinta lammaane. Diiwaangelin Premium cusub $20; kor u qaadis Basic $15.",
     stillHaveQuestions: "Weli su'aalo ma haysataa?",
@@ -913,6 +1002,7 @@ export const so: Translations = {
     waliSaved: "Xiriirka Calaf waa la kaydiyay",
     waliSaveFailed: "Xiriirka Calaf lama kaydin karin",
     waliVisibleTitle: "Calaf / mas'uul",
+    compatWhereAlign: "Halka aad ku waafaqsan tihiin",
     compatReligion: "Iswaafajinta diinta",
     compatPrayer: "Caadooyinka salaadda",
     compatAge: "Doorbidida da'da",

@@ -151,6 +151,54 @@
   box-shadow: var(--shadow-sm);
 }
 
+.admin-gateway-list {
+  border: 1px solid var(--border);
+  border-radius: 1.05rem;
+  background: var(--card);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-gateway-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.95rem;
+  border-top: 1px solid var(--border);
+}
+
+.admin-gateway-row:first-child {
+  border-top: 0;
+}
+
+.admin-gateway-name {
+  font-family: var(--font-display, inherit);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.admin-gateway-figures {
+  text-align: right;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.admin-gateway-figures strong {
+  font-family: var(--font-mono, inherit);
+  font-size: 1rem;
+}
+
+.admin-gateway-total {
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
+}
+
+.admin-gateway-total .admin-gateway-name,
+.admin-gateway-total .admin-gateway-figures strong {
+  color: var(--primary);
+}
+
 .admin-member-card .title-row,
 .admin-report-card .title-row,
 .admin-pay-card .title-row {

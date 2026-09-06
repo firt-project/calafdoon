@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
       // Hide even if JS is slow; React paints brand background underneath.
       launchAutoHide: true,
       launchShowDuration: 2500,
-      backgroundColor: "#a61b2b",
+      backgroundColor: "#2e5e4e",
       showSpinner: true,
       spinnerColor: "#ffffff",
     },

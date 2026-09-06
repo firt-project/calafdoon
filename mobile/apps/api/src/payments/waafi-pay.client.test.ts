@@ -37,27 +37,37 @@ describe("resolveWaafiPayerAccount", () => {
     if (r.ok) assert.equal(r.accountNo, "252611111111");
   });
 
-  it("allows matching international form of the same phone", () => {
+  it("normalizes the submitted wallet number", () => {
     const r = resolveWaafiPayerAccount({
       profilePhone: "0611111111",
-      submittedAccountNo: "252611111111",
+      submittedAccountNo: "0611111111",
     });
     assert.equal(r.ok, true);
+    if (r.ok) assert.equal(r.accountNo, "252611111111");
   });
 
-  it("rejects a different wallet", () => {
+  it("accepts a wallet that differs from the profile phone", () => {
     const r = resolveWaafiPayerAccount({
       profilePhone: "252611111111",
       submittedAccountNo: "252622222222",
     });
-    assert.deepEqual(r, { ok: false, reason: "mismatch" });
+    assert.equal(r.ok, true);
+    if (r.ok) assert.equal(r.accountNo, "252622222222");
   });
 
-  it("requires a profile phone", () => {
+  it("rejects a malformed submitted wallet", () => {
     const r = resolveWaafiPayerAccount({
-      submittedAccountNo: "252611111111",
+      profilePhone: "252611111111",
+      submittedAccountNo: "12",
     });
-    assert.deepEqual(r, { ok: false, reason: "no_profile_phone" });
+    assert.deepEqual(r, { ok: false, reason: "invalid" });
+  });
+
+  it("needs a wallet number when nothing is on file", () => {
+    const r = resolveWaafiPayerAccount({
+      submittedAccountNo: "",
+    });
+    assert.deepEqual(r, { ok: false, reason: "missing" });
   });
 });
 

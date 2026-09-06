@@ -25,6 +25,7 @@ export type AdminAdapter = {
   payments: {
     list(opts?: Record<string, unknown>): Promise<unknown>;
     stats(): Promise<unknown>;
+    dashboard(opts?: { from?: string; to?: string }): Promise<unknown>;
     quarantine(): Promise<unknown>;
   };
   evc: {

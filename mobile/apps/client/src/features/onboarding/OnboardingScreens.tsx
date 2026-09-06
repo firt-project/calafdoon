@@ -3,10 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   profile as profileApi,
   preferences as preferencesApi,
+  photos as photosApi,
   questionnaire,
   ApiClientError,
 } from "@hel/api-client";
-import { useSession } from "@/features/auth/SessionProvider";
+import { useSession, securityHomeRoute } from "@/features/auth/SessionProvider";
+import { SafeImage } from "@/ui/SafeImage";
+import { userFacingError } from "@/platform/errors";
+import { markPhotoAdded } from "@/features/profile/photo-gate";
 import {
   STEPS,
   type FieldConfig,
@@ -727,6 +731,9 @@ export function QuestionnaireOnboardingPage() {
     return () => {
       cancelled = true;
     };
+    // Intentionally re-runs only when questionnaire completion flips — genderComplete
+    // is read for the initial skip decision but must not trigger a disruptive reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessState?.questionnaireComplete]);
 
   function setField(name: string, value: unknown) {
@@ -950,3 +957,141 @@ export function QuestionnaireOnboardingPage() {
   );
 }
 
+
+type OnboardingPhoto = { mediaId?: string; url?: string | null; isMain?: boolean };
+
+/**
+ * Mandatory photo step. Sits between the questionnaire and payment — a member
+ * cannot reach Home, Discover, Matches or the paywall without one clear photo.
+ */
+export function PhotoOnboardingPage() {
+  const { user, accessState, refresh } = useSession();
+  const navigate = useNavigate();
+  const [list, setList] = useState<OnboardingPhoto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = async () => {
+    try {
+      const res = (await photosApi.listMine()) as
+        | { photos?: OnboardingPhoto[] }
+        | OnboardingPhoto[];
+      const items = Array.isArray(res) ? res : (res?.photos ?? []);
+      setList(items.filter((p) => p && (p.url || p.mediaId)));
+    } catch {
+      setList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void reload();
+  }, []);
+
+  async function addPhoto() {
+    setBusy(true);
+    setError(null);
+    try {
+      const { pickProfilePhoto, isPhotoPickCancelled } = await import(
+        "@/platform/camera"
+      );
+      let picked;
+      try {
+        picked = await pickProfilePhoto("library");
+      } catch (e) {
+        if (isPhotoPickCancelled(e)) return;
+        throw e;
+      }
+      const file = new File([picked.blob], picked.fileName, {
+        type: picked.contentType,
+      });
+      await photosApi.uploadFile(file, {
+        slot: list.length === 0 ? "main" : "additional",
+      });
+      markPhotoAdded();
+      await reload();
+    } catch (e) {
+      setError(userFacingError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function continueOn() {
+    setBusy(true);
+    try {
+      await refresh();
+    } catch {
+      /* non-blocking */
+    }
+    markPhotoAdded();
+    navigate(securityHomeRoute(user, accessState), { replace: true });
+  }
+
+  const hasPhoto = list.length > 0;
+
+  return (
+    <div className="screen q-screen">
+      <div className="q-progress" aria-hidden>
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: "92%" }} />
+        </div>
+      </div>
+      <header className="q-head">
+        <p className="q-kicker">Profile setup</p>
+        <h1 className="font-display">Add your photo</h1>
+        <p className="muted">
+          One clear photo of your face is required — profiles without a photo
+          can't be shown to anyone. You can add more or change it later.
+        </p>
+      </header>
+
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <div className="onboard-photo-grid">
+        {loading ? (
+          <p className="muted small">Loading…</p>
+        ) : (
+          <>
+            {list.map((p, i) => (
+              <SafeImage
+                key={p.mediaId ?? i}
+                src={p.url ?? null}
+                alt={`Photo ${i + 1}`}
+                className="onboard-photo-thumb"
+              />
+            ))}
+            {list.length < 5 && (
+              <button
+                type="button"
+                className="onboard-photo-add"
+                disabled={busy}
+                onClick={() => void addPhoto()}
+              >
+                {busy ? "Uploading…" : "+ Add photo"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="q-actions">
+        <span />
+        <button
+          type="button"
+          className="btn btn-primary q-continue"
+          disabled={busy || !hasPhoto}
+          onClick={() => void continueOn()}
+        >
+          {hasPhoto ? "Continue" : "Add a photo to continue"}
+        </button>
+      </div>
+    </div>
+  );
+}

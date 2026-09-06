@@ -198,7 +198,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (Capacitor.isNativePlatform()) {
           try {
             await StatusBar.setStyle({ style: Style.Light });
-            await StatusBar.setBackgroundColor({ color: "#a61b2b" });
+            await StatusBar.setBackgroundColor({ color: "#2e5e4e" });
           } catch {
             /* web */
           }

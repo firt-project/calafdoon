@@ -8,10 +8,16 @@ import {
   RegisterPage,
   ForgotPasswordPage,
 } from "@/features/auth/AuthScreens";
-import { RequireAuth, MainTabs, RequireMemberAccess } from "@/features/app/MainScreens";
+import {
+  RequireAuth,
+  MainTabs,
+  RequireMemberAccess,
+  RequirePhoto,
+} from "@/features/app/MainScreens";
 import { useSession, isStaffUser, securityHomeRoute } from "@/features/auth/SessionProvider";
 import { BiometricGate } from "@/features/auth/BiometricGate";
 import { DeepLinkNavigator } from "@/navigation/DeepLinkNavigator";
+import { AndroidBackBridge } from "@/navigation/AndroidBackBridge";
 
 const GenderOnboardingPage = lazy(() =>
   import("@/features/onboarding/OnboardingScreens").then((m) => ({
@@ -21,6 +27,11 @@ const GenderOnboardingPage = lazy(() =>
 const QuestionnaireOnboardingPage = lazy(() =>
   import("@/features/onboarding/OnboardingScreens").then((m) => ({
     default: m.QuestionnaireOnboardingPage,
+  }))
+);
+const PhotoOnboardingPage = lazy(() =>
+  import("@/features/onboarding/OnboardingScreens").then((m) => ({
+    default: m.PhotoOnboardingPage,
   }))
 );
 const DiscoverPage = lazy(() =>
@@ -225,6 +236,7 @@ export default function App() {
   return (
     <BiometricGate>
       <DeepLinkNavigator />
+      <AndroidBackBridge />
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/splash" element={<SplashPage />} />
@@ -279,14 +291,28 @@ export default function App() {
           }
         />
         <Route
+          path="/onboarding/photo"
+          element={
+            <RequireAuth>
+              <LazyRoute label="Loading…">
+                <StaffAwayFromMemberHome>
+                  <PhotoOnboardingPage />
+                </StaffAwayFromMemberHome>
+              </LazyRoute>
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/plans"
           element={
             <RequireAuth>
-              <LazyRoute>
-                <StaffAwayFromMemberHome>
-                  <PlansPage />
-                </StaffAwayFromMemberHome>
-              </LazyRoute>
+              <RequirePhoto>
+                <LazyRoute>
+                  <StaffAwayFromMemberHome>
+                    <PlansPage />
+                  </StaffAwayFromMemberHome>
+                </LazyRoute>
+              </RequirePhoto>
             </RequireAuth>
           }
         />

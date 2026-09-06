@@ -1,14 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Ban,
-  Image as ImageIcon,
-  MoreVertical,
-  Paperclip,
-  Send,
-  ShieldAlert,
-  Smile,
-} from "lucide-react";
+import { ArrowLeft, Ban, MoreVertical, Phone, Send, ShieldAlert } from "lucide-react";
 import {
   chat,
   connectRealtime,
@@ -35,8 +27,6 @@ import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet } from "@/ui/mobile-kit";
 import { Avatar } from "@/ui/design-system";
 import { cn } from "@/utils/cn";
-
-const EmojiPickerLazy = lazy(() => import("@/features/messages/EmojiPicker"));
 
 type UiMessage = {
   id?: string;
@@ -112,7 +102,7 @@ function toChatList(messages: UiMessage[]): ChatListMessage[] {
 
 export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const { user, offline } = useSession();
-  const { locale, t } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [peer, setPeer] = useState<{
@@ -127,19 +117,14 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const [typing, setTyping] = useState(false);
   const [stickToBottom, setStickToBottom] = useState(true);
   const [showJump, setShowJump] = useState(false);
-  const [emojiOpen, setEmojiOpen] = useState(false);
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
-  const [attachOpen, setAttachOpen] = useState(false);
   const [safetyBusy, setSafetyBusy] = useState(false);
-  const [attachPreview, setAttachPreview] = useState<{
-    url: string;
-    file: File;
-  } | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [callNote, setCallNote] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const callTimer = useRef<number | null>(null);
   const userId = user?.id ? String(user.id) : null;
-  const canSend = Boolean(body.trim() || attachPreview);
+  const canSend = Boolean(body.trim());
 
   async function loadMessages() {
     const data = await chat.getMessages(conversationId);
@@ -187,6 +172,9 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         });
       })
       .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
   }, [conversationId]);
 
   useEffect(() => {
@@ -252,33 +240,15 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
 
   useEffect(() => {
     return () => {
-      if (attachPreview?.url) URL.revokeObjectURL(attachPreview.url);
+      if (callTimer.current) window.clearTimeout(callTimer.current);
     };
-  }, [attachPreview]);
-
-  function insertEmoji(emoji: string) {
-    const el = textareaRef.current;
-    if (!el) {
-      setBody((b) => b + emoji);
-      return;
-    }
-    const start = el.selectionStart ?? body.length;
-    const end = el.selectionEnd ?? body.length;
-    const next = body.slice(0, start) + emoji + body.slice(end);
-    setBody(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + emoji.length;
-      el.setSelectionRange(pos, pos);
-    });
-  }
+  }, []);
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
     if (sending || offline) return;
     const text = body.trim();
-    const pendingFile = attachPreview?.file;
-    if (!text && !pendingFile) return;
+    if (!text) return;
     const tempId = `local-${Date.now()}`;
     setSending(true);
     setError(null);
@@ -289,8 +259,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         ...prev,
         {
           id: tempId,
-          message: text || undefined,
-          imageUrl: attachPreview?.url,
+          message: text,
           mine: true,
           pending: true,
           createdAt: Date.now(),
@@ -299,18 +268,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     );
     setStickToBottom(true);
     try {
-      let imageMediaId: string | undefined;
-      if (pendingFile) {
-        setUploadProgress(t("chatPage.uploading"));
-        const uploaded = await chat.uploadChatImage(conversationId, pendingFile);
-        imageMediaId = uploaded.mediaId;
-        setUploadProgress(null);
-        if (attachPreview?.url) URL.revokeObjectURL(attachPreview.url);
-        setAttachPreview(null);
-      }
       await chat.sendMessage(conversationId, {
-        message: text || undefined,
-        imageMediaId,
+        message: text,
         idempotencyKey: `${conversationId}-${tempId}`,
       });
       await hapticLight();
@@ -325,7 +284,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       setBody(text);
       if (userId) await saveChatDraft(userId, conversationId, text);
       setError(userFacingError(err));
-      setUploadProgress(null);
     } finally {
       setSending(false);
     }
@@ -339,19 +297,11 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     setBody(text);
   }
 
-  async function attachImage(source: "camera" | "library") {
-    setAttachOpen(false);
-    try {
-      const { pickProfilePhoto } = await import("@/platform/camera");
-      const picked = await pickProfilePhoto(source);
-      const file = new File([picked.blob], picked.fileName, {
-        type: picked.contentType,
-      });
-      if (attachPreview?.url) URL.revokeObjectURL(attachPreview.url);
-      setAttachPreview({ url: URL.createObjectURL(file), file });
-    } catch (e) {
-      setError(userFacingError(e));
-    }
+  function onCall() {
+    void hapticLight();
+    setCallNote(true);
+    if (callTimer.current) window.clearTimeout(callTimer.current);
+    callTimer.current = window.setTimeout(() => setCallNote(false), 2400);
   }
 
   const list = useMemo(() => toChatList(messages), [messages]);
@@ -394,9 +344,15 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
 
   return (
     <div className="screen chat-screen wa-chat">
+      <div className="wa-chat-canvas" aria-hidden />
+
       <header className="screen-header wa-chat-header">
-        <Link to="/messages" className="back-btn" aria-label={t("common.back")}>
-          ←
+        <Link
+          to="/messages"
+          className="wa-chat-icon-btn"
+          aria-label={t("common.back")}
+        >
+          <ArrowLeft size={20} />
         </Link>
         <button
           type="button"
@@ -414,7 +370,15 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         </button>
         <button
           type="button"
-          className="btn btn-ghost wa-chat-more"
+          className="wa-chat-icon-btn"
+          aria-label={t("chatPage.call")}
+          onClick={onCall}
+        >
+          <Phone size={18} />
+        </button>
+        <button
+          type="button"
+          className="wa-chat-icon-btn"
           aria-label={t("safety.reportOrBlock")}
           disabled={!peer.userId || offline}
           onClick={() => setSafetyOpen(true)}
@@ -481,31 +445,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         </div>
       </BottomSheet>
 
-      <BottomSheet
-        open={attachOpen}
-        title={t("chatPage.attach")}
-        onClose={() => setAttachOpen(false)}
-      >
-        <div className="stack">
-          <button
-            type="button"
-            className="btn btn-secondary btn-block"
-            disabled={offline || sending}
-            onClick={() => void attachImage("library")}
-          >
-            <ImageIcon size={16} /> {t("chatPage.photoLibrary")}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-block"
-            disabled={offline || sending}
-            onClick={() => void attachImage("camera")}
-          >
-            <ImageIcon size={16} /> {t("chatPage.camera")}
-          </button>
-        </div>
-      </BottomSheet>
-
       {offline && (
         <div className="form-error" role="status">
           {t("chatPage.offlineDraft")}
@@ -515,11 +454,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         <div className="form-error" role="alert">
           {error}
         </div>
-      )}
-      {uploadProgress && (
-        <p className="muted small center" role="status">
-          {uploadProgress}
-        </p>
       )}
 
       <VirtualizedMessageList
@@ -538,43 +472,13 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         onRetry={(id) => void retry(id)}
       />
 
-      {attachPreview && (
-        <div className="attach-preview">
-          <img src={attachPreview.url} alt="" />
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => {
-              URL.revokeObjectURL(attachPreview.url);
-              setAttachPreview(null);
-            }}
-          >
-            {t("common.remove")}
-          </button>
+      {callNote && (
+        <div className="chat-toast" role="status">
+          {t("chatPage.callSoon")}
         </div>
       )}
 
-      <form
-        className="composer wa-composer"
-        onSubmit={(e) => void send(e)}
-      >
-        <button
-          type="button"
-          className="btn btn-ghost btn-icon"
-          aria-label={t("chatPage.attach")}
-          disabled={offline || sending}
-          onClick={() => setAttachOpen(true)}
-        >
-          <Paperclip size={18} />
-        </button>
-        <button
-          type="button"
-          className="btn btn-ghost btn-icon"
-          aria-label={t("chatPage.emoji")}
-          onClick={() => setEmojiOpen(true)}
-        >
-          <Smile size={18} />
-        </button>
+      <form className="composer wa-composer" onSubmit={(e) => void send(e)}>
         <textarea
           ref={textareaRef}
           value={body}
@@ -604,28 +508,13 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         />
         <button
           type="submit"
-          className="btn btn-primary btn-icon"
+          className="wa-send-btn"
           disabled={sending || offline || !canSend}
           aria-label={t("chatPage.send")}
         >
           <Send size={18} />
         </button>
       </form>
-
-      <Suspense fallback={null}>
-        <EmojiPickerLazy
-          open={emojiOpen}
-          locale={locale === "so" ? "so" : "en"}
-          onClose={() => setEmojiOpen(false)}
-          onPick={(emoji) => {
-            insertEmoji(emoji);
-            setEmojiOpen(false);
-          }}
-          title={t("chatPage.emoji")}
-          recentLabel={locale === "so" ? "Dhawaan" : "Recent"}
-          searchLabel={locale === "so" ? "Raadi" : "Search"}
-        />
-      </Suspense>
     </div>
   );
 }

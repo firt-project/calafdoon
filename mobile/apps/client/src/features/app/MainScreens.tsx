@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import {
   Flag,
   Heart,
   Home,
+  Lock,
   MessageCircle,
   Shield,
   Sparkles,
@@ -20,6 +22,11 @@ import { cn } from "@/utils/cn";
 import { OfflineBanner } from "@/ui/mobile-kit";
 import { hapticLight } from "@/platform/haptics";
 import { securityGateRouteForUser } from "@/lib/security-gate-codes";
+import { useInboxUnread } from "@/features/messages/useInboxUnread";
+import {
+  getPhotoGate,
+  refreshPhotoGate,
+} from "@/features/profile/photo-gate";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { ready, user } = useSession();
@@ -62,6 +69,37 @@ export function RequireMemberAccess({
   if (dest !== "/home") {
     return <Navigate to={dest} replace />;
   }
+  return <RequirePhoto>{children}</RequirePhoto>;
+}
+
+/**
+ * A profile photo is mandatory. Checked once per session (cached) — the
+ * onboarding photo screen clears the gate the moment the first upload lands.
+ */
+export function RequirePhoto({ children }: { children: React.ReactNode }) {
+  const [gate, setGate] = useState(getPhotoGate());
+
+  useEffect(() => {
+    if (gate !== "unknown") return;
+    let alive = true;
+    void refreshPhotoGate().then((next) => {
+      if (alive) setGate(next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [gate]);
+
+  if (gate === "unknown") {
+    return (
+      <div className="screen" aria-busy="true">
+        <p className="muted">Checking your profile…</p>
+      </div>
+    );
+  }
+  if (gate === "none") {
+    return <Navigate to="/onboarding/photo" replace />;
+  }
   return children;
 }
 
@@ -70,6 +108,10 @@ export function MainTabs() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const staff = isStaffUser(user, accessState);
+  // Same rule as RequireMemberAccess — only a fully unlocked member gets the
+  // Home/Discover/Matches/Messages tabs. Everyone else sees Unlock + Settings.
+  const memberUnlocked = homeRouteFromAccess(accessState) === "/home";
+  const inboxUnread = useInboxUnread(memberUnlocked && !staff);
   const hideTabbar =
     pathname.startsWith("/discover/member/") ||
     pathname.startsWith("/messages/");
@@ -90,12 +132,22 @@ export function MainTabs() {
             <Tab to="/admin/reports" icon={Flag} label="Reports" />
             <Tab to="/settings" icon={Settings} label={t("app.settings")} />
           </>
-        ) : (
+        ) : memberUnlocked ? (
           <>
             <Tab to="/home" icon={Home} label={t("app.home")} end />
             <Tab to="/discover" icon={Sparkles} label={t("app.discover")} />
             <Tab to="/matches" icon={Heart} label={t("app.matches")} />
-            <Tab to="/messages" icon={MessageCircle} label={t("app.messages")} />
+            <Tab
+              to="/messages"
+              icon={MessageCircle}
+              label={t("app.messages")}
+              badge={inboxUnread}
+            />
+            <Tab to="/settings" icon={Settings} label={t("app.settings")} />
+          </>
+        ) : (
+          <>
+            <Tab to="/plans" icon={Lock} label="Unlock" end />
             <Tab to="/settings" icon={Settings} label={t("app.settings")} />
           </>
         )}
@@ -110,11 +162,13 @@ function Tab({
   icon: Icon,
   label,
   end,
+  badge = 0,
 }: {
   to: string;
   icon: typeof Sparkles;
   label: string;
   end?: boolean;
+  badge?: number;
 }) {
   const { pathname } = useLocation();
   const active = end
@@ -132,8 +186,20 @@ function Tab({
       aria-current={active ? "page" : undefined}
       onClick={() => void hapticLight()}
     >
-      <Icon size={20} aria-hidden />
-      <span>{label}</span>
+      <span className="tab-icon">
+        <Icon size={20} aria-hidden />
+        {badge > 0 ? (
+          <span className="tab-badge" aria-hidden>
+            {badge > 99 ? "99+" : badge}
+          </span>
+        ) : null}
+      </span>
+      <span>
+        {label}
+        {badge > 0 ? (
+          <span className="sr-only"> ({badge} unread)</span>
+        ) : null}
+      </span>
     </Link>
   );
 }

@@ -35,3 +35,4 @@ export {
   joinConversation,
   leaveConversation,
 } from "./realtime/socket-client";
+export type { RealtimeEvent } from "./realtime/socket-client";

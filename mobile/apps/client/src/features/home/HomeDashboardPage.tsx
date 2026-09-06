@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
@@ -25,6 +25,7 @@ import {
   type DiscoverMember,
 } from "@/features/discover/types";
 import { hapticError, hapticMedium, hapticSuccess } from "@/platform/haptics";
+import { useRealtimeRefresh } from "@/platform/useRealtimeRefresh";
 
 type HomeFeed = {
   dayKey?: string;
@@ -68,10 +69,11 @@ export function HomeDashboardPage() {
   const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
   const [menuFor, setMenuFor] = useState<DiscoverMember | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
+  const aliveRef = useRef(true);
+
+  const reload = useCallback(
+    async (showSpinner: boolean) => {
+      if (showSpinner) setLoading(true);
       setError(null);
       try {
         const [home, me] = await Promise.all([
@@ -81,7 +83,7 @@ export function HomeDashboardPage() {
             unknown
           > | null>,
         ]);
-        if (cancelled) return;
+        if (!aliveRef.current) return;
         setFeed(home && typeof home === "object" ? home : null);
         const n =
           (typeof me?.name === "string" && me.name) ||
@@ -89,19 +91,29 @@ export function HomeDashboardPage() {
           t("dashboard.guestName");
         setName(String(n).split(" ")[0] || t("dashboard.guestName"));
       } catch (e) {
-        if (!cancelled) {
-          setError(
-            e instanceof ApiClientError ? e.message : userFacingError(e)
-          );
+        if (aliveRef.current) {
+          setError(e instanceof ApiClientError ? e.message : userFacingError(e));
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (aliveRef.current) setLoading(false);
       }
-    })();
+    },
+    [t, user?.email]
+  );
+
+  useEffect(() => {
+    aliveRef.current = true;
+    void reload(true);
     return () => {
-      cancelled = true;
+      aliveRef.current = false;
     };
-  }, [t, user?.email]);
+  }, [reload]);
+
+  // New match / like arrives → refresh the daily match + "waiting" counts.
+  useRealtimeRefresh(
+    ["notification:new", "unread:update", "conversation:updated"],
+    () => void reload(false)
+  );
 
   const daily = feed?.dailyMatch ?? null;
   const recentlyActive = feed?.recentlyActive ?? [];

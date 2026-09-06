@@ -18,6 +18,7 @@ import { useSession } from "@/features/auth/SessionProvider";
 import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet } from "@/ui/mobile-kit";
 import { CompatBadge } from "@/ui/design-system";
+import { PhotoGuard } from "@/ui/PhotoGuard";
 import { hapticError, hapticMedium, hapticSuccess } from "@/platform/haptics";
 import { userFacingError } from "@/platform/errors";
 import type { DiscoverMember, LookingForPrefs } from "@/features/discover/types";
@@ -187,7 +188,15 @@ function ProfileGallery({
         }}
       >
         {photos.length > 0 ? (
-          <img src={photos[safeIndex]} alt={`${name}`} />
+          <>
+            <img
+              src={photos[safeIndex]}
+              alt={`${name}`}
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+            <PhotoGuard />
+          </>
         ) : (
           <div className="fp-gallery-fallback" aria-hidden>
             {name.slice(0, 1)}

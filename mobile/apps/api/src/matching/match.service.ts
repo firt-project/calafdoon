@@ -15,6 +15,7 @@ import {
   PRIVATE_REVEALS_PER_MATCH_PREMIUM,
 } from "../profile/photo-rules";
 import { MediaAccessService } from "../media/media-access.service";
+import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import {
   resolveProfileMainImageUrl,
   resolveProfileMainMediaId,
@@ -42,7 +43,8 @@ export class MatchService {
     private readonly prisma: PrismaService,
     private readonly scores: ScoreService,
     private readonly media: MediaAccessService,
-    private readonly presence: PresenceService
+    private readonly presence: PresenceService,
+    private readonly realtime: ChatRealtimeService
   ) {}
 
   private async requireMatchAccess(userId: string): Promise<AccessCtx> {
@@ -732,6 +734,22 @@ export class MatchService {
           ? (err as { code?: string }).code
           : undefined;
       if (code !== "P2002") throw err;
+      return; // duplicate — already delivered, don't re-notify
+    }
+
+    // Push so the recipient's Home / Matches / notification badge update live.
+    try {
+      const unread = await this.prisma.notification.count({
+        where: { userId: data.userId, read: false },
+      });
+      this.realtime.emitToUser(data.userId, "notification:new", {
+        type: data.type,
+      });
+      this.realtime.emitToUser(data.userId, "unread:update", {
+        notificationUnreadCount: unread,
+      });
+    } catch {
+      /* realtime is best-effort; the notification row is already saved */
     }
   }
 
