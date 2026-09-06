@@ -8,13 +8,15 @@ import { buildContentSecurityPolicy } from "./src/lib/security/content-security-
  * Override with API_UPSTREAM_URL (server-only). Do not point this at the
  * Vercel/frontend URL.
  */
+// Use `||`, not `??`: a Vercel env var set to an EMPTY string is not null/undefined,
+// so `??` would keep "" and the /backend/* + /socket.io/* rewrites would resolve to
+// an empty hostname (Vercel error DNS_HOSTNAME_EMPTY → 502 on every proxied call,
+// realtime included). `||` and the trim() also skip blank/whitespace values.
+// Fallback is the deployed Render API; override with API_UPSTREAM_URL for staging
+// or a custom API host (never point it at the Vercel/frontend URL).
 const apiUpstream = (
-  process.env.API_UPSTREAM_URL ??
-  process.env.NEST_API_UPSTREAM_URL ??
-  // Fallback to the deployed Render API so /backend/* and /socket.io/* still
-  // proxy when the env var is missing (was https://api.example.com — an
-  // unresolvable host that surfaced as opaque 502s). Override with
-  // API_UPSTREAM_URL for staging / a custom API host.
+  process.env.API_UPSTREAM_URL?.trim() ||
+  process.env.NEST_API_UPSTREAM_URL?.trim() ||
   "https://tel-calafkaaga-1.onrender.com"
 ).replace(/\/$/, "");
 
