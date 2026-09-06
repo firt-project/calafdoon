@@ -790,6 +790,19 @@ export const so: Translations = {
     mpesaStepsNote:
       "Geli lambarkaaga M-Pesa, ka dibna ansixi codsiga STK push ee telefoonkaaga.",
     mpesaFailed: "Lama bilaabi karo lacag bixinta M-Pesa. Fadlan isku day mar kale.",
+    payWithPaystackCard: "Kaarka Paystack",
+    pscardBadge: "Kaar",
+    pscardTitle: "Ku bixi kaar",
+    pscardSubtitle:
+      "Bixi ${{price}} 30-ka maalmood ee kowaad adigoo isticmaalaya kaar Visa ama Mastercard, ka dibna kaliya ${{monthly}} bil kasta. Waxaa si ammaan ah u maamula Paystack.",
+    pscardPay: "Ku bixi ${{price}} kaar",
+    pscardRedirecting: "Furaya bogga kaarka…",
+    pscardSecureNote: "Lacag bixin kaar ammaan ah iyada oo loo marayo Paystack.",
+    pscardStepsNote:
+      "Geli faahfaahinta kaarkaaga bogga Paystack oo ansixi — sawir looma baahna.",
+    pscardPeriodNote:
+      "Helitaanku waa 30 maalmood. Lacagta kowaad waa ${{price}}; cusbooneysiin kasta ka dib waa ${{monthly}}.",
+    pscardFailed: "Lama bilaabi karo lacag bixinta kaarka. Fadlan isku day mar kale.",
   },
   faq: {
     title: "Su'aalaha Inta Badan La Isweydiiyo",

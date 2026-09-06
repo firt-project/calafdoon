@@ -11,10 +11,11 @@ import { cn } from "@/lib/utils";
 import { EvcPaymentSection } from "@/components/payment/evc-payment-section";
 import { WaafiPaymentSection } from "@/components/payment/waafi-payment-section";
 import { MpesaPaymentSection } from "@/components/payment/mpesa-payment-section";
+import { PaystackCardSection } from "@/components/payment/paystack-card-section";
 import { useCreateRegistrationCheckout } from "@/data/payments/hooks";
 
 type RegistrationTier = "basic" | "premium";
-type PayMethod = "card" | "waafi" | "mpesa" | "evc";
+type PayMethod = "card" | "pscard" | "waafi" | "mpesa" | "evc";
 
 function formatPrice(price: number): string {
   return Number.isInteger(price) ? String(price) : price.toFixed(2);
@@ -206,6 +207,13 @@ export function PaymentGate({
             {t("payment.payWithCard")}
           </MethodButton>
           <MethodButton
+            active={payMethod === "pscard"}
+            onClick={() => setPayMethod("pscard")}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            {t("payment.payWithPaystackCard")}
+          </MethodButton>
+          <MethodButton
             active={payMethod === "waafi"}
             onClick={() => setPayMethod("waafi")}
           >
@@ -302,6 +310,8 @@ export function PaymentGate({
           </p>
         </>
       ) : null}
+
+      {payMethod === "pscard" ? <PaystackCardSection /> : null}
 
       {payMethod === "waafi" ? <WaafiPaymentSection /> : null}
 

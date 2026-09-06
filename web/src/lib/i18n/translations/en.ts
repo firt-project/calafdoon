@@ -782,6 +782,19 @@ export const en = {
     mpesaStepsNote:
       "Enter your M-Pesa number, then approve the STK push prompt on your phone.",
     mpesaFailed: "Could not start the M-Pesa payment. Please try again.",
+    payWithPaystackCard: "Paystack card",
+    pscardBadge: "Card",
+    pscardTitle: "Pay by card",
+    pscardSubtitle:
+      "Pay ${{price}} for your first 30 days with any Visa or Mastercard, then just ${{monthly}} every month. Processed securely by Paystack.",
+    pscardPay: "Pay ${{price}} by card",
+    pscardRedirecting: "Opening card checkout…",
+    pscardSecureNote: "Secure card checkout via Paystack.",
+    pscardStepsNote:
+      "Enter your card details on the Paystack page and confirm — no screenshot needed.",
+    pscardPeriodNote:
+      "Access lasts 30 days. Your first payment is ${{price}}; every renewal after that is ${{monthly}}.",
+    pscardFailed: "Could not start the card payment. Please try again.",
   },
   faq: {
     title: "Frequently Asked Questions",
