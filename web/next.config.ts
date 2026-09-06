@@ -11,7 +11,11 @@ import { buildContentSecurityPolicy } from "./src/lib/security/content-security-
 const apiUpstream = (
   process.env.API_UPSTREAM_URL ??
   process.env.NEST_API_UPSTREAM_URL ??
-  "https://api.example.com"
+  // Fallback to the deployed Render API so /backend/* and /socket.io/* still
+  // proxy when the env var is missing (was https://api.example.com — an
+  // unresolvable host that surfaced as opaque 502s). Override with
+  // API_UPSTREAM_URL for staging / a custom API host.
+  "https://tel-calafkaaga-1.onrender.com"
 ).replace(/\/$/, "");
 
 const securityHeaders = [
