@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { createHash } from "node:crypto";
 import {
   ALLOW_DURING_PASSWORD_RESET_KEY,
   ALLOW_WHILE_UNVERIFIED_KEY,
@@ -14,10 +13,6 @@ import {
   ROLES_KEY,
 } from "./auth.guards";
 import { generateToken, hashToken } from "./crypto-util";
-
-function sha256(raw: string) {
-  return createHash("sha256").update(raw, "utf8").digest("hex");
-}
 
 function mockGuardContext(opts: {
   isPublic?: boolean;
@@ -223,13 +218,11 @@ describe("AuthGuard email verification (M3)", () => {
 });
 
 describe("AuthService email verification (M3)", () => {
-  it("register creates unverified user, hashed token only, and no token in response", async () => {
+  it("register creates a verified user and sends no verification email", async () => {
     const { AuthService } = await import("./auth.service");
     const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-    let storedHash: string | null = null;
-    let storedEmail: string | null = null;
+    let tokenCreated = false;
     let mailText = "";
-    let mailHtml = "";
     const auditActions: string[] = [];
 
     const prisma = {
@@ -240,18 +233,18 @@ describe("AuthService email verification (M3)", () => {
           email: "new@example.com",
           emailNormalized: "new@example.com",
           mustResetPassword: false,
-          emailVerificationTime: null,
+          emailVerificationTime: new Date(),
           profile: { role: "user", banned: false, hasPaid: false },
         }),
         create: async ({ data }: { data: Record<string, unknown> }) => {
-          assert.equal(data.emailVerificationTime, null);
+          assert.ok(data.emailVerificationTime instanceof Date);
           return { id: userId, ...data };
         },
       },
       authAccount: {
         findFirst: async () => null,
         create: async ({ data }: { data: { emailVerified?: boolean } }) => {
-          assert.equal(data.emailVerified, false);
+          assert.equal(data.emailVerified, true);
           return {};
         },
       },
@@ -259,13 +252,8 @@ describe("AuthService email verification (M3)", () => {
       preference: { create: async () => ({}) },
       emailVerificationToken: {
         updateMany: async () => ({ count: 0 }),
-        create: async ({
-          data,
-        }: {
-          data: { tokenHash: string; email: string };
-        }) => {
-          storedHash = data.tokenHash;
-          storedEmail = data.email;
+        create: async () => {
+          tokenCreated = true;
           return { id: "tok1" };
         },
       },
@@ -292,9 +280,8 @@ describe("AuthService email verification (M3)", () => {
           k === "APP_URL" ? "https://app.example" : "test-session-secret-32chars-min!!",
       } as never,
       {
-        send: async (msg: { text: string; html?: string }) => {
+        send: async (msg: { text: string }) => {
           mailText = msg.text;
-          mailHtml = msg.html ?? "";
         },
       } as never
     );
@@ -305,20 +292,12 @@ describe("AuthService email verification (M3)", () => {
       ip: "127.0.0.1",
     });
 
-    assert.equal(result.user.emailVerified, false);
+    assert.equal(result.user.emailVerified, true);
     assert.equal(result.rawToken, "reg-tok");
-    assert.ok(storedHash);
-    assert.equal(storedEmail, "new@example.com");
-    assert.equal(storedHash!.includes("reg-tok"), false);
-    assert.ok(!JSON.stringify(result).includes(storedHash!));
-    assert.ok(!JSON.stringify(result).includes("/verify-email?token="));
-    assert.ok(mailText.includes("/verify-email?token="));
-    assert.ok(mailHtml.includes("Verify your email"));
-    const tokenMatch = mailText.match(/token=([A-Za-z0-9_-]+)/);
-    assert.ok(tokenMatch?.[1]);
-    assert.equal(storedHash, sha256(decodeURIComponent(tokenMatch![1]!)));
+    assert.equal(tokenCreated, false);
+    assert.equal(mailText, "");
     assert.ok(auditActions.includes("register_success"));
-    assert.ok(auditActions.includes("email_verification_sent"));
+    assert.ok(!auditActions.includes("email_verification_sent"));
   });
 
   it("correct token verifies email and consumes token", async () => {
@@ -502,74 +481,6 @@ describe("AuthService email verification (M3)", () => {
     assert.ok(!JSON.stringify(first).includes(hashes[0]!));
     assert.ok(mailBody.includes("/verify-email?token="));
     assert.ok(!JSON.stringify(second).includes("token="));
-  });
-
-  it("mail failure on register does not expose token and keeps user unverified", async () => {
-    const { AuthService } = await import("./auth.service");
-    const userId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
-    let storedHash: string | null = null;
-    const auditActions: string[] = [];
-
-    const prisma = {
-      user: {
-        findFirst: async () => null,
-        findUnique: async () => ({
-          id: userId,
-          email: "fail@example.com",
-          emailNormalized: "fail@example.com",
-          mustResetPassword: false,
-          emailVerificationTime: null,
-          profile: { role: "user", banned: false, hasPaid: false },
-        }),
-        create: async () => ({ id: userId }),
-      },
-      authAccount: {
-        findFirst: async () => null,
-        create: async () => ({}),
-      },
-      profile: { create: async () => ({}) },
-      preference: { create: async () => ({}) },
-      emailVerificationToken: {
-        updateMany: async () => ({ count: 0 }),
-        create: async ({ data }: { data: { tokenHash: string } }) => {
-          storedHash = data.tokenHash;
-          return { id: "tok" };
-        },
-      },
-      authAuditEvent: {
-        create: async ({ data }: { data: { action: string } }) => {
-          auditActions.push(data.action);
-          return {};
-        },
-      },
-      $transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn(prisma),
-    };
-
-    const auth = new AuthService(
-      prisma as never,
-      {
-        createSession: async () => ({
-          rawToken: "reg-tok",
-          sessionId: "sid",
-          expiresAt: new Date(Date.now() + 1000),
-        }),
-      } as never,
-      { get: () => "https://app.example" } as never,
-      {
-        send: async () => {
-          throw new Error("smtp down");
-        },
-      } as never
-    );
-
-    const result = await auth.register({
-      email: "fail@example.com",
-      password: "Register-Pass-99",
-    });
-    assert.equal(result.user.emailVerified, false);
-    assert.ok(storedHash);
-    assert.ok(!JSON.stringify(result).includes(storedHash!));
-    assert.ok(auditActions.includes("email_verification_send_failed"));
   });
 
   it("password reset does not set emailVerificationTime", async () => {

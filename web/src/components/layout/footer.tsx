@@ -20,7 +20,6 @@ import { useNavLinks } from "@/lib/i18n/hooks";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { AuthRegisterCta } from "@/components/auth/auth-register-cta";
-import { AndroidDownloadLink } from "@/components/marketing/android-download-link";
 
 const SUPPORT_LINKS = [
   { href: "/faq", label: "Help Center" },
@@ -60,10 +59,6 @@ export function Footer() {
               <span className="font-semibold">WhatsApp</span>
               <span className="text-white/80">{WHATSAPP_DISPLAY}</span>
             </a>
-            <div className="space-y-1.5 pt-1">
-              <AndroidDownloadLink variant="footer" className="w-full sm:w-auto" />
-              <p className="text-xs text-white/55">{t("common.downloadAndroidHint")}</p>
-            </div>
           </div>
 
           {/* Quick Links */}

@@ -357,8 +357,8 @@ export class AuthService {
             emailNormalized,
             name: "User",
             gender,
-            // M3: new registrations start unverified.
-            emailVerificationTime: null,
+            // Email verification is not required at signup — accounts start verified.
+            emailVerificationTime: new Date(),
           },
         });
 
@@ -371,7 +371,7 @@ export class AuthService {
             providerAccountId: emailNormalized,
             passwordHash: preferred.hash,
             passwordAlgo: preferred.algo as PasswordAlgo,
-            emailVerified: false,
+            emailVerified: true,
           },
         });
 
@@ -466,15 +466,6 @@ export class AuthService {
       userId,
       metadata: { sessionId: session.sessionId },
       ip: opts.ip,
-    });
-
-    // M3: send verification after account exists. Mail failure does not roll back
-    // registration; user can resend from the restricted session.
-    await this.issueEmailVerification({
-      userId,
-      email: emailNormalized,
-      ip: opts.ip,
-      reason: "register",
     });
 
     const user = await this.prisma.user.findUnique({

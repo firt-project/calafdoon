@@ -111,6 +111,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
+  /* No page should ever scroll sideways on a phone. `clip` (not `hidden`)
+     so it never turns body into a scroll container / breaks sticky headers. */
+  overflow-x: clip;
+}
+
+/*
+ * Long unbreakable strings — Somali compound words, emails, URLs — must wrap
+ * instead of forcing the layout wider than the phone screen.
+ */
+h1,
+h2,
+h3,
+h4,
+p,
+li,
+dd,
+dt,
+figcaption,
+blockquote {
+  overflow-wrap: break-word;
 }
 
 /* Smooth day/night handoff for surfaces without janking animations */

@@ -1,4 +1,3 @@
-// TODO(rebrand): confirm PLAY_STORE_PACKAGE_ID matches the Play Console listing.
 export const APP_NAME = "Hel Calafkaaga";
 /** Full brand / business name — used for Google site name & Organization schema. */
 export const SITE_BRAND_NAME = "Hel Calafkaaga";
@@ -12,14 +11,6 @@ export const WHATSAPP_GREEN = "#25D366";
 export const WHATSAPP_NUMBER = "254793692710";
 export const WHATSAPP_DISPLAY = "+254 793 692710";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
-/** Brand-domain install page (still useful for APK sideload notes). */
-export const ANDROID_INSTALL_PATH = "/download";
-export const ANDROID_INSTALL_URL = `${PRODUCTION_SITE_URL}${ANDROID_INSTALL_PATH}`;
-/** Google Play listing — primary install CTA on the homepage. */
-export const PLAY_STORE_PACKAGE_ID = "com.helcalaf.app";
-export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE_ID}`;
-/** Legacy direct APK (optional sideload); prefer Play Store. */
-export const ANDROID_APK_URL = "/download/web.apk";
 export const SUPPORT_EMAIL = "support@helcalafkaaga.com";
 /** Manual EVC / Hormuud mobile-money payee (Somalia). */
 export const EVC_PAYEE_NAME = "Axmed Xaaji";

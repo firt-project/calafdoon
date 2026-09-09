@@ -879,7 +879,7 @@ describe("AuthService behaviour (mocked prisma)", () => {
           email: "new@example.com",
           emailNormalized: "new@example.com",
           mustResetPassword: false,
-          emailVerificationTime: null,
+          emailVerificationTime: new Date(),
           profile: { role: "user", banned: false, hasPaid: false },
         }),
         create: async ({ data }: { data: { email: string; gender: string } }) => {
@@ -959,7 +959,7 @@ describe("AuthService behaviour (mocked prisma)", () => {
     assert.equal(registrationComplete, false);
     assert.equal(result.user.hasPaid, false);
     assert.equal(result.user.hasProfile, true);
-    assert.equal(result.user.emailVerified, false);
+    assert.equal(result.user.emailVerified, true);
     assert.equal(result.rawToken, "reg-tok");
     assert.ok(auditActions.includes("register_success"));
     assert.ok(!auditActions.includes("register_failed"));

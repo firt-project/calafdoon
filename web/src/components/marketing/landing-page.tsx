@@ -161,10 +161,10 @@ export function LandingPage() {
       {/* Hero */}
       <section className="gradient-hero">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:grid-cols-[1fr_1.05fr] lg:gap-14 lg:px-8">
-          <div>
+          <div className="min-w-0">
             <Reveal delayMs={40}>
-              <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-[0.78rem] font-semibold text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="inline-flex max-w-full items-center gap-2 rounded-2xl bg-accent px-3.5 py-1.5 text-[0.78rem] font-semibold text-primary">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                 {t("landing.heroEyebrow")}
               </span>
             </Reveal>
@@ -184,7 +184,7 @@ export function LandingPage() {
                 registerLabel={t("landing.heroCta", { price })}
                 plan="basic"
                 size="lg"
-                className="h-13 rounded-full px-8 text-[15px] shadow-lg shadow-primary/20"
+                className="min-h-13 h-auto whitespace-normal rounded-full px-6 py-2.5 text-center text-[15px] leading-snug shadow-lg shadow-primary/20 sm:px-8"
               />
               <Link
                 href="/how-it-works"
@@ -428,7 +428,7 @@ export function LandingPage() {
               registerLabel={t("landing.heroCta", { price })}
               plan="basic"
               size="lg"
-              className="h-13 rounded-full border-0 bg-primary-foreground px-8 text-[15px] text-primary hover:bg-primary-foreground/90"
+              className="min-h-13 h-auto whitespace-normal rounded-full border-0 bg-primary-foreground px-6 py-2.5 text-center text-[15px] leading-snug text-primary hover:bg-primary-foreground/90 sm:px-8"
             />
           </div>
         </div>
