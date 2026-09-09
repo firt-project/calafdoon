@@ -311,16 +311,16 @@ export const so: Translations = {
     priceLead:
       "Wax walba waa ku jira. Ma jirto lacag farriineed, ma jirto lacag lagu furo cidda ku jeclaatay, ma jirto cusboonaysiin lama-filaan ah.",
     priceOnce: "hal mar",
+    priceCoffee: "Mar keliya — ku dhawaad intaad shaah ku bixiso.",
     priceThen: "ka dibna ${{monthly}} bishii — goor kastana waad joojin kartaa",
+    priceIncluded: "Wax walba waa ku jira",
     priceFeatureProfile: "Profile buuxa: su'aalo iyo sawirro",
     priceFeatureMatches: "Maalin walba dad lagugu waafajiyo iyo jeclaan aan xad lahayn",
     priceFeatureChat: "Farriin qof kasta oo labadiinuba isku jeceshihiin",
     priceFeatureLikes: "Arag cidda ku jeclaatay",
     priceFeatureWali: "Ku dar wali / xubin qoyskaaga ah",
-    priceCompare:
-      "Muzz iyo Salams waxay bishii ku qaataan $20 ilaa $45 wax la mid ah.",
     priceAsideBody:
-      "Qiimaha waxaa loo dhigay in arday Nairobi joogaa iyo kalkaaliye Muqdisho joogaa labaduba ay awoodaan — maaha qurbaha oo kaliya. ${{basic}}-ka hore wuxuu daboolaa fiirinta profile-kaaga; ${{monthly}} bishii ayaa adeegga socodsiiya.",
+      "Qiimaha waxaa loo dhigay in arday Nairobi joogaa iyo kalkaaliye Muqdisho joogaa labaduba ay awoodaan. ${{basic}}-ka hore wuxuu daboolaa fiirinta profile-kaaga; ${{monthly}} bishii ayaa adeegga socodsiiya.",
 
     finalEyebrowLine: "Bilow maanta",
     finalTitle: "Calafkaaguna wuu ku raadinayaa.",

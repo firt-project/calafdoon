@@ -46,15 +46,15 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
-        <BrandLogo href="/" className="min-w-0 shrink" />
+        <BrandLogo href="/" className="min-w-0 shrink xl:shrink-0" />
 
-        <nav className="hidden lg:flex items-center gap-0.5">
+        <nav className="hidden xl:flex items-center gap-0.5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "relative px-3 py-2 text-sm font-medium transition-colors",
+                "relative whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors",
                 isActive(link.href)
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -111,7 +111,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden rounded-xl h-10 w-10"
+            className="xl:hidden rounded-xl h-10 w-10"
             onClick={() => setOpen(!open)}
             aria-label={open ? t("common.a11yCloseMenu") : t("common.a11yOpenMenu")}
           >
@@ -121,7 +121,7 @@ export function Navbar() {
       </div>
 
       {open ? (
-        <div className="lg:hidden border-t border-border motion-safe:animate-reveal">
+        <div className="xl:hidden border-t border-border motion-safe:animate-reveal">
           <div className="px-4 py-4 space-y-1">
             {navLinks.map((link) => (
               <Link

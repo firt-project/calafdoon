@@ -309,16 +309,16 @@ export const en = {
     priceLead:
       "Everything is included. No pay-per-message, no unlocking your own likes, no surprise renewal.",
     priceOnce: "once",
+    priceCoffee: "Paid once — about what a coffee costs.",
     priceThen: "then ${{monthly}} / month · cancel any time",
+    priceIncluded: "Everything included",
     priceFeatureProfile: "Full profile, questionnaire and photos",
     priceFeatureMatches: "Daily matches and unlimited likes",
     priceFeatureChat: "Messaging with every mutual match",
     priceFeatureLikes: "See who liked you",
     priceFeatureWali: "Add a wali / family contact",
-    priceCompare:
-      "Muzz and Salams charge $20 to $45 a month for the same thing.",
     priceAsideBody:
-      "Hel Calafkaaga is priced so a student in Nairobi and a nurse in Mogadishu can both afford it — not just the diaspora. The first ${{basic}} covers your review; ${{monthly}} a month keeps the lights on.",
+      "Priced so a student in Nairobi and a nurse in Mogadishu can both afford it. The first ${{basic}} covers reviewing your profile; ${{monthly}} a month keeps the service running.",
 
     finalEyebrowLine: "Start today",
     finalTitle: "Your calaf is looking too.",

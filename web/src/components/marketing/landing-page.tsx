@@ -10,6 +10,7 @@ import {
   CreditCard,
   Smartphone,
   Languages,
+  Coffee,
 } from "lucide-react";
 import { AuthRegisterCta } from "@/components/auth/auth-register-cta";
 import { FAQAccordion } from "@/components/marketing/faq-accordion";
@@ -360,22 +361,50 @@ export function LandingPage() {
 
       {/* Pricing */}
       <section className="marketing-section" id="pricing">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-3xl">
           <SectionHead title={t("landing.priceTitle")} lead={t("landing.priceLead")} />
-          <div className="flex flex-wrap items-center gap-12">
-            <div className="w-full max-w-sm flex-1 rounded-[1.75rem] border border-border bg-card p-8 shadow-md">
-              <div className="flex items-end gap-2">
-                <span className="font-display text-[3.25rem] font-semibold leading-none tracking-tight text-primary">
-                  ${price}
-                </span>
-                <span className="pb-1.5 text-base text-muted-foreground">
-                  {t("landing.priceOnce")}
-                </span>
+
+          <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-lg">
+            <div className="h-1.5 bg-gradient-to-r from-primary via-gold to-primary" />
+            <div className="p-6 sm:p-9">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
+                    {t("landing.priceEyebrow")}
+                  </p>
+                  <div className="mt-3 flex items-end gap-2">
+                    <span className="font-display text-[3.75rem] font-semibold leading-[0.9] tracking-tight text-primary">
+                      ${price}
+                    </span>
+                    <span className="pb-2 text-base text-muted-foreground">
+                      {t("landing.priceOnce")}
+                    </span>
+                  </div>
+                  <p className="mt-2.5 flex items-center gap-2 text-[0.95rem] text-muted-foreground">
+                    <Coffee className="h-4 w-4 shrink-0 text-gold" />
+                    {t("landing.priceCoffee")}
+                  </p>
+                  <p className="mt-1 text-[0.95rem] font-medium text-primary">
+                    {t("landing.priceThen", { monthly })}
+                  </p>
+                </div>
+                <AuthRegisterCta
+                  registerLabel={t("common.joinNow")}
+                  plan="basic"
+                  size="lg"
+                  className="min-h-13 h-auto w-full shrink-0 whitespace-normal rounded-full px-6 py-2.5 text-center leading-snug sm:w-auto sm:px-8"
+                />
               </div>
-              <p className="mt-3 text-[0.95rem] font-medium text-primary">
-                {t("landing.priceThen", { monthly })}
-              </p>
-              <ul className="my-6 space-y-3">
+
+              <div className="my-7 flex items-center gap-3">
+                <span className="h-px flex-1 bg-border" />
+                <span className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("landing.priceIncluded")}
+                </span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
+              <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
                 {priceFeatures.map((f) => (
                   <li key={f} className="flex gap-3 text-[0.98rem]">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf" />
@@ -383,22 +412,12 @@ export function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <AuthRegisterCta
-                registerLabel={t("common.joinNow")}
-                plan="basic"
-                size="lg"
-                className="h-13 w-full rounded-full"
-              />
-            </div>
-            <div className="max-w-sm flex-1 space-y-4">
-              <p className="font-display text-2xl font-medium italic leading-snug tracking-tight text-balance">
-                {t("landing.priceCompare")}
-              </p>
-              <p className="leading-relaxed text-muted-foreground">
-                {t("landing.priceAsideBody", { basic: price, monthly })}
-              </p>
             </div>
           </div>
+
+          <p className="mx-auto mt-6 max-w-xl text-center text-[0.95rem] leading-relaxed text-muted-foreground">
+            {t("landing.priceAsideBody", { basic: price, monthly })}
+          </p>
         </div>
       </section>
 
