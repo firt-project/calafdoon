@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { payments, ApiClientError, profile } from "@hel/api-client";
+import { payments, ApiClientError, profile, auth } from "@hel/api-client";
 import {
   formatMoney,
   REGISTRATION_PRICE,
@@ -8,6 +8,11 @@ import {
 } from "@/lib/constants";
 import { useSession } from "@/features/auth/SessionProvider";
 import { PaystackCheckoutSheet } from "@/features/payments/PaystackCheckoutSheet";
+import {
+  openWebCheckout,
+  shouldUseWebCheckout,
+  subscribeWebCheckoutReturn,
+} from "@/platform/web-checkout";
 
 const WAAFI_COUNTRY_CODE = "252";
 
@@ -25,9 +30,13 @@ function toLocalMobileDigits(raw: string): string {
 type PaystackSession = { url: string; reference: string };
 
 /**
- * Mobile paywall — WaafiPay (Somali mobile wallet) and Paystack (card, M-Pesa,
- * bank). Both complete inside the app: WaafiPay via a phone PIN prompt, Paystack
- * via an embedded checkout sheet. No EVC proof upload, no browser jump.
+ * Mobile paywall. Android: WaafiPay (Somali mobile wallet) and Paystack (card,
+ * M-Pesa, bank) complete inside the app — WaafiPay via a phone PIN prompt,
+ * Paystack via an embedded checkout sheet. iOS: Apple's IAP rules (App Store
+ * Review Guideline 3.1.1) block real-money payment for in-app digital access
+ * without StoreKit, so iOS instead sends the member to helcalafkaaga.com in
+ * the system browser to pay — same account, same backend — and re-checks
+ * access when they come back (see platform/web-checkout.ts).
  */
 export function PlansPage() {
   const navigate = useNavigate();
@@ -47,6 +56,8 @@ export function PlansPage() {
   const [paystackSession, setPaystackSession] = useState<PaystackSession | null>(
     null
   );
+  const [checkingAccess, setCheckingAccess] = useState(false);
+  const webCheckout = shouldUseWebCheckout();
 
   const priceLabel = formatMoney(REGISTRATION_PRICE);
 
@@ -63,22 +74,25 @@ export function PlansPage() {
 
   useEffect(() => {
     let cancelled = false;
-    void payments.waafi
-      .status()
-      .then((s) => {
-        if (!cancelled) setWaafiEnabled(Boolean(s?.enabled));
-      })
-      .catch(() => {
-        if (!cancelled) setWaafiEnabled(false);
-      });
-    void payments.paystack
-      .status()
-      .then((s) => {
-        if (!cancelled) setPaystackEnabled(Boolean(s?.enabled));
-      })
-      .catch(() => {
-        if (!cancelled) setPaystackEnabled(false);
-      });
+    // iOS never shows these in-app payment methods, so skip the calls.
+    if (!webCheckout) {
+      void payments.waafi
+        .status()
+        .then((s) => {
+          if (!cancelled) setWaafiEnabled(Boolean(s?.enabled));
+        })
+        .catch(() => {
+          if (!cancelled) setWaafiEnabled(false);
+        });
+      void payments.paystack
+        .status()
+        .then((s) => {
+          if (!cancelled) setPaystackEnabled(Boolean(s?.enabled));
+        })
+        .catch(() => {
+          if (!cancelled) setPaystackEnabled(false);
+        });
+    }
     // Prefill the wallet field from the profile phone as a convenience only —
     // any wallet number is accepted, it need not match the profile.
     void profile
@@ -97,7 +111,47 @@ export function PlansPage() {
     return () => {
       cancelled = true;
     };
+    // webCheckout is derived from the native platform, which cannot change
+    // for the life of the app — safe to run this once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // iOS pays on the website. When the in-app browser closes, or the app comes
+  // back to the foreground, re-check access. bootstrapMe() gives the fresh
+  // result directly; refresh() keeps the rest of the app's session in sync.
+  useEffect(() => {
+    if (!webCheckout) return;
+    return subscribeWebCheckoutReturn(() => {
+      void auth.bootstrapMe().then((boot) => {
+        void refresh();
+        if (boot.accessState?.hasPaidAccess) {
+          setStatus("Payment received. Unlocking your account…");
+          navigate("/home", { replace: true });
+        }
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [webCheckout]);
+
+  async function checkAccessAfterWebCheckout() {
+    setCheckingAccess(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const boot = await auth.bootstrapMe();
+      void refresh();
+      if (boot.accessState?.hasPaidAccess) {
+        setStatus("Payment received. Unlocking your account…");
+        navigate("/home", { replace: true });
+      } else {
+        setError(
+          "Not paid yet. Finish checkout on the website, then check again."
+        );
+      }
+    } finally {
+      setCheckingAccess(false);
+    }
+  }
 
   async function payWithWaafi() {
     if (waafiEnabled === false) {
@@ -244,8 +298,10 @@ export function PlansPage() {
               </div>
               <p className="muted small" style={{ margin: 0 }}>
                 {membershipExpired
-                  ? `Your ${WAAFI_ACCESS_DAYS}-day access ended. Pay to unlock another ${WAAFI_ACCESS_DAYS} days of matches and messaging.`
-                  : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa — everything finishes here in the app."}
+                  ? `Your ${WAAFI_ACCESS_DAYS}-day access ended. Renew to unlock another ${WAAFI_ACCESS_DAYS} days of matches and messaging.`
+                  : webCheckout
+                    ? "Unlocks matches and messaging. Continue on our website to set up membership, using the same account."
+                    : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa — everything finishes here in the app."}
               </p>
             </div>
 
@@ -260,73 +316,113 @@ export function PlansPage() {
               </div>
             )}
 
-            <div className="pay-method">
-              <div className="pay-method-head">
-                <span className="pay-method-name">WaafiPay</span>
-                <span className="pay-method-tag">EVC Plus · WAAFI · ZAAD · SAHAL</span>
-              </div>
-              {waafiEnabled === false ? (
-                <p className="form-error small" role="alert" style={{ margin: 0 }}>
-                  WaafiPay is temporarily unavailable.
-                </p>
-              ) : (
-                <p className="muted small" style={{ margin: 0 }}>
-                  The wallet you enter gets the PIN prompt — it can be yours or a
-                  relative's.
-                </p>
-              )}
-              <label className="pay-field-label" htmlFor="waafi-mobile">
-                Wallet number
-              </label>
-              <div className="pay-phone-input">
-                <span className="pay-phone-cc">+{WAAFI_COUNTRY_CODE}</span>
-                <input
-                  id="waafi-mobile"
-                  className="input"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="61 234 5678"
-                  value={localMobile}
-                  onChange={(e) =>
-                    setLocalMobile(toLocalMobileDigits(e.target.value))
-                  }
-                />
-              </div>
-              <button
-                type="button"
-                className="btn btn-primary btn-block btn-lg"
-                disabled={
-                  busy || waafiEnabled === false || localMobile.length < 8
-                }
-                onClick={() => void payWithWaafi()}
-              >
-                {busy
-                  ? "Waiting for phone approval…"
-                  : `Pay $${priceLabel} with WaafiPay`}
-              </button>
-            </div>
-
-            {paystackEnabled !== false && (
+            {webCheckout ? (
               <div className="pay-method">
                 <div className="pay-method-head">
-                  <span className="pay-method-name">Card &amp; M-Pesa</span>
-                  <span className="pay-method-tag">Card · M-Pesa · bank · Paystack</span>
+                  <span className="pay-method-name">Membership</span>
+                  <span className="pay-method-tag">helcalafkaaga.com</span>
                 </div>
                 <p className="muted small" style={{ margin: 0 }}>
-                  Opens a secure payment sheet inside the app. Choose card, M-Pesa
-                  or bank on the next screen.
+                  Continue on our website to set up your membership — sign in
+                  there with this same email, finish on that page, then come
+                  back to the app.
                 </p>
                 <button
                   type="button"
                   className="btn btn-primary btn-block btn-lg"
-                  disabled={mpesaBusy || paystackEnabled === null}
-                  onClick={() => void payWithPaystack()}
+                  onClick={() => void openWebCheckout()}
                 >
-                  {mpesaBusy
-                    ? "Starting payment…"
-                    : `Pay $${priceLabel} by card or M-Pesa`}
+                  Continue on our website
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-block"
+                  disabled={checkingAccess}
+                  onClick={() => void checkAccessAfterWebCheckout()}
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  {checkingAccess ? "Checking…" : "I've finished — check again"}
                 </button>
               </div>
+            ) : (
+              <>
+                <div className="pay-method">
+                  <div className="pay-method-head">
+                    <span className="pay-method-name">WaafiPay</span>
+                    <span className="pay-method-tag">
+                      EVC Plus · WAAFI · ZAAD · SAHAL
+                    </span>
+                  </div>
+                  {waafiEnabled === false ? (
+                    <p
+                      className="form-error small"
+                      role="alert"
+                      style={{ margin: 0 }}
+                    >
+                      WaafiPay is temporarily unavailable.
+                    </p>
+                  ) : (
+                    <p className="muted small" style={{ margin: 0 }}>
+                      The wallet you enter gets the PIN prompt — it can be
+                      yours or a relative's.
+                    </p>
+                  )}
+                  <label className="pay-field-label" htmlFor="waafi-mobile">
+                    Wallet number
+                  </label>
+                  <div className="pay-phone-input">
+                    <span className="pay-phone-cc">+{WAAFI_COUNTRY_CODE}</span>
+                    <input
+                      id="waafi-mobile"
+                      className="input"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="61 234 5678"
+                      value={localMobile}
+                      onChange={(e) =>
+                        setLocalMobile(toLocalMobileDigits(e.target.value))
+                      }
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-block btn-lg"
+                    disabled={
+                      busy || waafiEnabled === false || localMobile.length < 8
+                    }
+                    onClick={() => void payWithWaafi()}
+                  >
+                    {busy
+                      ? "Waiting for phone approval…"
+                      : `Pay $${priceLabel} with WaafiPay`}
+                  </button>
+                </div>
+
+                {paystackEnabled !== false && (
+                  <div className="pay-method">
+                    <div className="pay-method-head">
+                      <span className="pay-method-name">Card &amp; M-Pesa</span>
+                      <span className="pay-method-tag">
+                        Card · M-Pesa · bank · Paystack
+                      </span>
+                    </div>
+                    <p className="muted small" style={{ margin: 0 }}>
+                      Opens a secure payment sheet inside the app. Choose
+                      card, M-Pesa or bank on the next screen.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block btn-lg"
+                      disabled={mpesaBusy || paystackEnabled === null}
+                      onClick={() => void payWithPaystack()}
+                    >
+                      {mpesaBusy
+                        ? "Starting payment…"
+                        : `Pay $${priceLabel} by card or M-Pesa`}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
             <p className="muted small" style={{ marginTop: "0.5rem" }}>

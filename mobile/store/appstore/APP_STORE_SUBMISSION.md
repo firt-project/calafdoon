@@ -73,8 +73,9 @@ HOW IT WORKS
 4. Take it forward with family when you are both ready.
 
 MEMBERSHIP
-Some features require a paid membership, handled by trusted payment processors.
-Browsing and setting up your profile are free.
+Some features require a paid membership. Set up your profile in the app for free;
+membership is completed on helcalafkaaga.com in Safari, then unlocks in the app
+automatically once you sign back in.
 
 PRIVACY & SAFETY
 You control what is on your profile and who sees it. Delete your account and data
@@ -100,7 +101,8 @@ HelCalaf is for adults 18 and older who are seeking marriage.
 - **Dating**: Yes → forces **17+**
 - Expected result: **17+**
 
-**Price:** Free (with in-app purchases if/when you wire StoreKit — see §7).
+**Price:** Free. No in-app purchases — App Store Connect's "In-App Purchases"
+section should be left empty (see §7, option D).
 
 **Version / What's New (1.1.4):**
 ```
@@ -154,9 +156,14 @@ This account has a completed profile and at least one match + conversation so al
 tabs are reachable without payment. Paid features are gated by a membership; the
 demo account has membership enabled.
 
-Payments: handled by Paystack / Waafi hosted checkout (not Apple IAP) because this
-is an external physical-world service (matchmaking membership). See guideline
-3.1.3(e)/3.1.5 — happy to discuss. [Apple may still push back; see §7.]
+Payments: this build does not sell or unlock any digital content, subscription,
+or in-app purchase from within the app, and contains no purchase flow, price, or
+"buy" button. Members who want to add a paid membership do so on our website,
+https://www.helcalafkaaga.com, outside the app, in Safari (the app links out
+there and simply checks membership status when the member returns — no payment
+UI, card entry, or checkout of any kind happens inside the app binary). This
+mirrors how a multiplatform service account works when purchased on the web.
+Happy to walk through this on a call if useful. [See §7 for background.]
 ```
 
 ---
@@ -199,7 +206,9 @@ is an external physical-world service (matchmaking membership). See guideline
    now I only have Welcome / Register / Login.
 3. **Confirm the app name** `HelCalaf` and that it's free on the App Store.
 4. **Privacy policy** — confirm it's live and whether you want it expanded (§3 note).
-5. **Payments decision** — see §7. This is the most likely review rejection.
+5. **Payments** — decided: option D in §7 (web checkout, no in-app purchase).
+   Still the most likely source of a review rejection; have the §7 fallback
+   (option C, hide the button) ready if Apple pushes back.
 6. Your **App Store Connect login** stays with you; you do the final "Submit for
    Review". Codemagic only needs the API key.
 
@@ -220,9 +229,26 @@ Options, roughly in order of safety:
   real-world service. Sometimes accepted for matrimony apps; risky, expect a fight.
 - **C.** Ship iOS with **no paid membership at all** (browse + profile + limited
   messaging free), monetise elsewhere. Cleanest for a first release; least revenue.
+- **D. (IMPLEMENTED, 2026-09-11)** No purchase flow of any kind ships inside the
+  iOS binary. `PlansPage` on iOS shows no WaafiPay form and no in-app Paystack
+  sheet — instead a "Continue on our website" button opens
+  `https://www.helcalafkaaga.com/login` in the system browser
+  (`@capacitor/browser`, SFSafariViewController — `src/platform/web-checkout.ts`).
+  The member signs in / pays there (same account, same Render backend as the
+  website), then the app re-checks access when the browser closes or the app
+  resumes, and unlocks automatically. Android is untouched — it still pays
+  in-app via WaafiPay/Paystack (commit in `redesign/web-warm`-era mobile work).
 
-Decide this before submitting — it changes what "ready" means. I can implement
-option A or C.
+  **This is not a guaranteed pass.** It avoids the worst violation (an in-app
+  checkout UI / iframe / card form), which is the version of 3.1.1 Apple flags
+  most reliably, but Apple can still reject a build that has *any* path —
+  even an external link — to pay for something usable inside the app, unless
+  it also qualifies as a genuine "reader"/multiplatform-service app (§7 option B)
+  or uses Apple's restricted External Purchase Link Entitlement (region-gated,
+  requires its own ASC approval, not implemented here). Treat D as the pragmatic
+  middle ground while testing the waters with a real submission — if Apple
+  rejects citing 3.1.1, the fallback is option C (hide the "Continue on our
+  website" button entirely, ship browsing-only) or option A (real StoreKit IAP).
 
 ---
 

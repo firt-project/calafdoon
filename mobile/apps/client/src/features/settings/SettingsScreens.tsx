@@ -29,6 +29,7 @@ import {
 import { useTranslation } from "@/lib/i18n/context";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { openMailTo } from "@/platform/external-links";
+import { shouldUseWebCheckout } from "@/platform/web-checkout";
 import { clearAllClientData, prefsStore } from "@/platform/secure-storage";
 import { useTheme, type ThemeMode } from "@/platform/theme";
 import {
@@ -453,7 +454,11 @@ export function SettingsHomePage() {
             icon={CreditCard}
             tone="green"
             title={t("settingsPage.planBilling")}
-            subtitle="WaafiPay membership — pay or renew with mobile wallet"
+            subtitle={
+              shouldUseWebCheckout()
+                ? "Membership — set up or renew on our website"
+                : "WaafiPay membership — pay or renew with mobile wallet"
+            }
           />
         </SettingsGroup>
       )}
