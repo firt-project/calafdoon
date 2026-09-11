@@ -17,7 +17,7 @@ Print or tick before handing Mac access / repo.
 
 - [ ] Clone or zip of `calafdoon` (at least `mobile/`)  
 - [ ] Read `IOS_DEVELOPER_HANDOFF.md`  
-- [ ] Bundle ID is `com.helcalaf.app` (do not change without App Store Connect app record)  
+- [ ] Bundle ID is `com.helcalafkaaga.helcalaf` (do not change without App Store Connect app record)  
 - [ ] `apps/client/.env.production` created from `.env.production.example` (gitignored)  
 
 ## On Mac (developer)

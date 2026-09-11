@@ -87,9 +87,9 @@ re-fetch, no code change.
 
 ### 3c. RevenueCat
 1. Create a project `HelCalaf`.
-2. **Apps**: add an App Store app (bundle `com.helcalaf.app`, needs an ASC API key —
-   in-app-purchase key) and a Play app (package `com.helcalaf.app`, upload the
-   service-account JSON from 3b.4).
+2. **Apps**: add an App Store app (bundle `com.helcalafkaaga.helcalaf`, needs an ASC
+   API key — in-app-purchase key) and a Play app (package `com.helcalaf.app`,
+   upload the service-account JSON from 3b.4).
 3. **Entitlements**: create `membership` and `registered`.
 4. **Products**: import `helcalaf_membership_monthly` (→ attach to `membership`)
    and `helcalaf_registration` (→ attach to `registered`).

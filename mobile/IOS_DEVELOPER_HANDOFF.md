@@ -11,7 +11,7 @@
 |------|------------------|
 | App | Capacitor 7 + React (Vite) — **not** Expo / React Native |
 | Native iOS project | `mobile/apps/client/ios/App/App.xcworkspace` |
-| Bundle ID | `com.helcalaf.app` |
+| Bundle ID | `com.helcalafkaaga.helcalaf` |
 | Display name | **HelCalaf** |
 | Marketing version | `1.0.0` |
 | Build number | `1` (bump each TestFlight upload) |
@@ -81,7 +81,7 @@ open App.xcworkspace
 In Xcode:
 
 1. Select target **App** → **Signing & Capabilities** → your Team  
-2. Confirm Bundle Identifier `com.helcalaf.app`  
+2. Confirm Bundle Identifier `com.helcalafkaaga.helcalaf`  
 3. Confirm Version `1.0.0` / Build `1` (increment Build for each upload)  
 4. **Product → Archive**  
 5. **Distribute App → App Store Connect → Upload**  
@@ -173,7 +173,7 @@ On a physical iPhone or Simulator (HTTPS API):
 ## 10. Quick identity reference
 
 ```text
-Bundle ID:     com.helcalaf.app
+Bundle ID:     com.helcalafkaaga.helcalaf
 App name:      HelCalaf
 Scheme:        helcalaf://
 Version:       1.0.0

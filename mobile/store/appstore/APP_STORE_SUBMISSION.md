@@ -3,7 +3,9 @@
 Generated 2026-09-06. Companion to the Play pack in `mobile/store/play/`.
 
 Apple Developer: **Individual**, Team ID **`PHULDKCSY6`**, renews 2027-09-07.
-Bundle ID: **`com.helcalaf.app`** (matches Android + the iOS project).
+Bundle ID: **`com.helcalafkaaga.helcalaf`** (App Store Connect app record, Apple ID
+6811169065). This intentionally differs from the Android `applicationId`
+(`com.helcalaf.app`), which is already live on Play and stays unchanged.
 
 ---
 
@@ -181,9 +183,9 @@ Happy to walk through this on a call if useful. [See §7 for background.]
    - `VITE_API_URL = https://tel-calafkaaga-1.onrender.com`  (Secure ✔ optional)
    - optionally `VITE_SOCKET_URL`, `VITE_APP_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`
 5. In App Store Connect, **create the app record**: Apps → + → New App
-   - Platform iOS, Name `HelCalaf`, Primary language English (U.K.),
-     Bundle ID `com.helcalaf.app` (create it here or let Codemagic auto-create in
-     step 6), SKU `helcalaf-ios-001`.
+   - This app record already exists (Apple ID 6811169065, SKU `helcalaf-ios-1`)
+     with Bundle ID `com.helcalafkaaga.helcalaf` — no need to create a new one,
+     just finish filling in its metadata (see §2/§3 below).
 6. Run the `ios-appstore` workflow in Codemagic. It builds the web app, `cap sync`,
    `pod install`, auto-creates the signing cert + provisioning profile via your
    API key, builds the `.ipa`, and uploads it to **TestFlight**.
