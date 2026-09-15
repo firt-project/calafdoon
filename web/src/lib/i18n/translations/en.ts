@@ -579,7 +579,7 @@ export const en = {
       "Users must interact respectfully and in accordance with Islamic principles. Harassment, inappropriate content, or misuse of the platform will result in account termination.",
     s4Title: "4. Payments",
     s4Body:
-      "Registration requires a one-time payment starting at ${{basic}} (standard) or ${{premium}} (with personal guidance). This unlocks full access to matching and messaging. All payments are processed securely through Stripe. Refunds are handled on a case-by-case basis.",
+      "Registration requires a one-time payment starting at ${{basic}} (standard) or ${{premium}} (with personal guidance). This unlocks full access to matching and messaging. All payments are processed securely. Refunds are handled on a case-by-case basis.",
     s5Title: "5. Account Termination",
     s5Body:
       "We reserve the right to suspend or terminate accounts that violate these terms. You may delete your account at any time.",

@@ -586,7 +586,7 @@ export const so: Translations = {
       "Isticmaaleyaashu waa inay si ixtiraam leh ula falgalaan oo waafaqsan mabaadi'da Islaamka. Dhibaataynta, waxyaabaha aan habboonayn, ama si xun u isticmaalida platform-ka waxay keeni doontaa xiritaanka akoonka.",
     s4Title: "4. Lacag Bixinta",
     s4Body:
-      "Diiwaangelintu waxay u baahan tahay lacag hal mar laga bilaabo ${{basic}} (caadi) ama ${{premium}} (taageero shakhsi ah). Tani waxay fureysaa helitaanka buuxa ee isbarbardhigga iyo fariimaha. Dhammaan lacag bixintu waxay si ammaan ah ugu socdaan Stripe. Lacag celinta waxaa lagu maamulaa kiis kiis.",
+      "Diiwaangelintu waxay u baahan tahay lacag hal mar laga bilaabo ${{basic}} (caadi) ama ${{premium}} (taageero shakhsi ah). Tani waxay fureysaa helitaanka buuxa ee isbarbardhigga iyo fariimaha. Dhammaan lacag bixintu waxay si ammaan ah u socdaan. Lacag celinta waxaa lagu maamulaa kiis kiis.",
     s5Title: "5. Xiritaanka Akoonka",
     s5Body:
       "Waxaan xaq u leenahay inaan hakino ama xirno akoonnada jebiya shuruudahan. Waad tirtiri kartaa akoonkaaga wakhti kasta.",
