@@ -8,11 +8,7 @@ export function HowItWorksPageContent() {
   const { t } = useTranslation();
 
   return (
-    <MarketingPage
-      eyebrow={t("landing.howEyebrow")}
-      title={t("howItWorks.title")}
-      subtitle={t("howItWorks.subtitle")}
-    >
+    <MarketingPage title={t("howItWorks.title")} subtitle={t("howItWorks.subtitle")}>
       <HowItWorksContent />
     </MarketingPage>
   );

@@ -18,7 +18,7 @@ export default function OpenGraphImage() {
           justifyContent: "center",
           padding: "72px 80px",
           background:
-            "linear-gradient(135deg, #5e1626 0%, #8e2438 42%, #a83049 74%, #a97b3c 100%)",
+            "linear-gradient(135deg, #6b1220 0%, #a61b2b 40%, #c41e3a 75%, #c9a227 100%)",
           color: "#ffffff",
           fontFamily: "system-ui, sans-serif",
         }}
@@ -37,30 +37,22 @@ export default function OpenGraphImage() {
               height: 72,
               borderRadius: 18,
               background: "#ffffff",
-              color: "#8e2438",
+              color: "#a61b2b",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 40,
-              fontWeight: 600,
-              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontSize: 28,
+              fontWeight: 700,
             }}
           >
-            C
+            HC
           </div>
-          <div
-            style={{
-              fontSize: 56,
-              fontWeight: 600,
-              letterSpacing: -2,
-              fontFamily: "Georgia, 'Times New Roman', serif",
-            }}
-          >
+          <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: -2 }}>
             {SITE_BRAND_NAME}
           </div>
         </div>
         <div style={{ fontSize: 36, fontWeight: 600, opacity: 0.95 }}>
-          Hel calafkaaga
+          Hel Lammaanaha Noloshaada
         </div>
         <div
           style={{

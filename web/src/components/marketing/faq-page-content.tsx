@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { MarketingPage } from "@/components/marketing/marketing-page";
 import { FAQAccordion } from "@/components/marketing/faq-accordion";
 import { AuthRegisterCta } from "@/components/auth/auth-register-cta";
+import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n/context";
 
 export function FaqPageContent() {
@@ -14,29 +15,26 @@ export function FaqPageContent() {
     <MarketingPage title={t("faq.title")} subtitle={t("faq.subtitle")}>
       <FAQAccordion />
 
-      <div className="mt-14 max-w-2xl rounded-3xl bg-accent p-7">
-        <MessageCircle className="h-7 w-7 text-primary" />
-        <h2 className="mt-3 font-display text-xl font-semibold tracking-tight text-accent-foreground">
-          {t("faq.stillHaveQuestions")}
-        </h2>
-        <p className="mt-2 leading-relaxed text-accent-foreground/80">
-          {t("faq.stillHaveQuestionsDesc")}
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <AuthRegisterCta
-            registerLabel={t("common.joinNow")}
-            plan="basic"
-            className="w-full rounded-full sm:w-auto"
-            size="lg"
-          />
-          <Link
-            href="/contact"
-            className="inline-flex h-13 w-full items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold transition-colors hover:border-primary hover:text-primary sm:w-auto"
-          >
-            {t("faq.contactTeam")}
-          </Link>
-        </div>
-      </div>
+      <Card className="mx-auto mt-12 max-w-3xl rounded-3xl border-border/80 bg-card/80">
+        <CardContent className="p-8 text-center">
+          <MessageCircle className="mx-auto h-8 w-8 text-primary" />
+          <h2 className="mt-4 text-xl font-bold">{t("faq.stillHaveQuestions")}</h2>
+          <p className="mt-2 text-muted-foreground leading-relaxed">{t("faq.stillHaveQuestionsDesc")}</p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <AuthRegisterCta
+              registerLabel={t("common.joinNow")}
+              className="w-full sm:w-auto"
+              size="lg"
+            />
+            <Link
+              href="/contact"
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-border px-6 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
+            >
+              {t("faq.contactTeam")}
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </MarketingPage>
   );
 }

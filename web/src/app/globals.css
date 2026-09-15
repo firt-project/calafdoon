@@ -3,65 +3,54 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * Rummaan palette — the pomegranate. One warm accent (pomegranate), gold for
- * trust marks, leaf for the "verified / positive" semantic. Soft warm ground,
- * generous radii, soft shadows — a marriage platform, not a spec sheet.
- */
 :root {
-  --background: #fcf8f4;
-  --foreground: #2a1e20;
+  --background: #faf7f7;
+  --foreground: #1a1214;
   --card: #ffffff;
-  --card-foreground: #2a1e20;
-  --muted: #f4ece5;
-  --muted-foreground: #71625f;
-  --border: #ebe0d8;
+  --card-foreground: #1a1214;
+  --muted: #f4eeee;
+  --muted-foreground: #6b5c5f;
+  --border: #e8dcde;
   --input: #ffffff;
-  --ring: #9a2740;
-  --primary: #9a2740;
-  --primary-foreground: #fef5f1;
-  --accent: #f7ede7;
-  --accent-foreground: #6a1a2c;
-  --destructive: #b3261e;
-  --navy: #2a1e20;
-  --brand-dark: #5e1626;
+  --ring: #c41e3a;
+  --primary: #a61b2b;
+  --primary-foreground: #ffffff;
+  --accent: #fdf2f3;
+  --accent-foreground: #7a1520;
+  --destructive: #b91c1c;
+  --navy: #1a1214;
+  --brand-dark: #6b1220;
   --whatsapp: #25d366;
-  --gold: #b0813f;
-  --gold-foreground: #2e2100;
-  /* Semantic positive only — approved, paid, matched. Not decoration. */
-  --leaf: #3f6350;
-  --leaf-foreground: #edf3ef;
-  --radius: 1rem;
+  --gold: #c9a227;
+  --gold-foreground: #3d2e00;
+  --radius: 0.875rem;
   --app-header: 4rem;
   --app-tabbar: 3.5rem;
-  --shadow-sm: 0 2px 8px -3px rgba(84, 26, 42, 0.10);
-  --shadow-md: 0 14px 34px -16px rgba(84, 26, 42, 0.18);
-  --shadow-lg: 0 34px 70px -28px rgba(84, 26, 42, 0.26);
+  --shadow-sm: 0 1px 2px rgba(26, 18, 20, 0.04);
+  --shadow-md: 0 4px 16px rgba(26, 18, 20, 0.07);
+  --shadow-lg: 0 12px 40px rgba(26, 18, 20, 0.09);
 }
 
 .dark {
-  --background: #171011;
-  --foreground: #f3ebe6;
-  --card: #221819;
-  --card-foreground: #f3ebe6;
-  --muted: #261c1d;
-  --muted-foreground: #b19d9e;
-  --border: #382a2c;
-  --input: #261c1d;
-  --ring: #e08a99;
-  /* Kept saturated enough that --primary-foreground stays a light tint. */
-  --primary: #c73751;
-  --primary-foreground: #fef5f1;
-  --accent: #2c1c1f;
-  --accent-foreground: #f3cdd3;
-  --destructive: #f16a5f;
-  --gold: #cfa569;
+  --background: #120d0e;
+  --foreground: #faf5f5;
+  --card: #1a1214;
+  --card-foreground: #faf5f5;
+  --muted: #241a1c;
+  --muted-foreground: #b5a3a6;
+  --border: #3a2a2d;
+  --input: #241a1c;
+  --ring: #fb7185;
+  --primary: #e11d48;
+  --primary-foreground: #ffffff;
+  --accent: #2a1519;
+  --accent-foreground: #fecdd3;
+  --destructive: #f87171;
+  --gold: #d4af37;
   --gold-foreground: #1a1400;
-  --leaf: #96bda4;
-  --leaf-foreground: #11201b;
-  --shadow-sm: 0 2px 8px -3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 14px 34px -16px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 34px 70px -28px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
@@ -84,16 +73,12 @@
   --color-whatsapp: var(--whatsapp);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
-  --color-leaf: var(--leaf);
-  --color-leaf-foreground: var(--leaf-foreground);
   --font-sans: var(--font-jakarta);
   --font-serif: var(--font-cormorant);
   --font-display: var(--font-cormorant);
-  --radius-sm: calc(var(--radius) - 5px);
-  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
 * {
@@ -111,26 +96,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
-  /* No page should ever scroll sideways on a phone. `clip` (not `hidden`)
-     so it never turns body into a scroll container / breaks sticky headers. */
-  overflow-x: clip;
-}
-
-/*
- * Long unbreakable strings — Somali compound words, emails, URLs — must wrap
- * instead of forcing the layout wider than the phone screen.
- */
-h1,
-h2,
-h3,
-h4,
-p,
-li,
-dd,
-dt,
-figcaption,
-blockquote {
-  overflow-wrap: break-word;
 }
 
 /* Smooth day/night handoff for surfaces without janking animations */
@@ -146,42 +111,41 @@ h1,
 h2,
 h3,
 .font-display {
-  font-family: var(--font-display), "Georgia", "Times New Roman", serif;
-  font-optical-sizing: auto;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .font-display {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(142, 36, 56, 0.06), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(169, 123, 60, 0.06), transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(142, 36, 56, 0.035), transparent 60%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(166, 27, 43, 0.07), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(201, 162, 39, 0.07), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(166, 27, 43, 0.04), transparent 60%),
     var(--background);
 }
 
 .dark .dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(190, 49, 73, 0.11), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(205, 162, 104, 0.07), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 0% -10%, rgba(225, 29, 72, 0.12), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(212, 175, 55, 0.08), transparent 50%),
     var(--background);
 }
 
-/* Welcome banner on the member home feed — Rummaan pomegranate band */
+/* Warm welcome banner on the member home feed (Muzz-style hero) */
 .member-hero {
   position: relative;
   overflow: hidden;
-  color: #fdf4f0;
-  border-radius: 1.5rem;
+  color: #fff;
+  border-radius: 1.75rem;
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.16), transparent 42%),
-    radial-gradient(circle at 88% 6%, rgba(169, 123, 60, 0.42), transparent 46%),
-    linear-gradient(135deg, #5e1626 0%, #8e2438 48%, #a83049 100%);
-  box-shadow: 0 22px 44px -22px rgba(94, 22, 44, 0.6);
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.22), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(201, 162, 39, 0.55), transparent 45%),
+    linear-gradient(135deg, #7a1520 0%, #a61b2b 46%, #c9324a 100%);
+  box-shadow: 0 18px 40px -18px rgba(122, 21, 32, 0.65);
 }
 
 .member-hero::after {
@@ -198,9 +162,9 @@ h3,
 
 .dark .member-hero {
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.1), transparent 42%),
-    radial-gradient(circle at 88% 6%, rgba(205, 162, 104, 0.34), transparent 45%),
-    linear-gradient(135deg, #3d0f1a 0%, #5e1626 50%, #8e2438 100%);
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.12), transparent 42%),
+    radial-gradient(circle at 88% 6%, rgba(212, 175, 55, 0.4), transparent 45%),
+    linear-gradient(135deg, #4d0d16 0%, #7a1520 50%, #a61b2b 100%);
 }
 
 /* Bold tappable stat card on the home feed */
@@ -286,15 +250,15 @@ h3,
 
 .gradient-hero {
   background:
-    radial-gradient(ellipse 90% 55% at 15% -10%, rgba(154, 39, 64, 0.07), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 100% 5%, rgba(176, 129, 63, 0.06), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(166, 27, 43, 0.09), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(201, 162, 39, 0.06), transparent),
     var(--background);
 }
 
 .dark .gradient-hero {
   background:
-    radial-gradient(ellipse 90% 55% at 15% -10%, rgba(199, 55, 81, 0.13), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 100% 5%, rgba(207, 165, 105, 0.06), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(225, 29, 72, 0.14), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(212, 175, 55, 0.06), transparent),
     var(--background);
 }
 

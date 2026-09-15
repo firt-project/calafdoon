@@ -1,24 +1,27 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ShieldCheck,
+  Shield,
+  Lock,
+  Landmark,
+  UserPlus,
+  Search,
+  MessageCircleHeart,
+  ClipboardList,
+  ArrowRight,
   Check,
-  Users,
-  CreditCard,
-  Smartphone,
-  Languages,
-  Coffee,
 } from "lucide-react";
 import { AuthRegisterCta } from "@/components/auth/auth-register-cta";
+import { Button } from "@/components/ui/button";
 import { FAQAccordion } from "@/components/marketing/faq-accordion";
 import {
+  HOW_TO_USE_YOUTUBE_ID,
   MIN_COMPATIBILITY_SCORE,
-  MONTHLY_PRICE,
   REGISTRATION_PRICE,
-  formatMoney,
+  SITE_BRAND_NAME,
 } from "@/lib/constants";
 import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
@@ -42,389 +45,240 @@ function Reveal({
   );
 }
 
-function SectionHead({
-  title,
-  lead,
-}: {
-  title: ReactNode;
-  lead?: string;
-}) {
-  return (
-    <Reveal className="mb-10 max-w-2xl sm:mb-12">
-      <h2 className="font-display text-3xl font-medium leading-[1.12] tracking-tight text-balance sm:text-[2.6rem]">
-        {title}
-      </h2>
-      {lead ? (
-        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          {lead}
-        </p>
-      ) : null}
-    </Reveal>
-  );
-}
-
-/** Example compatibility match — a real person is never shown. */
-function MatchCard() {
-  const { t } = useTranslation();
-  const score = 82;
-  const circumference = 2 * Math.PI * 30;
-  const rows = [
-    { k: t("landing.matchRowDeen"), v: t("landing.matchRowValueAligned") },
-    { k: t("landing.matchRowChildren"), v: t("landing.matchRowValueBoth") },
-    { k: t("landing.matchRowFamily"), v: t("landing.matchRowValueWelcome") },
-  ];
-
-  return (
-    <div className="w-[17rem] rounded-3xl border border-border bg-card/95 p-5 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center gap-3.5">
-        <span className="relative h-16 w-16 shrink-0">
-          <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
-            <circle cx="32" cy="32" r="30" fill="none" stroke="var(--border)" strokeWidth="5" />
-            <circle
-              cx="32"
-              cy="32"
-              r="30"
-              fill="none"
-              stroke="var(--primary)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={circumference * (1 - score / 100)}
-            />
-          </svg>
-          <span className="absolute inset-0 flex items-center justify-center font-display text-lg font-semibold">
-            {score}%
-          </span>
-        </span>
-        <div className="min-w-0">
-          <p className="font-display text-base font-semibold">
-            {t("landing.matchExampleName")}
-          </p>
-          <p className="text-[0.8rem] text-muted-foreground">
-            {t("landing.matchExampleMeta")}
-          </p>
-        </div>
-      </div>
-      <ul className="mt-4 space-y-2">
-        {rows.map((row) => (
-          <li key={row.k} className="flex items-center justify-between gap-3 text-[0.85rem]">
-            <span className="text-muted-foreground">{row.k}</span>
-            <span className="inline-flex items-center gap-1 font-medium text-leaf">
-              <Check className="h-3.5 w-3.5" />
-              {row.v}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 flex items-center gap-1.5 border-t border-border/70 pt-3 text-[0.78rem] text-muted-foreground">
-        <ShieldCheck className="h-3.5 w-3.5 text-gold" />
-        {t("landing.matchReviewedBy")}
-      </p>
-    </div>
-  );
-}
-
 export function LandingPage() {
   const { t } = useTranslation();
-  const price = formatMoney(REGISTRATION_PRICE);
-  const monthly = formatMoney(MONTHLY_PRICE);
 
   const steps = [
-    { t: t("landing.howStep1Title"), d: t("landing.howStep1Desc") },
-    { t: t("landing.howStep2Title"), d: t("landing.howStep2Desc") },
-    { t: t("landing.howStep3Title"), d: t("landing.howStep3Desc") },
+    { icon: UserPlus, title: t("landing.step1Title"), desc: t("landing.step1Desc") },
+    { icon: ClipboardList, title: t("landing.step2Title"), desc: t("landing.step2Desc") },
+    { icon: Search, title: t("landing.step3Title"), desc: t("landing.step3Desc") },
+    { icon: MessageCircleHeart, title: t("landing.step4Title"), desc: t("landing.step4Desc") },
   ];
 
-  const life = [
-    { icon: Users, t: t("landing.lifeFamilyTitle"), d: t("landing.lifeFamilyDesc") },
-    { icon: CreditCard, t: t("landing.lifePayTitle"), d: t("landing.lifePayDesc") },
-    { icon: Smartphone, t: t("landing.lifePhoneTitle"), d: t("landing.lifePhoneDesc") },
-    { icon: Languages, t: t("landing.lifeLangTitle"), d: t("landing.lifeLangDesc") },
+  const values = [
+    { icon: Landmark, title: t("landing.heroFeature4"), desc: t("landing.whyPay1Desc") },
+    { icon: Shield, title: t("landing.heroFeature2"), desc: t("landing.whyPay2Desc") },
+    { icon: Lock, title: t("landing.heroFeature3"), desc: t("landing.whyPay4Desc") },
   ];
 
-  const safety = [
-    t("landing.safe1"),
-    t("landing.safe2"),
-    t("landing.safe3"),
-    t("landing.safe4"),
-  ];
-
-  const priceFeatures = [
-    t("landing.priceFeatureProfile"),
-    t("landing.priceFeatureMatches"),
-    t("landing.priceFeatureChat"),
-    t("landing.priceFeatureLikes"),
-    t("landing.priceFeatureWali"),
+  const basicFeatures = [
+    t("landing.basicFeature1"),
+    t("landing.basicFeature2"),
+    t("landing.basicFeature3"),
+    t("landing.basicFeature4"),
+    t("landing.basicFeature5"),
   ];
 
   return (
     <div className="overflow-hidden">
-      {/* Hero */}
-      <section className="gradient-hero">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:grid-cols-[1fr_1.05fr] lg:gap-14 lg:px-8">
-          <div className="min-w-0">
-            <Reveal delayMs={40}>
-              <span className="inline-flex max-w-full items-center gap-2 rounded-2xl bg-accent px-3.5 py-1.5 text-[0.78rem] font-semibold text-primary">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                {t("landing.heroEyebrow")}
-              </span>
-            </Reveal>
-            <Reveal delayMs={110}>
-              <h1 className="mt-5 font-display text-[2.7rem] font-medium leading-[1.05] tracking-tight text-balance sm:text-[3.75rem]">
-                {t("landing.heroLine1")}{" "}
-                <span className="italic text-primary">{t("landing.heroLine2")}</span>
-              </h1>
-            </Reveal>
-            <Reveal delayMs={180}>
-              <p className="mt-5 max-w-md text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                {t("landing.heroLead")}
-              </p>
-            </Reveal>
-            <Reveal delayMs={260} className="mt-8 flex flex-wrap items-center gap-4">
-              <AuthRegisterCta
-                registerLabel={t("landing.heroCta", { price })}
-                plan="basic"
-                size="lg"
-                className="min-h-13 h-auto whitespace-normal rounded-full px-6 py-2.5 text-center text-[15px] leading-snug shadow-lg shadow-primary/20 sm:px-8"
-              />
-              <Link
-                href="/how-it-works"
-                className="text-[15px] font-semibold text-foreground/80 underline-offset-4 transition-colors hover:text-primary hover:underline"
-              >
-                {t("landing.seeHowItWorks")}
-              </Link>
-            </Reveal>
-            <Reveal
-              delayMs={330}
-              className="mt-7 flex max-w-sm items-start gap-2.5 text-[0.95rem] text-muted-foreground"
-            >
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-              <span>{t("landing.heroAssurance")}</span>
-            </Reveal>
-          </div>
-
-          <Reveal
-            delayMs={220}
-            className="relative mx-auto w-full max-w-lg lg:mx-0 lg:ml-auto"
-          >
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-lg sm:aspect-square">
-              <Image
-                src="/images/hero-couple.webp"
-                alt=""
-                fill
-                priority
-                sizes="(max-width: 1024px) 90vw, 45vw"
-                className="object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/25 via-transparent to-transparent" />
-            </div>
-            <div
-              className="absolute -bottom-6 -left-4 hidden sm:block motion-safe:animate-reveal"
-              style={{ animationDelay: "440ms" }}
-            >
-              <MatchCard />
-            </div>
-          </Reveal>
-          <div className="-mt-4 flex justify-center sm:hidden">
-            <MatchCard />
-          </div>
-        </div>
-      </section>
-
-      {/* Proof */}
-      <div className="border-y border-border/60 bg-card">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-x-10 gap-y-3 px-4 py-6 text-center text-[0.95rem] text-muted-foreground sm:flex-row sm:justify-between sm:px-6 sm:text-left lg:px-8">
-          <span className="flex items-center gap-2">
-            <Check className="h-4 w-4 shrink-0 text-gold" />
-            {t("landing.proofReviewed")}
-          </span>
-          <span className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-gold" />
-            {t("landing.proofReach")}
-          </span>
-          <span className="flex flex-wrap items-center justify-center gap-2">
-            {t("landing.proofPayWith")}
-            <span className="font-semibold text-foreground/80">
-              M-Pesa · EVC Plus · Hormuud
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* How it works */}
-      <section className="marketing-section" id="how-it-works">
-        <div className="mx-auto max-w-6xl">
-          <SectionHead title={t("landing.howTitle")} lead={t("landing.howLead")} />
-          <ol className="grid gap-5 sm:grid-cols-3">
-            {steps.map((step, i) => (
-              <li
-                key={step.t}
-                className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm motion-safe:animate-reveal"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <span className="font-display text-3xl font-semibold text-primary/70">
-                  {i + 1}
-                </span>
-                <h3 className="mt-2 font-display text-xl font-semibold tracking-tight">
-                  {step.t}
-                </h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">
-                  {step.d}
-                </p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-6 flex max-w-2xl items-start gap-3.5 rounded-3xl bg-accent p-6">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
-              <Check className="h-4 w-4" strokeWidth={2.5} />
-            </span>
-            <p className="leading-relaxed text-accent-foreground">
-              <span className="font-display font-semibold">
-                {t("landing.floorLabel")}.
-              </span>{" "}
-              {t("landing.floorNote", { score: MIN_COMPATIBILITY_SCORE })}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Warm photo band */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+      {/* Hero — message-first hierarchy with how-to video */}
+      <section
+        id="how-to-use"
+        className="relative overflow-hidden bg-[#120d0e] scroll-mt-20"
+      >
+        <div className="absolute inset-0 motion-safe:animate-hero-zoom">
           <Image
             src="/images/hero-couple.webp"
             alt=""
             fill
+            priority
             sizes="100vw"
-            className="object-cover object-center"
+            className="object-cover object-[72%_center] sm:object-[center_28%]"
+            aria-hidden
           />
-          <div className="absolute inset-0 bg-brand-dark/[0.78]" />
         </div>
-        <div className="relative mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-24">
-          <p className="font-display text-2xl font-medium italic leading-snug text-white text-balance sm:text-[2rem]">
-            &ldquo;{t("landing.quote")}&rdquo;
-          </p>
-          <p className="mt-4 text-sm font-medium uppercase tracking-wide text-white/60">
-            {t("landing.quoteAuthor")}
-          </p>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/35 sm:via-black/50 sm:to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/35" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--background)] to-transparent opacity-90" />
+
+        <div className="relative mx-auto w-full max-w-7xl px-4 pb-14 pt-20 sm:px-6 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-24 lg:pt-28">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12">
+            <div className="max-w-xl">
+              <p
+                className="motion-safe:animate-hero-rise text-sm font-medium tracking-wide text-gold sm:text-base"
+                style={{ animationDelay: "70ms" }}
+              >
+                {SITE_BRAND_NAME}
+              </p>
+
+              <h1
+                className="motion-safe:animate-hero-rise mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.5rem]"
+                style={{ animationDelay: "120ms" }}
+              >
+                {t("landing.heroTitle")}{" "}
+                <span className="text-white/85">{t("landing.heroHighlight")}</span>
+              </h1>
+
+              <p
+                className="motion-safe:animate-hero-rise mt-4 max-w-md text-base leading-relaxed text-white/80 sm:mt-5 sm:text-lg"
+                style={{ animationDelay: "200ms" }}
+              >
+                {t("landing.heroDesc")}
+              </p>
+
+              <div
+                className="motion-safe:animate-hero-rise mt-8 flex flex-col items-stretch gap-3 sm:mt-9 sm:flex-row sm:items-center"
+                style={{ animationDelay: "280ms" }}
+              >
+                <AuthRegisterCta
+                  registerLabel={t("common.joinNow")}
+                  className="h-12 rounded-2xl px-8 text-base shadow-lg shadow-black/25"
+                  size="lg"
+                />
+                <Link
+                  href="/how-it-works"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-2 text-sm font-semibold text-white/90 transition-colors hover:text-white sm:px-4"
+                >
+                  {t("landing.seeHowItWorks")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div
+              className="motion-safe:animate-hero-rise w-full"
+              style={{ animationDelay: "400ms" }}
+            >
+              <p className="mb-3 text-sm font-medium text-white/80 sm:text-base">
+                {t("landing.videoTitle")}
+              </p>
+              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black/80 ring-1 ring-white/15 shadow-xl shadow-black/30">
+                <iframe
+                  src={`https://www.youtube.com/embed/${HOW_TO_USE_YOUTUBE_ID}?rel=0`}
+                  title={t("landing.videoIframeTitle")}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  className="absolute inset-0 h-full w-full border-0"
+                />
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-white/70 sm:text-base">
+                {t("landing.videoDesc")}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Why Hel Calafkaaga */}
-      <section className="marketing-section" id="why">
-        <div className="mx-auto max-w-6xl">
-          <SectionHead title={t("landing.lifeTitle")} lead={t("landing.lifeLead")} />
-          <div className="grid gap-5 sm:grid-cols-2">
-            {life.map((item) => (
-              <div
-                key={item.t}
-                className="flex gap-4 rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <section id="why-trust" className="marketing-section scroll-mt-20 gradient-hero">
+        <div className="mx-auto max-w-5xl">
+          <Reveal className="marketing-section-intro text-center max-w-2xl mx-auto mb-12 sm:mb-14">
+            <h2 className="marketing-h2 landing-section-title">
+              {t("landing.badge")}
+            </h2>
+            <p className="mt-4 marketing-lead">
+              {t("landing.previewSubtitle")}
+            </p>
+          </Reveal>
+
+          <div className="grid gap-8 sm:grid-cols-3 sm:gap-10">
+            {values.map((item, i) => (
+              <Reveal key={item.title} delayMs={i * 80} className="text-center sm:text-left">
+                <div className="mx-auto sm:mx-0 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <item.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-display text-lg font-semibold">{item.t}</h3>
-                  <p className="mt-1.5 leading-relaxed text-muted-foreground">
-                    {item.d}
-                  </p>
                 </div>
-              </div>
+                <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
+                <p className="mt-2 marketing-body">
+                  {item.desc}
+                </p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Safety */}
-      <section className="marketing-section bg-muted/40">
+      <section className="marketing-section bg-muted/50">
         <div className="mx-auto max-w-6xl">
-          <SectionHead
-            title={t("landing.safetyTitle")}
-            lead={t("landing.safetyLead")}
-          />
-          <ul className="grid max-w-3xl gap-x-10 gap-y-5 sm:grid-cols-2">
-            {safety.map((s) => (
-              <li
-                key={s}
-                className="flex items-start gap-3 text-[1.05rem] leading-relaxed"
-              >
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-leaf/15 text-leaf">
-                  <Check className="h-3 w-3" strokeWidth={3} />
+          <Reveal className="text-center max-w-2xl mx-auto mb-12 sm:mb-14">
+            <h2 className="marketing-h2 landing-section-title">
+              {t("landing.howWorks")}
+            </h2>
+          </Reveal>
+
+          <ol className="grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4">
+            {steps.map((step, i) => (
+              <li key={step.title} className="relative motion-safe:animate-reveal" style={{ animationDelay: `${i * 70}ms` }}>
+                <span className="font-display text-3xl font-semibold text-primary/25 sm:text-4xl">
+                  {String(i + 1).padStart(2, "0")}
                 </span>
-                <span>{s}</span>
+                <div className="mt-3 flex h-11 w-11 items-center justify-center rounded-xl bg-card border border-border text-primary shadow-sm">
+                  <step.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-base font-semibold sm:text-lg">{step.title}</h3>
+                <p className="mt-2 marketing-body">
+                  {step.desc}
+                </p>
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="marketing-section" id="pricing">
-        <div className="mx-auto max-w-3xl">
-          <SectionHead title={t("landing.priceTitle")} lead={t("landing.priceLead")} />
+      <section className="marketing-section">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wider text-gold">
+            {t("landing.stat1")}
+          </p>
+          <h2 className="mt-3 marketing-h2">
+            {t("landing.matchingTitle")}
+          </h2>
+          <p className="mt-4 marketing-lead sm:mt-5">
+            {t("landing.matchingDesc", { score: MIN_COMPATIBILITY_SCORE })}
+          </p>
+        </Reveal>
+      </section>
 
-          <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-lg">
-            <div className="h-1.5 bg-gradient-to-r from-primary via-gold to-primary" />
-            <div className="p-6 sm:p-9">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
-                    {t("landing.priceEyebrow")}
-                  </p>
-                  <div className="mt-3 flex items-end gap-2">
-                    <span className="font-display text-[3.75rem] font-semibold leading-[0.9] tracking-tight text-primary">
-                      ${price}
-                    </span>
-                    <span className="pb-2 text-base text-muted-foreground">
-                      {t("landing.priceOnce")}
-                    </span>
-                  </div>
-                  <p className="mt-2.5 flex items-center gap-2 text-[0.95rem] text-muted-foreground">
-                    <Coffee className="h-4 w-4 shrink-0 text-gold" />
-                    {t("landing.priceCoffee")}
-                  </p>
-                  <p className="mt-1 text-[0.95rem] font-medium text-primary">
-                    {t("landing.priceThen", { monthly })}
-                  </p>
-                </div>
-                <AuthRegisterCta
-                  registerLabel={t("common.joinNow")}
-                  plan="basic"
-                  size="lg"
-                  className="min-h-13 h-auto w-full shrink-0 whitespace-normal rounded-full px-6 py-2.5 text-center leading-snug sm:w-auto sm:px-8"
-                />
-              </div>
+      <section className="marketing-section bg-muted/50">
+        <div className="mx-auto max-w-5xl">
+          <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+            <h2 className="marketing-h2 landing-section-title">
+              {t("landing.pricingTitle")}
+            </h2>
+            <p className="mt-4 marketing-lead">
+              {t("landing.pricingBasicOnly", {
+                basic: REGISTRATION_PRICE,
+              })}
+            </p>
+          </Reveal>
 
-              <div className="my-7 flex items-center gap-3">
-                <span className="h-px flex-1 bg-border" />
-                <span className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground">
-                  {t("landing.priceIncluded")}
+          <div className="mx-auto max-w-md">
+            <Reveal className="rounded-2xl border border-primary/30 bg-card p-6 shadow-md sm:p-8">
+              <h3 className="text-lg font-semibold sm:text-xl">{t("landing.basicPlan")}</h3>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="font-display text-4xl font-semibold text-primary sm:text-[2.75rem]">
+                  ${REGISTRATION_PRICE}
                 </span>
-                <span className="h-px flex-1 bg-border" />
+                <span className="text-sm text-muted-foreground">{t("common.oneTime")}</span>
               </div>
-
-              <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-                {priceFeatures.map((f) => (
-                  <li key={f} className="flex gap-3 text-[0.98rem]">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf" />
-                    <span>{f}</span>
+              <p className="mt-2 text-sm font-medium text-primary">
+                {t("landing.samePriceNote")}
+              </p>
+              <ul className="mt-6 space-y-3">
+                {basicFeatures.map((feature) => (
+                  <li key={feature} className="flex gap-3 marketing-body">
+                    <Check className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
-            </div>
+              <AuthRegisterCta
+                registerLabel={t("common.joinNow")}
+                plan="basic"
+                className="w-full mt-8"
+              />
+            </Reveal>
           </div>
-
-          <p className="mx-auto mt-6 max-w-xl text-center text-[0.95rem] leading-relaxed text-muted-foreground">
-            {t("landing.priceAsideBody", { basic: price, monthly })}
-          </p>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="marketing-section bg-muted/40">
+      <section className="marketing-section">
         <div className="mx-auto max-w-3xl">
-          <SectionHead title={t("landing.faqSubtitle")} />
+          <Reveal className="text-center mb-10 sm:mb-12">
+            <h2 className="marketing-h2 landing-section-title">
+              {t("landing.faqTitle")}
+            </h2>
+            <p className="mt-4 marketing-lead">{t("landing.faqSubtitle")}</p>
+          </Reveal>
           <FAQAccordion
             limit={4}
             viewAllHref="/faq"
@@ -433,24 +287,35 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-primary py-20 text-center text-primary-foreground">
-        <div className="mx-auto max-w-2xl px-4">
-          <h2 className="font-display text-[2.25rem] font-medium leading-[1.08] tracking-tight text-balance sm:text-[3rem]">
-            {t("landing.finalTitle")}
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-primary-foreground/80">
-            {t("landing.finalLead")}
-          </p>
-          <div className="mt-8 flex justify-center">
-            <AuthRegisterCta
-              registerLabel={t("landing.heroCta", { price })}
-              plan="basic"
-              size="lg"
-              className="min-h-13 h-auto whitespace-normal rounded-full border-0 bg-primary-foreground px-6 py-2.5 text-center text-[15px] leading-snug text-primary hover:bg-primary-foreground/90 sm:px-8"
-            />
+      <section className="marketing-section pt-0 sm:pt-0">
+        <Reveal className="mx-auto max-w-4xl rounded-3xl bg-brand-dark px-6 py-10 sm:px-12 sm:py-14 text-center text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,162,39,0.18),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.2),transparent_50%)]" />
+          <div className="relative">
+            <h2 className="marketing-h2 text-white">
+              {t("landing.finalCtaTitle")}
+            </h2>
+            <p className="mt-4 text-base text-white/80 max-w-xl mx-auto leading-relaxed sm:text-lg">
+              {t("landing.finalCtaDesc")}
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <AuthRegisterCta
+                registerLabel={t("common.joinNow")}
+                className="bg-gold text-gold-foreground hover:bg-gold/90 border-0"
+              />
+              <Button
+                asChild
+                variant="outline"
+                className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
+                <Link href="/pricing">
+                  {t("nav.pricing")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
     </div>
   );

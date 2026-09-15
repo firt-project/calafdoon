@@ -6,9 +6,9 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { BackendStatusBanner } from "@/components/layout/backend-status-banner";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
-import { SITE_BRAND_NAME } from "@/lib/constants";
 import { isAuthRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { SITE_BRAND_NAME } from "@/lib/constants";
 
 /**
  * Isolates chrome crashes (nav/footer) so a mobile auth/query failure

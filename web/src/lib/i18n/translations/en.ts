@@ -643,7 +643,7 @@ export const en = {
     profileSaved: "Your profile questionnaire is saved",
     completeQuestionnaire: "Complete your profile questionnaire",
     browseMatches: "Browse matches and message",
-    secureStripe: "Secure payment via Stripe",
+    secureStripe: "Secure payment",
     featureProfile: "Create profile & upload photo",
     featureBrowse: "Browse compatible matches",
     featureMatch: "Like and match",

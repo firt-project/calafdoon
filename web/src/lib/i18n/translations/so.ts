@@ -650,7 +650,7 @@ export const so: Translations = {
     profileSaved: "Su'aalaha profile-kaaga waa la kaydiyay",
     completeQuestionnaire: "Dhammaystir su'aalaha profile-kaaga",
     browseMatches: "Baadh lammaanayaasha oo fariin dir",
-    secureStripe: "Lacag bixin ammaan ah Stripe",
+    secureStripe: "Lacag bixin ammaan ah",
     featureProfile: "Samee profile oo soo geli sawir",
     featureBrowse: "Raadi isbarbardhigyo ku habboon",
     featureMatch: "Jeclaa oo isbarbardhig",
