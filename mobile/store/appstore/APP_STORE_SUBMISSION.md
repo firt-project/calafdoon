@@ -41,12 +41,18 @@ build → TestFlight pipeline. Setup steps in §5.
 
 Usage-description strings for Camera / Photos / Face ID were already present and fine.
 
-**Nothing is committed** — the working tree already had a large redesign; commit
-when ready.
+All of the above is committed on `main`. Signing, bundle ID
+(`com.helcalafkaaga.helcalafkaaga`) and iOS 15.0 minimum were fixed 2026-09-30;
+builds now reach TestFlight.
 
 ---
 
 ## 2. App Store Connect — metadata to enter
+
+Same wording as the Play listing (`../play/PLAY_STORE_SUBMISSION.md` §3) so both
+stores read identically. The **only** intentional difference is the MEMBERSHIP
+paragraph: iOS must not mention in-app payment processors (Apple 3.1.1, see §7).
+Primary language in App Store Connect is **English (U.K.)**.
 
 **App Name:** `HelCalaf`  (must be globally unique on the App Store — if taken,
 try `HelCalaf: Marriage Matchmaking`)
@@ -64,9 +70,10 @@ It is designed around serious intentions — finding a spouse — not casual dat
 WHY HELCALAF
 • Marriage-first: every profile and conversation is oriented toward nikah.
 • Compatibility scoring: answer a structured questionnaire and see how aligned
-  you are with each match on values, family, and lifestyle.
-• Respectful by design: guided conversations, plus report and block tools.
-• Bilingual: full English and Somali (Af-Soomaali).
+  you are with each potential match on values, family, and lifestyle.
+• Respectful by design: guided conversations, report and block tools, and a
+  team that reviews reports.
+• Bilingual: full English and Somali (Af-Soomaali) support.
 
 HOW IT WORKS
 1. Create your account and complete your profile and questionnaire.
@@ -80,8 +87,8 @@ membership is completed on helcalafkaaga.com in Safari, then unlocks in the app
 automatically once you sign back in.
 
 PRIVACY & SAFETY
-You control what is on your profile and who sees it. Delete your account and data
-any time from Settings. We never sell your personal data.
+You control what is on your profile and who can see it. You can delete your
+account and data at any time from Settings. We never sell your personal data.
 
 HelCalaf is for adults 18 and older who are seeking marriage.
 ```
@@ -89,12 +96,24 @@ HelCalaf is for adults 18 and older who are seeking marriage.
 **Keywords** (max 100 chars, comma-separated, no spaces):
 `marriage,muslim,matchmaking,halal,somali,nikah,single,relationship,muslim marriage,muslima`
 
+**Somali (optional localization — add "Somali" in App Store Connect if offered;
+otherwise put this line at the end of the English promotional text):**
+`Barta guurka ee bulshada Soomaaliyeed — is-waafajin iyo doorasho xalaal ah.`
+(same line as the Play Somali short description)
+
 **Support URL:** `https://www.helcalafkaaga.com`
+**Support / contact email:** `support@helcalafkaaga.com` (same as Play)
 **Marketing URL** (optional): `https://www.helcalafkaaga.com`
 **Privacy Policy URL:** `https://www.helcalafkaaga.com/privacy`
 
 **Primary category:** Lifestyle. **Secondary:** Social Networking.
-(Apple has no "Dating" category; dating apps sit in Lifestyle/Social.)
+(Apple has no "Dating" category; this is the closest match to the Play "Dating"
+category.)
+
+**Screenshots (6.7" iPhone, 1290×2796):** upload
+`screenshots/iphone-6.7-framed/welcome.png`, `register.png`, `login.png` —
+same three screens, frame and headline as the Play set
+(`../play/screenshots/phone/framed-*.png`), just iPhone-sized.
 
 **Age rating:** answer the questionnaire →
 - "Unrestricted Web Access": No
@@ -147,6 +166,7 @@ Data collected and **linked to the user**:
 
 ```
 HelCalaf is a marriage matchmaking app for the Somali community (18+).
+The same app is live on Google Play (com.helcalaf.app).
 
 Backend: hosted API at https://tel-calafkaaga-1.onrender.com (may cold-start;
 first request can take ~30s).
@@ -167,6 +187,25 @@ UI, card entry, or checkout of any kind happens inside the app binary). This
 mirrors how a multiplatform service account works when purchased on the web.
 Happy to walk through this on a call if useful. [See §7 for background.]
 ```
+
+---
+
+## 4b. TestFlight → Test Information (required for external testers)
+
+App Store Connect → HelCalaf → TestFlight → **Test Information**:
+
+- **Beta App Description:**
+  `HelCalaf is a marriage-focused matchmaking app for the Somali community. Please test sign-up, profile, questionnaire, matches and chat, in English and Somali.`
+- **Feedback Email:** `support@helcalafkaaga.com`
+- **Marketing URL:** `https://www.helcalafkaaga.com`
+- **Privacy Policy URL:** `https://www.helcalafkaaga.com/privacy`
+- **Beta App Review Information:** your first name, last name, phone, email.
+- **Sign-in required:** Yes → the same demo account as §4.
+- **Review notes:** paste the §4 notes.
+
+External group name must be exactly **`External Testers`** (codemagic.yaml
+`beta_groups`). Add testers by CSV (`First,Last,email` per line, no header),
+one by one, or turn on the group's Public Link.
 
 ---
 
@@ -191,7 +230,7 @@ Happy to walk through this on a call if useful. [See §7 for background.]
      same one for every build. (If an existing distribution cert was made with a
      different key, revoke it in the Apple Developer portal or supply that key.)
 5. In App Store Connect, **create the app record**: Apps → + → New App
-   - This app record already exists (Apple ID 6817910609, SKU `helcalaf-ios-1`)
+   - This app record already exists (Apple ID 6817910609, SKU `helcalaf`)
      with Bundle ID `com.helcalafkaaga.helcalafkaaga` — no need to create a new one,
      just finish filling in its metadata (see §2/§3 below).
 6. Run the `ios-appstore` workflow in Codemagic. It builds the web app, `cap sync`,
