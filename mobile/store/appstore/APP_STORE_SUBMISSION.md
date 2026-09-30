@@ -50,8 +50,8 @@ builds now reach TestFlight.
 ## 2. App Store Connect — metadata to enter
 
 Same wording as the Play listing (`../play/PLAY_STORE_SUBMISSION.md` §3) so both
-stores read identically. The **only** intentional difference is the MEMBERSHIP
-paragraph: iOS must not mention in-app payment processors (Apple 3.1.1, see §7).
+stores read identically. Since 2026-09-30 the iOS app is identical to Android,
+payments included (WaafiPay + Paystack in-app) — see §7 for the review risk.
 Primary language in App Store Connect is **English (U.K.)**.
 
 **App Name:** `HelCalaf`  (must be globally unique on the App Store — if taken,
@@ -82,9 +82,8 @@ HOW IT WORKS
 4. Take it forward with family when you are both ready.
 
 MEMBERSHIP
-Some features require a paid membership. Set up your profile in the app for free;
-membership is completed on helcalafkaaga.com in Safari, then unlocks in the app
-automatically once you sign back in.
+Some features require a paid membership. Payments are handled by trusted
+processors. You can use the app to browse and set up your profile for free.
 
 PRIVACY & SAFETY
 You control what is on your profile and who can see it. You can delete your
@@ -122,8 +121,9 @@ same three screens, frame and headline as the Play set
 - **Dating**: Yes → forces **17+**
 - Expected result: **17+**
 
-**Price:** Free. No in-app purchases — App Store Connect's "In-App Purchases"
-section should be left empty (see §7, option D).
+**Price:** Free to download. Membership is paid in-app via WaafiPay / Paystack
+(not Apple IAP), so App Store Connect's "In-App Purchases" section stays empty
+(see §7).
 
 **Version / What's New (1.1.4):**
 ```
@@ -178,14 +178,12 @@ This account has a completed profile and at least one match + conversation so al
 tabs are reachable without payment. Paid features are gated by a membership; the
 demo account has membership enabled.
 
-Payments: this build does not sell or unlock any digital content, subscription,
-or in-app purchase from within the app, and contains no purchase flow, price, or
-"buy" button. Members who want to add a paid membership do so on our website,
-https://www.helcalafkaaga.com, outside the app, in Safari (the app links out
-there and simply checks membership status when the member returns — no payment
-UI, card entry, or checkout of any kind happens inside the app binary). This
-mirrors how a multiplatform service account works when purchased on the web.
-Happy to walk through this on a call if useful. [See §7 for background.]
+Payments: membership ($4.99 per 30 days) is paid with WaafiPay (Somali mobile
+wallets: EVC Plus, ZAAD, SAHAL) or Paystack (card / M-Pesa), the same as our
+Android app. Most of our members are in Somalia and East Africa, where these
+mobile-money wallets are the main way people pay. Membership unlocks a
+matchmaking service between real people aimed at marriage.
+[See §7 — this is the likely point of contention.]
 ```
 
 ---
@@ -278,7 +276,12 @@ Options, roughly in order of safety:
   real-world service. Sometimes accepted for matrimony apps; risky, expect a fight.
 - **C.** Ship iOS with **no paid membership at all** (browse + profile + limited
   messaging free), monetise elsewhere. Cleanest for a first release; least revenue.
-- **D. (IMPLEMENTED, 2026-09-11)** No purchase flow of any kind ships inside the
+- **CURRENT (2026-09-30): same as Android — WaafiPay + Paystack in-app on iOS.**
+  Chosen by the owner so iOS and Android are identical. Highest rejection risk
+  under 3.1.1. If Apple rejects, set `IOS_WEB_CHECKOUT = true` in
+  `apps/client/src/platform/web-checkout.ts` (one line) to go back to option D,
+  restore the option-D review notes/description from git history, and rebuild.
+- **D. (built, currently switched OFF)** No purchase flow of any kind ships inside the
   iOS binary. `PlansPage` on iOS shows no WaafiPay form and no in-app Paystack
   sheet — instead a "Continue on our website" button opens
   `https://www.helcalafkaaga.com/login` in the system browser

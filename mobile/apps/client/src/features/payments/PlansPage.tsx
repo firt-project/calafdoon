@@ -30,13 +30,11 @@ function toLocalMobileDigits(raw: string): string {
 type PaystackSession = { url: string; reference: string };
 
 /**
- * Mobile paywall. Android: WaafiPay (Somali mobile wallet) and Paystack (card,
- * M-Pesa, bank) complete inside the app — WaafiPay via a phone PIN prompt,
- * Paystack via an embedded checkout sheet. iOS: Apple's IAP rules (App Store
- * Review Guideline 3.1.1) block real-money payment for in-app digital access
- * without StoreKit, so iOS instead sends the member to helcalafkaaga.com in
- * the system browser to pay — same account, same backend — and re-checks
- * access when they come back (see platform/web-checkout.ts).
+ * Mobile paywall, same on Android and iOS: WaafiPay (Somali mobile wallet) and
+ * Paystack (card, M-Pesa, bank) complete inside the app — WaafiPay via a phone
+ * PIN prompt, Paystack via an embedded checkout sheet. A switch in
+ * platform/web-checkout.ts can send iOS to helcalafkaaga.com instead, re-checking
+ * access when the member comes back, if App Review requires it.
  */
 export function PlansPage() {
   const navigate = useNavigate();

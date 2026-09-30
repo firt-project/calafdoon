@@ -5,14 +5,15 @@ import { PRODUCTION_SITE_URL } from "@/lib/constants";
 import { openExternalUrl } from "@/platform/external-links";
 
 /**
- * iOS cannot process real-money payment for in-app digital access without
- * Apple's IAP (App Store Review Guideline 3.1.1) — WaafiPay / Paystack can't
- * ship in-app on iOS. Instead, iOS sends the member to the website (same
- * account, same backend) to complete membership there, in the system browser.
- * Android keeps the existing in-app WaafiPay / Paystack flow.
+ * iOS web-checkout switch. Off: iOS pays in-app with WaafiPay / Paystack,
+ * exactly like Android. Flip to true to send iOS members to the website
+ * instead — the fallback if App Review rejects the build under Guideline
+ * 3.1.1 (in-app payment for digital access without Apple IAP).
  */
+const IOS_WEB_CHECKOUT = false;
+
 export function shouldUseWebCheckout(): boolean {
-  return Capacitor.getPlatform() === "ios";
+  return IOS_WEB_CHECKOUT && Capacitor.getPlatform() === "ios";
 }
 
 /** Opens the website login in the system browser (SFSafariViewController on iOS).
