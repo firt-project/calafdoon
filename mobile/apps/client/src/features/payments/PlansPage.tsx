@@ -31,8 +31,8 @@ type PaystackSession = { url: string; reference: string };
 
 /**
  * Mobile paywall, same on Android and iOS: WaafiPay (Somali mobile wallet) and
- * Paystack (card, M-Pesa, bank) complete inside the app — WaafiPay via a phone
- * PIN prompt, Paystack via an embedded checkout sheet. A switch in
+ * Paystack (card, M-Pesa, bank): WaafiPay completes in-app via a phone
+ * PIN prompt, Paystack on its hosted page in the browser. A switch in
  * platform/web-checkout.ts can send iOS to helcalafkaaga.com instead, re-checking
  * access when the member comes back, if App Review requires it.
  */
@@ -299,7 +299,7 @@ export function PlansPage() {
                   ? `Your ${WAAFI_ACCESS_DAYS}-day access ended. Renew to unlock another ${WAAFI_ACCESS_DAYS} days of matches and messaging.`
                   : webCheckout
                     ? "Unlocks matches and messaging. Continue on our website to set up membership, using the same account."
-                    : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa — everything finishes here in the app."}
+                    : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa in your browser."}
               </p>
             </div>
 
@@ -405,8 +405,8 @@ export function PlansPage() {
                       </span>
                     </div>
                     <p className="muted small" style={{ margin: 0 }}>
-                      Opens a secure payment sheet inside the app. Choose
-                      card, M-Pesa or bank on the next screen.
+                      Opens the secure Paystack page in your browser. Choose
+                      card, M-Pesa or bank there, then come back to the app.
                     </p>
                     <button
                       type="button"

@@ -3210,11 +3210,18 @@ button.chip {
   font-weight: 600;
 }
 
-.pay-sheet-frame {
+.pay-sheet-wait {
   flex: 1;
-  width: 100%;
-  border: 0;
-  background: var(--background);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem var(--screen-pad-x);
+  text-align: center;
+}
+
+.pay-sheet-wait p {
+  margin: 0;
 }
 
 .pay-sheet-foot {
