@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Ban, MoreVertical, Phone, Send, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Ban, MoreVertical, Send, ShieldAlert } from "lucide-react";
 import {
   chat,
   connectRealtime,
@@ -120,9 +120,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [safetyBusy, setSafetyBusy] = useState(false);
-  const [callNote, setCallNote] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const callTimer = useRef<number | null>(null);
   const userId = user?.id ? String(user.id) : null;
   const canSend = Boolean(body.trim());
 
@@ -238,12 +236,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     return () => window.clearTimeout(handle);
   }, [body, conversationId, userId]);
 
-  useEffect(() => {
-    return () => {
-      if (callTimer.current) window.clearTimeout(callTimer.current);
-    };
-  }, []);
-
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
     if (sending || offline) return;
@@ -295,13 +287,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     const text = String(m.message ?? m.body ?? m.text ?? "");
     setMessages((prev) => prev.filter((x) => x.id !== m.id));
     setBody(text);
-  }
-
-  function onCall() {
-    void hapticLight();
-    setCallNote(true);
-    if (callTimer.current) window.clearTimeout(callTimer.current);
-    callTimer.current = window.setTimeout(() => setCallNote(false), 2400);
   }
 
   const list = useMemo(() => toChatList(messages), [messages]);
@@ -367,14 +352,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
               {statusLabel}
             </span>
           </span>
-        </button>
-        <button
-          type="button"
-          className="wa-chat-icon-btn"
-          aria-label={t("chatPage.call")}
-          onClick={onCall}
-        >
-          <Phone size={18} />
         </button>
         <button
           type="button"
@@ -472,12 +449,6 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         onRetry={(id) => void retry(id)}
       />
 
-      {callNote && (
-        <div className="chat-toast" role="status">
-          {t("chatPage.callSoon")}
-        </div>
-      )}
-
       <form className="composer wa-composer" onSubmit={(e) => void send(e)}>
         <textarea
           ref={textareaRef}
@@ -512,7 +483,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           disabled={sending || offline || !canSend}
           aria-label={t("chatPage.send")}
         >
-          <Send size={18} />
+          <Send size={16} />
+          <span>{t("chatPage.send")}</span>
         </button>
       </form>
     </div>
