@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-26
 
     env:
-      BUNDLE_ID: com.helcalafkaaga.helcalaf
+      BUNDLE_ID: com.helcalafkaaga.helcalafkaaga
       TEAM_ID: PHULDKCSY6
       VITE_API_URL: https://tel-calafkaaga-1.onrender.com
       VITE_SOCKET_URL: https://tel-calafkaaga-1.onrender.com

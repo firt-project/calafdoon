@@ -2,7 +2,7 @@
 
 **Status:** Engineering draft for App Store Connect privacy labels. Requires legal/product confirmation.
 
-**Bundle ID:** `com.helcalafkaaga.helcalaf`
+**Bundle ID:** `com.helcalafkaaga.helcalafkaaga`
 
 ## Data linked to identity (expected)
 

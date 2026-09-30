@@ -11,7 +11,7 @@ Engineering guide — not legal advice. Does not claim App Review approval.
 
 | Field | Value |
 |-------|--------|
-| Bundle ID | `com.helcalafkaaga.helcalaf` |
+| Bundle ID | `com.helcalafkaaga.helcalafkaaga` |
 | Display name | HelCalaf |
 | Marketing version | `1.0.0` |
 | Build (`CURRENT_PROJECT_VERSION`) | `1` — increment each TestFlight upload |

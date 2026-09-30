@@ -8,7 +8,7 @@
 #   3. Client env vars are hardcoded below (not secret — a public API URL and a
 #      Stripe *publishable* key are meant to be public). No UI variable group
 #      needed. Update the vars: block directly if the API/website URL changes.
-#   4. Register the App ID  com.helcalafkaaga.helcalaf  (Codemagic can auto-create
+#   4. Register the App ID  com.helcalafkaaga.helcalafkaaga  (Codemagic can auto-create
 #      it during "fetch-signing-files --create", or do it in the Apple Developer
 #      portal). This matches the existing App Store Connect app record
 #      (Apple ID 6811169065) — it intentionally differs from the Android
@@ -25,7 +25,7 @@ workflows:
       groups:
         - ios_signing # CERTIFICATE_PRIVATE_KEY (Secure) — see signing step below
       vars:
-        BUNDLE_ID: "com.helcalafkaaga.helcalaf"
+        BUNDLE_ID: "com.helcalafkaaga.helcalafkaaga"
         XCODE_PROJECT_DIR: "mobile/apps/client/ios/App"
         XCODE_SCHEME: "App"
         VITE_API_URL: "https://tel-calafkaaga-1.onrender.com"
