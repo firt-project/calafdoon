@@ -136,5 +136,10 @@ workflows:
         # age rating + review). After that first release you can flip
         # submit_to_app_store: true for hands-off releases.
         submit_to_testflight: true
+        # External TestFlight group (create it once in App Store Connect →
+        # TestFlight → External Testing, exact name). Each approved build goes
+        # to everyone in it automatically.
+        beta_groups:
+          - External Testers
         # submit_to_app_store: true
         # release_type: MANUAL
