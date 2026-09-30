@@ -11,7 +11,7 @@
 #   4. Register the App ID  com.helcalafkaaga.helcalafkaaga  (Codemagic can auto-create
 #      it during "fetch-signing-files --create", or do it in the Apple Developer
 #      portal). This matches the existing App Store Connect app record
-#      (Apple ID 6811169065) — it intentionally differs from the Android
+#      (Apple ID 6817910609) — it intentionally differs from the Android
 #      applicationId (com.helcalaf.app), which stays unchanged.
 
 workflows:

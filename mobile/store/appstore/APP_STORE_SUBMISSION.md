@@ -4,7 +4,7 @@ Generated 2026-09-06. Companion to the Play pack in `mobile/store/play/`.
 
 Apple Developer: **Individual**, Team ID **`PHULDKCSY6`**, renews 2027-09-07.
 Bundle ID: **`com.helcalafkaaga.helcalafkaaga`** (App Store Connect app record, Apple ID
-6811169065). This intentionally differs from the Android `applicationId`
+6817910609). This intentionally differs from the Android `applicationId`
 (`com.helcalaf.app`), which is already live on Play and stays unchanged.
 
 ---
@@ -191,7 +191,7 @@ Happy to walk through this on a call if useful. [See §7 for background.]
      same one for every build. (If an existing distribution cert was made with a
      different key, revoke it in the Apple Developer portal or supply that key.)
 5. In App Store Connect, **create the app record**: Apps → + → New App
-   - This app record already exists (Apple ID 6811169065, SKU `helcalaf-ios-1`)
+   - This app record already exists (Apple ID 6817910609, SKU `helcalaf-ios-1`)
      with Bundle ID `com.helcalafkaaga.helcalafkaaga` — no need to create a new one,
      just finish filling in its metadata (see §2/§3 below).
 6. Run the `ios-appstore` workflow in Codemagic. It builds the web app, `cap sync`,
