@@ -16,6 +16,12 @@ export function shouldUseWebCheckout(): boolean {
   return IOS_WEB_CHECKOUT && Capacitor.getPlatform() === "ios";
 }
 
+/** iOS opens the Paystack page in the browser (Safari view); Android keeps
+ * the original in-app iframe sheet unchanged. */
+export function paystackOpensInBrowser(): boolean {
+  return Capacitor.getPlatform() === "ios";
+}
+
 /** Opens the website login in the system browser (SFSafariViewController on iOS).
  * Once signed in there, the website's own post-login routing sends an unpaid
  * member straight to its payment page — no query params to wire up. */

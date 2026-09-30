@@ -3210,6 +3210,13 @@ button.chip {
   font-weight: 600;
 }
 
+.pay-sheet-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--background);
+}
+
 .pay-sheet-wait {
   flex: 1;
   display: flex;

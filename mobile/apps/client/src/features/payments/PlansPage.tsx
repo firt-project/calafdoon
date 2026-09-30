@@ -11,6 +11,7 @@ import { PaystackCheckoutSheet } from "@/features/payments/PaystackCheckoutSheet
 import {
   openWebCheckout,
   shouldUseWebCheckout,
+  paystackOpensInBrowser,
   subscribeWebCheckoutReturn,
 } from "@/platform/web-checkout";
 
@@ -32,7 +33,8 @@ type PaystackSession = { url: string; reference: string };
 /**
  * Mobile paywall, same on Android and iOS: WaafiPay (Somali mobile wallet) and
  * Paystack (card, M-Pesa, bank): WaafiPay completes in-app via a phone
- * PIN prompt, Paystack on its hosted page in the browser. A switch in
+ * PIN prompt, Paystack on its hosted page (browser on iOS, in-app sheet on
+ * Android). A switch in
  * platform/web-checkout.ts can send iOS to helcalafkaaga.com instead, re-checking
  * access when the member comes back, if App Review requires it.
  */
@@ -56,6 +58,7 @@ export function PlansPage() {
   );
   const [checkingAccess, setCheckingAccess] = useState(false);
   const webCheckout = shouldUseWebCheckout();
+  const paystackInBrowser = paystackOpensInBrowser();
 
   const priceLabel = formatMoney(REGISTRATION_PRICE);
 
@@ -299,7 +302,9 @@ export function PlansPage() {
                   ? `Your ${WAAFI_ACCESS_DAYS}-day access ended. Renew to unlock another ${WAAFI_ACCESS_DAYS} days of matches and messaging.`
                   : webCheckout
                     ? "Unlocks matches and messaging. Continue on our website to set up membership, using the same account."
-                    : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa in your browser."}
+                    : paystackInBrowser
+                      ? "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa in your browser."
+                      : "Unlocks matches and messaging. Pay with a Somali mobile wallet, or by card / M-Pesa — everything finishes here in the app."}
               </p>
             </div>
 
@@ -405,8 +410,9 @@ export function PlansPage() {
                       </span>
                     </div>
                     <p className="muted small" style={{ margin: 0 }}>
-                      Opens the secure Paystack page in your browser. Choose
-                      card, M-Pesa or bank there, then come back to the app.
+                      {paystackInBrowser
+                        ? "Opens the secure Paystack page in your browser. Choose card, M-Pesa or bank there, then come back to the app."
+                        : "Opens a secure payment sheet inside the app. Choose card, M-Pesa or bank on the next screen."}
                     </p>
                     <button
                       type="button"
