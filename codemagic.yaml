@@ -22,6 +22,8 @@ workflows:
     integrations:
       app_store_connect: HelCalaf ASC API key
     environment:
+      groups:
+        - ios_signing # CERTIFICATE_PRIVATE_KEY (Secure) — see signing step below
       vars:
         BUNDLE_ID: "com.helcalafkaaga.helcalaf"
         XCODE_PROJECT_DIR: "mobile/apps/client/ios/App"
@@ -79,12 +81,40 @@ workflows:
 
       - name: Fetch signing files (auto-creates profile + App ID)
         script: |
+          set -euo pipefail
           keychain initialize
+
+          # A distribution certificate can only be downloaded/created when its
+          # private key is supplied. Without it no cert lands in the keychain and
+          # `use-profiles` silently skips the profile -> "App requires a
+          # provisioning profile" at archive time. CERTIFICATE_PRIVATE_KEY is a
+          # secure env var (group ios_signing) holding an RSA 2048 PEM key.
+          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set."
+            echo "Create it:  ssh-keygen -t rsa -b 2048 -m PEM -f cert_key -q -N ''"
+            echo "then paste the contents of cert_key into Codemagic env group"
+            echo "'ios_signing' as CERTIFICATE_PRIVATE_KEY (Secure)."
+            exit 1
+          fi
+
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
           keychain add-certificates
-          xcode-project use-profiles
+
+          # Point at the App project explicitly; the default **/*.xcodeproj glob
+          # from the repo root also sweeps up Pods and node_modules projects.
+          xcode-project use-profiles \
+            --project "$XCODE_PROJECT_DIR/App.xcodeproj"
+
+          echo "Installed provisioning profiles:"
+          ls -l "$HOME/Library/MobileDevice/Provisioning Profiles/" || true
+          if ! grep -q "PROVISIONING_PROFILE_SPECIFIER" \
+               "$XCODE_PROJECT_DIR/App.xcodeproj/project.pbxproj"; then
+            echo "ERROR: use-profiles did not assign a profile to the App target."
+            exit 1
+          fi
 
       - name: Build .ipa
         script: |

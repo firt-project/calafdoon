@@ -182,6 +182,14 @@ Happy to walk through this on a call if useful. [See §7 for background.]
 4. Codemagic → your app → Environment variables → group **`helcalaf_client_env`**:
    - `VITE_API_URL = https://tel-calafkaaga-1.onrender.com`  (Secure ✔ optional)
    - optionally `VITE_SOCKET_URL`, `VITE_APP_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`
+   - **Required for signing:** group **`ios_signing`** with
+     `CERTIFICATE_PRIVATE_KEY` (Secure ✔). Generate it once with
+     `ssh-keygen -t rsa -b 2048 -m PEM -f cert_key -q -N ''` and paste the full
+     contents of `cert_key` (including the BEGIN/END lines). Codemagic uses it to
+     create/download the Apple Distribution certificate; without it the archive
+     fails with *"App" requires a provisioning profile*. Keep the key — reuse the
+     same one for every build. (If an existing distribution cert was made with a
+     different key, revoke it in the Apple Developer portal or supply that key.)
 5. In App Store Connect, **create the app record**: Apps → + → New App
    - This app record already exists (Apple ID 6811169065, SKU `helcalaf-ios-1`)
      with Bundle ID `com.helcalafkaaga.helcalaf` — no need to create a new one,
