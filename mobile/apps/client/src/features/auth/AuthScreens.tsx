@@ -19,7 +19,16 @@ function AuthShell({
   hero?: boolean;
 }) {
   return (
-    <div className={cn("auth-layout", hero && "auth-layout-hero")}>
+    <div
+      className={cn("auth-layout", hero && "auth-layout-hero")}
+      onFocus={(e) => {
+        const t = e.target as HTMLElement;
+        if (t.matches("input, textarea, select")) {
+          // Wait for the iOS keyboard to finish resizing, then bring the field into view.
+          window.setTimeout(() => t.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+        }
+      }}
+    >
       {hero ? (
         <div className="auth-hero-media" aria-hidden>
           <img src="/images/hero-couple.jpg" alt="" />

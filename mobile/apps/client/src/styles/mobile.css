@@ -650,7 +650,11 @@ img {
   flex-direction: column;
   padding: calc(var(--safe-top) + 0.75rem) calc(var(--safe-right) + 1rem)
     calc(var(--safe-bottom) + 1.25rem) calc(var(--safe-left) + 1rem);
-  overflow: hidden;
+  /* Scrollable so fields stay reachable when the iOS keyboard shrinks the viewport */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   background: var(--paper);
 }
 
@@ -662,7 +666,7 @@ img {
 }
 
 .auth-hero-media {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
 }
@@ -689,7 +693,7 @@ img {
 }
 
 .auth-soft-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
