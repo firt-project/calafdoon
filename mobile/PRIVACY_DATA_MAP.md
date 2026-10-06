@@ -11,9 +11,10 @@ Statements must match this map. Do **not** claim on-device-only storage, E2EE, o
 | Likes / matches | Yes | PostgreSQL | Matching |
 | Messages | Yes | PostgreSQL (+ realtime Socket.IO) | Chat |
 | Blocks / reports | Yes | PostgreSQL | Safety |
-| Payment metadata | Yes | PostgreSQL + Stripe | Access gating |
+| Payment metadata | Yes | PostgreSQL + Paystack / WaafiPay (app), Stripe (website) | Access gating |
 | Device push tokens | No (not implemented) | — | — |
-| Precise location | Optional client fields; server strips some client location writes | Review product | Matching prefs |
+| Approximate location | Yes — coarse GPS requested in onboarding; API reverse-geocodes (OpenStreetMap Nominatim receives coordinates only) and stores city, country, approx. coordinates, accuracy, verified-at on `profiles` | PostgreSQL | Show people nearby (other members see city + country only) |
+| Precise location | No — `ACCESS_COARSE_LOCATION` only; clients cannot write location fields (server strips them) | — | — |
 | Analytics SDK | Not added by default | — | — |
 
 ## Deletion

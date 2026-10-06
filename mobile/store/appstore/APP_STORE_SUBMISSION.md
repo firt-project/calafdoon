@@ -144,7 +144,7 @@ Data collected and **linked to the user**:
 | Photos | App Functionality | Yes | No |
 | Messages / User Content | App Functionality | Yes | No |
 | Sensitive Info (religious/marital/orientation from the questionnaire) | App Functionality (matching) | Yes | No |
-| Coarse Location — **only if** onboarding stores a city; it's typed, not GPS. If unsure, declare "City" under Location, purpose App Functionality | App Functionality | Yes | No |
+| **Coarse Location** — the app requests the device's approximate location once in onboarding (`NSLocationWhenInUseUsageDescription`); the server derives and stores city + country (+ approx. coordinates) | App Functionality | Yes | No |
 | Purchases / Payment Info | App Functionality | Yes (status only; card handled by processor) | No |
 | Customer Support content | App Functionality | Yes | No |
 
@@ -156,9 +156,9 @@ Data collected and **linked to the user**:
   account) and at `helcalafkaaga.com/delete-account`.
 - Encrypted in transit: Yes (ATS enforced, HTTPS only).
 
-> The public privacy policy is thin (collection/use/sharing/rights/contact only).
-> Before submitting, add: photos/camera, the payment processors (Paystack/Waafi),
-> hosting/retention, and an explicit "no under-18s" line. Apple reviewers read it.
+> The public privacy policy (updated 2026-10-06) now covers location, photos,
+> the payment processors (Paystack/WaafiPay/Stripe), retention and a "no
+> under-18s" line. Redeploy the website before submitting — Apple reviewers read it.
 
 ---
 

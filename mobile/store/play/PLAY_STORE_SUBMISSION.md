@@ -130,18 +130,28 @@ under-18 bucket (the app itself enforces 18+ at registration).
 | Email address | Yes | No | Account management, comms | Required |
 | Photos | Yes | With other users (profile) | App functionality | Optional |
 | Messages (in-app) | Yes | With the other participant | App functionality | Required to chat |
-| Approx. location | If you added it to onboarding — check | With other users | Matchmaking | Optional |
+| **Approximate location** | **Yes** — GPS (coarse) is requested once in onboarding; the server turns it into city + country and stores the city, country and approximate coordinates | **No third party** (see note A) — other members see only city + country | App functionality (show people nearby) | **Required** to use the app |
+| Precise location | **No** — only `ACCESS_COARSE_LOCATION` is declared; precise location is never requested | — | — | — |
+| Phone number | Yes (questionnaire contact step) | No | Account / contact | Required |
+| Date of birth / age | Date of birth is entered, only the resulting age is stored | Age shown to other members | App functionality | Required (18+) |
+| App activity (likes, matches, compatibility) | Yes | With the other member only when mutual | App functionality | Required |
+| Purchase history | Yes — plan status and payment references (no card numbers) | With the payment processor | Purchases | Required to pay |
 | Sexual orientation / religious/marital info | Yes (questionnaire) | With other users as match info | Matchmaking | Required for matching |
 | Payment info | Processed by Paystack/Waafi, **not stored by the app** | With payment processor | Purchases | Required to pay |
 | App interactions / diagnostics | If analytics present — check | No | Analytics | — |
 
+- **Note A (location sharing):** the API sends the coordinates (only coordinates, no name/account) to OpenStreetMap Nominatim to find the city. That is a service provider acting on our behalf, so in Play's definitions it is *not* "sharing"; if you prefer to be conservative, answer **Shared: Yes → service provider** for approximate location. Disclose it either way in the privacy policy (done).
 - Data encrypted in transit: **Yes** (HTTPS enforced).
 - Users can request deletion: **Yes** (`/delete-account` + in-app Settings).
 - Android permissions in the build: `INTERNET`, `ACCESS_NETWORK_STATE`,
-  `CAMERA` (profile photos), `READ_MEDIA_IMAGES` (pick photos). No location
-  permission is declared in the manifest — if onboarding asks for a city it is
-  typed, not device GPS, so answer location = "not collected" unless you know
-  otherwise.
+  `CAMERA` (profile photos), `VIBRATE`, `USE_BIOMETRIC`/`USE_FINGERPRINT`
+  (optional app lock) and **`ACCESS_COARSE_LOCATION`** (approximate location,
+  foreground only, needed for the onboarding location step). Fine/precise
+  location and background location are **not** requested, so no *Location
+  permissions declaration* form is needed — just the Data safety answers above.
+- Privacy policy URL to enter in Play Console: https://helcalafkaaga.com/privacy
+  (mentions location, Nominatim, photos and payment providers; updated
+  2026-10-06 — make sure the website is redeployed before you submit).
 
 **Government app / financial features / health:** No.
 

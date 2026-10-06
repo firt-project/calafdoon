@@ -519,10 +519,10 @@ export const en = {
   },
   privacyPage: {
     title: "Privacy Policy",
-    subtitle: "Last updated: July 2026",
+    subtitle: "Last updated: October 2026",
     s1Title: "1. Information We Collect",
     s1Body:
-      "When you use {{name}}, we collect information you provide directly, including your name, email, profile details, questionnaire responses, and messages.",
+      "When you use {{name}}, we collect information you provide directly, including your name, email, profile details, questionnaire responses, photos, and messages. In our mobile apps we also collect your approximate location, with your permission: it is used to work out your city and country and to show you people nearby. Other members see only your city and country, never your exact position. You can turn location off in your phone settings at any time, and deleting your account deletes your saved location. We use payment providers (Paystack, WaafiPay, Stripe) to process payments and do not store full card details.",
     s2Title: "2. How We Use Your Information",
     s2Body:
       "We use your information to provide our matchmaking services, calculate compatibility scores, facilitate communication between matches, and improve our platform.",
@@ -534,7 +534,7 @@ export const en = {
       "We never sell your personal data. Profile information is only visible to other users according to your privacy settings and match status.",
     s5Title: "5. Your Rights",
     s5Body:
-      "You have the right to access, update, or delete your personal data at any time through your account settings or by contacting us.",
+      "You have the right to access, update, or delete your personal data at any time through your account settings or by contacting us. We keep your data while your account is active and delete it when you delete your account, except records we are legally required to keep (such as payments). HelCalaf is for adults aged 18 and over only, and we do not knowingly collect data from anyone under 18.",
     s6Title: "6. Contact",
     s6Body: "For privacy-related inquiries, please contact us at {{email}}.",
   },

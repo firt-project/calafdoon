@@ -525,10 +525,10 @@ export const so: Translations = {
   },
   privacyPage: {
     title: "Siyaasadda Qarsoodiga",
-    subtitle: "Cusbooneysii u dambaysay: Luulyo 2026",
+    subtitle: "Cusbooneysii u dambaysay: Oktoobar 2026",
     s1Title: "1. Macluumaadka aan Ururinno",
     s1Body:
-      "Markaad isticmaasho {{name}}, waxaan ururinaa macluumaadka aad si toos ah u bixiso, oo ay ku jiraan magacaaga, emailkaaga, faahfaahinta profile-kaaga, jawaabaha su'aalaha, iyo fariimaha.",
+      "Markaad isticmaasho {{name}}, waxaan ururinaa macluumaadka aad si toos ah u bixiso, oo ay ku jiraan magacaaga, emailkaaga, faahfaahinta profile-kaaga, jawaabaha su'aalaha, sawirrada, iyo fariimaha. App-yada mobile-ka waxaan sidoo kale ururinnaa goobtaada qiyaasta ah, markaad oggolaato: waxaa loo isticmaalaa in lagu ogaado magaaladaada iyo dalkaaga iyo in lagu tuso dadka kuu dhow. Xubnaha kale waxay arkaan magaaladaada iyo dalkaaga oo keliya, weligood ma arkaan goobtaada saxda ah. Goobta waxaad ka demin kartaa settings-ka taleefankaaga wakhti kasta, tirtiridda akoonkaaguna waxay tirtirtaa goobta la kaydiyey. Waxaan isticmaalnaa bixiyeyaal lacag-bixin (Paystack, WaafiPay, Stripe) si loo farsameeyo lacagaha, mana kaydinno faahfaahinta kaarka oo dhan.",
     s2Title: "2. Sida aan u Isticmaalno Macluumaadkaaga",
     s2Body:
       "Waxaan u isticmaalnaa macluumaadkaaga si aan u bixino adeegyada isbarbardhigga, u xisaabino dhibcaha iswaafajinta, u fududeyno isgaarsiinta lammaanayaasha, una hagaajino platform-kayaga.",
@@ -540,7 +540,7 @@ export const so: Translations = {
       "Waligaa kuma iibino xogtaada shakhsi ahaaneed. Macluumaadka profile-ka waxaa arki kara isticmaaleyaasha kale oo keliya sida ay u dhigmaan goobaha qarsoodigaaga iyo xaaladda isbarbardhigga.",
     s5Title: "5. Xuquuqdaada",
     s5Body:
-      "Waxaad xaq u leedahay inaad gasho, cusbooneysiiso, ama tirtirto xogtaada shakhsi ahaaneed wakhti kasta goobaha akoonkaaga ama adigoo nala soo xiriira.",
+      "Waxaad xaq u leedahay inaad gasho, cusbooneysiiso, ama tirtirto xogtaada shakhsi ahaaneed wakhti kasta goobaha akoonkaaga ama adigoo nala soo xiriira. Xogtaada waan haynaa inta akoonkaagu firfircoon yahay, waana tirtirnaa marka aad akoonkaaga tirtirto, marka laga reebo diiwaannada sharcigu nagu waajibiyo inaan haysano (sida lacag-bixinta). HelCalaf wuxuu u yahay dadka waaweyn 18 jir iyo ka weyn oo keliya, si ula kac ahna uma ururinno xogta qof ka yar 18.",
     s6Title: "6. Nala Soo Xiriir",
     s6Body: "Su'aalaha la xiriira qarsoodiga, fadlan nala soo xiriir {{email}}.",
   },
