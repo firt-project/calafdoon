@@ -6,6 +6,7 @@ import {
   useSession,
 } from "@/features/auth/SessionProvider";
 import { userFacingError } from "@/platform/errors";
+import { LogoutControl } from "@/features/auth/LogoutControl";
 
 export function VerifyEmailPage() {
   const { user, ready, refresh, logout, accessState } = useSession();
@@ -92,6 +93,7 @@ export function VerifyEmailPage() {
     <div className="screen pad">
       <header className="screen-header">
         <h1>Verify your email</h1>
+        <LogoutControl />
       </header>
       <p className="muted">
         We sent a link to <strong>{user?.email ?? "your email"}</strong>. Open it
@@ -164,6 +166,7 @@ export function ForcedChangePasswordPage() {
     <div className="screen pad">
       <header className="screen-header">
         <h1>Change password</h1>
+        <LogoutControl />
       </header>
       <p className="muted">
         For your security, you must set a new password before using the app.
@@ -266,6 +269,7 @@ export function EnrollMfaPage() {
     <div className="screen pad">
       <header className="screen-header">
         <h1>Set up two-factor auth</h1>
+        <LogoutControl />
       </header>
       <p className="muted">
         Staff accounts need an authenticator app (Google Authenticator, Authy,

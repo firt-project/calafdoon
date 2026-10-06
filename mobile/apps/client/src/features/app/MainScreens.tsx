@@ -20,7 +20,6 @@ import {
 import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/utils/cn";
 import { OfflineBanner } from "@/ui/mobile-kit";
-import { hapticLight } from "@/platform/haptics";
 import { securityGateRouteForUser } from "@/lib/security-gate-codes";
 import { useInboxUnread } from "@/features/messages/useInboxUnread";
 import {
@@ -184,7 +183,6 @@ function Tab({
       to={to}
       className={cn("tab", active && "active")}
       aria-current={active ? "page" : undefined}
-      onClick={() => void hapticLight()}
     >
       <span className="tab-icon">
         <Icon size={20} aria-hidden />

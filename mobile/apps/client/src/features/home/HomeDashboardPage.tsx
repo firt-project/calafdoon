@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
   Handshake,
+  MapPin,
   MessageCircle,
   Sparkles,
   Users,
@@ -10,16 +11,9 @@ import {
 import { matching, profile as profileApi, ApiClientError } from "@hel/api-client";
 import { useSession } from "@/features/auth/SessionProvider";
 import { useTranslation } from "@/lib/i18n/context";
-import { BottomSheet, SkeletonCard } from "@/ui/mobile-kit";
-import {
-  Avatar,
-  PageTitle,
-  ScreenContainer,
-  SectionHeader,
-  SurfaceCard,
-} from "@/ui/design-system";
+import { SkeletonCard } from "@/ui/mobile-kit";
+import { Avatar, ScreenContainer } from "@/ui/design-system";
 import { userFacingError } from "@/platform/errors";
-import { CompactMemberCard } from "@/features/discover/CompactMemberCard";
 import {
   memberId,
   type DiscoverMember,
@@ -57,6 +51,124 @@ type HomeFeed = {
   }>;
 };
 
+type CardLabels = {
+  viewProfile: string;
+  message: string;
+  like: string;
+  more: string;
+  verified: string;
+  locationPrivate: string;
+};
+
+function scoreOf(m: DiscoverMember): number | null {
+  const n = Math.round(Number(m.score ?? m.compatibilityScore));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function Photo({ member }: { member: DiscoverMember }) {
+  const src = member.imageUrl || member.photoUrl;
+  const name = member.name ?? "Member";
+  return src ? (
+    <img src={src} alt="" loading="lazy" />
+  ) : (
+    <span className="hm-photo-fallback" aria-hidden>
+      {name.slice(0, 1)}
+    </span>
+  );
+}
+
+/** Daily match: the one big, photo-first card on the page. */
+function HeroMatch({
+  member,
+  liked,
+  busy,
+  labels,
+  onOpen,
+  onMessage,
+  onLike,
+}: {
+  member: DiscoverMember;
+  liked: boolean;
+  busy: boolean;
+  labels: CardLabels;
+  onOpen: (m: DiscoverMember) => void;
+  onMessage: (m: DiscoverMember) => void;
+  onLike: (m: DiscoverMember) => void;
+}) {
+  const id = memberId(member);
+  const score = scoreOf(member);
+  const place = [member.city, member.country].filter(Boolean).join(", ");
+  return (
+    <article className="hm-hero" data-member-id={id || undefined}>
+      <button
+        type="button"
+        className="hm-hero-photo"
+        onClick={() => onOpen(member)}
+        aria-label={labels.viewProfile}
+      >
+        <Photo member={member} />
+        {score != null && <span className="hm-score">{score}% match</span>}
+        {member.online && <span className="hm-online" aria-label="Online" />}
+        <span className="hm-hero-info">
+          <span className="hm-hero-name">
+            {member.name ?? "Member"}
+            {member.age != null ? `, ${member.age}` : ""}
+          </span>
+          <span className="hm-hero-meta">
+            <MapPin size={13} aria-hidden /> {place || labels.locationPrivate}
+            {member.occupation ? ` · ${member.occupation}` : ""}
+          </span>
+        </span>
+      </button>
+      <div className="hm-hero-actions">
+        <button
+          type="button"
+          className="btn btn-primary hm-hero-msg"
+          disabled={busy || !id}
+          onClick={() => onMessage(member)}
+        >
+          <MessageCircle size={17} aria-hidden /> {labels.message}
+        </button>
+        <button
+          type="button"
+          className={liked ? "hm-icon-btn is-liked" : "hm-icon-btn"}
+          aria-label={labels.like}
+          aria-pressed={liked}
+          disabled={busy || !id}
+          onClick={() => onLike(member)}
+        >
+          <Heart size={20} fill={liked ? "currentColor" : "none"} aria-hidden />
+        </button>
+      </div>
+    </article>
+  );
+}
+
+/** Photo tile for horizontal rails: full name, never truncated to an initial. */
+function MemberTile({
+  member,
+  onOpen,
+}: {
+  member: DiscoverMember;
+  onOpen: (m: DiscoverMember) => void;
+}) {
+  const score = scoreOf(member);
+  return (
+    <button type="button" className="hm-tile" onClick={() => onOpen(member)}>
+      <span className="hm-tile-photo">
+        <Photo member={member} />
+        {score != null && <span className="hm-score hm-score-sm">{score}%</span>}
+        {member.online && <span className="hm-online" aria-label="Online" />}
+      </span>
+      <span className="hm-tile-name">
+        {member.name ?? "Member"}
+        {member.age != null ? `, ${member.age}` : ""}
+      </span>
+      <span className="hm-tile-meta">{member.city || member.country || ""}</span>
+    </button>
+  );
+}
+
 export function HomeDashboardPage() {
   const { user, offline } = useSession();
   const { t } = useTranslation();
@@ -67,7 +179,6 @@ export function HomeDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
-  const [menuFor, setMenuFor] = useState<DiscoverMember | null>(null);
 
   const aliveRef = useRef(true);
 
@@ -116,7 +227,6 @@ export function HomeDashboardPage() {
   );
 
   const daily = feed?.dailyMatch ?? null;
-  const recentlyActive = feed?.recentlyActive ?? [];
   const nearYou = feed?.nearYou ?? [];
   const recent = feed?.recentMutuals ?? [];
   const todayLabel = new Date().toLocaleDateString(undefined, {
@@ -205,18 +315,16 @@ export function HomeDashboardPage() {
   ];
 
   return (
-    <ScreenContainer className="home-flow" aria-label={t("app.home")}>
-      <section className="home-greeting" aria-label="Greeting">
-        <PageTitle
-          eyebrow={`${t("dashboard.greetingPeace")} · ${todayLabel}`}
-          title={t("dashboard.hello", { name })}
-        >
-          <p className="lead">{t("homeFeed.subtitle")}</p>
-        </PageTitle>
-      </section>
+    <ScreenContainer className="home-flow hm" aria-label={t("app.home")}>
+      <header className="hm-greeting">
+        <p className="hm-eyebrow">
+          {t("dashboard.greetingPeace")} · {todayLabel}
+        </p>
+        <h1 className="hm-title">{t("dashboard.hello", { name })}</h1>
+      </header>
 
       {offline && (
-        <div className="form-error" role="status">
+        <div className="form-notice" role="status">
           You appear offline. Some updates may be out of date.
         </div>
       )}
@@ -225,16 +333,25 @@ export function HomeDashboardPage() {
           {error}
         </div>
       )}
+
+      <nav className="hm-stats" aria-label={t("homeFeed.activityGlance")}>
+        {glance.map((item) => (
+          <Link key={item.to + item.label} to={item.to} className="hm-stat">
+            <strong>{item.value}</strong>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+
       {loading && <SkeletonCard />}
 
-      <section className="home-section" aria-label={t("homeFeed.dailyMatch")}>
-        <SectionHeader
-          title={t("homeFeed.dailyMatch")}
-          subtitle={t("homeFeed.dailyMatchDesc")}
-          action={<span className="chip chip-today">{t("homeFeed.today")}</span>}
-        />
+      <section className="hm-section" aria-label={t("homeFeed.dailyMatch")}>
+        <div className="hm-section-head">
+          <h2>{t("homeFeed.dailyMatch")}</h2>
+          <span className="hm-tag">{t("homeFeed.today")}</span>
+        </div>
         {daily ? (
-          <CompactMemberCard
+          <HeroMatch
             member={daily}
             liked={likedIds.has(memberId(daily))}
             busy={busyId === memberId(daily)}
@@ -242,144 +359,49 @@ export function HomeDashboardPage() {
             onOpen={openPeer}
             onMessage={(m) => void messageMember(m)}
             onLike={(m) => void likeMember(m)}
-            onMore={setMenuFor}
           />
         ) : !loading ? (
-          <SurfaceCard>
-            <p className="muted" style={{ margin: 0 }}>
-              {t("homeFeed.noDailyMatch")}
-            </p>
-            <Link
-              to="/discover"
-              className="btn btn-secondary"
-              style={{ marginTop: "0.75rem" }}
-            >
+          <div className="hm-empty">
+            <p>{t("homeFeed.noDailyMatch")}</p>
+            <Link to="/discover" className="btn btn-secondary">
               <Sparkles size={16} /> {t("homeFeed.browseMatches")}
             </Link>
-          </SurfaceCard>
+          </div>
         ) : null}
       </section>
 
-      <SurfaceCard
-        className="home-section-card"
-        aria-label={t("homeFeed.recentlyActive")}
-      >
-        <SectionHeader
-          title={t("homeFeed.recentlyActive")}
-          action={
-            <Link to="/discover" className="btn btn-ghost">
-              {t("dashboard.seeAll")}
-            </Link>
-          }
-        />
-        {recentlyActive.length > 0 ? (
-          <div className="person-rail home-active-rail">
-            {recentlyActive.map((m) => (
-              <button
-                key={m.userId ?? m.name}
-                type="button"
-                className="person-rail-item home-active-item"
-                onClick={() =>
-                  m.userId
-                    ? openPeer({
-                        userId: m.userId,
-                        name: m.name,
-                        imageUrl: m.imageUrl ?? undefined,
-                        city: m.city,
-                        age: m.age ?? undefined,
-                      })
-                    : navigate("/discover")
-                }
-              >
-                <Avatar
-                  src={m.imageUrl}
-                  name={m.name}
-                  size="lg"
-                  online={Boolean(m.activeNow)}
-                />
-                <span>{m.name ?? "Member"}</span>
-                <em
-                  className={
-                    m.activeNow
-                      ? "home-active-status"
-                      : "home-active-status is-muted"
-                  }
-                >
-                  {m.activeNow
-                    ? t("homeFeed.activeNow")
-                    : t("homeFeed.recently")}
-                </em>
-              </button>
+      <section className="hm-section" aria-label={t("homeFeed.peopleNearYou")}>
+        <div className="hm-section-head">
+          <h2>{t("homeFeed.peopleNearYou")}</h2>
+          <Link to="/discover" className="hm-link">
+            {t("dashboard.seeAll")}
+          </Link>
+        </div>
+        {nearYou.length > 0 ? (
+          <div className="hm-tiles">
+            {nearYou.map((p) => (
+              <MemberTile key={memberId(p) || p.name} member={p} onOpen={openPeer} />
             ))}
           </div>
         ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            {t("homeFeed.noRecentlyActive")}
-          </p>
+          <p className="hm-muted">{t("homeFeed.noNearYou")}</p>
         )}
-      </SurfaceCard>
+      </section>
 
-      <SurfaceCard
-        className="home-section-card"
-        aria-label={t("homeFeed.peopleNearYou")}
-      >
-        <SectionHeader
-          title={t("homeFeed.peopleNearYou")}
-          action={
-            <Link to="/discover" className="btn btn-ghost">
-              {t("dashboard.seeAll")}
-            </Link>
-          }
-        />
-        {nearYou.length > 0 ? (
-          <div className="home-near-grid">
-            {nearYou.map((p) => {
-              const id = memberId(p);
-              return (
-                <CompactMemberCard
-                  key={id || p.name}
-                  member={p}
-                  variant="row"
-                  showSecondaryActions={false}
-                  busy={busyId === id}
-                  labels={cardLabels}
-                  onOpen={openPeer}
-                  onMessage={(m) => void messageMember(m)}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            {t("homeFeed.noNearYou")}
-          </p>
-        )}
-      </SurfaceCard>
-
-      <SurfaceCard
-        className="home-section-card"
-        aria-label={t("homeFeed.newMatches")}
-      >
-        <SectionHeader
-          title={t("homeFeed.newMatches")}
-          subtitle={
-            (feed?.newMutualCount ?? 0) > 0
-              ? t("homeFeed.newCount", { count: feed?.newMutualCount ?? 0 })
-              : undefined
-          }
-          action={
-            <Link to="/matches" className="btn btn-ghost">
-              {t("dashboard.seeAll")}
-            </Link>
-          }
-        />
+      <section className="hm-section" aria-label={t("homeFeed.newMatches")}>
+        <div className="hm-section-head">
+          <h2>{t("homeFeed.newMatches")}</h2>
+          <Link to="/matches" className="hm-link">
+            {t("dashboard.seeAll")}
+          </Link>
+        </div>
         {recent.length > 0 ? (
-          <div className="person-rail home-match-rail">
+          <div className="hm-matches">
             {recent.map((m) => (
               <button
                 key={m.matchId ?? m.name}
                 type="button"
-                className="person-rail-item home-match-item"
+                className={m.isNew ? "hm-match is-new" : "hm-match"}
                 onClick={() =>
                   m.conversationId
                     ? navigate(`/messages/${m.conversationId}`)
@@ -387,69 +409,18 @@ export function HomeDashboardPage() {
                 }
               >
                 <Avatar src={m.imageUrl} name={m.name} size="lg" />
-                <span>{m.name ?? "Match"}</span>
-                {m.isNew ? (
-                  <em className="home-match-new">{t("homeFeed.newBadge")}</em>
-                ) : (
-                  <em className="home-match-new is-muted">
-                    {t("homeFeed.openChat")}
-                  </em>
-                )}
+                <span className="hm-match-name">{m.name ?? "Match"}</span>
+                <span className="hm-match-sub">
+                  {m.isNew ? t("homeFeed.newBadge") : t("homeFeed.openChat")}
+                </span>
               </button>
             ))}
           </div>
         ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            {t("dashboard.noMatchesDesc")}
-          </p>
+          <p className="hm-muted">{t("dashboard.noMatchesDesc")}</p>
         )}
-      </SurfaceCard>
+      </section>
 
-      <SurfaceCard
-        className="home-activity-glance"
-        aria-label={t("homeFeed.activityGlance")}
-      >
-        <SectionHeader title={t("homeFeed.activityGlance")} />
-        <div className="home-glance-row">
-          {glance.map((item) => (
-            <Link key={item.to + item.label} to={item.to} className="home-glance-item">
-              <span className="home-glance-icon">{item.icon}</span>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </SurfaceCard>
-
-      <BottomSheet
-        open={Boolean(menuFor)}
-        title={t("homeFeed.moreActions")}
-        onClose={() => setMenuFor(null)}
-      >
-        <div className="stack">
-          <button
-            type="button"
-            className="btn btn-secondary btn-block"
-            onClick={() => {
-              if (menuFor) openPeer(menuFor);
-              setMenuFor(null);
-            }}
-          >
-            {t("homeFeed.viewProfile")}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary btn-block"
-            disabled={!menuFor || Boolean(busyId)}
-            onClick={() => {
-              if (menuFor) void messageMember(menuFor);
-              setMenuFor(null);
-            }}
-          >
-            <MessageCircle size={16} /> {t("dashboard.message")}
-          </button>
-        </div>
-      </BottomSheet>
     </ScreenContainer>
   );
 }

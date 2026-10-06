@@ -13,14 +13,49 @@ function AuthShell({
   children,
   backTo,
   hero = false,
+  plain = false,
+  sheet = false,
 }: {
   children: ReactNode;
   backTo?: string;
   hero?: boolean;
+  /** Flat, calm background (no decorative orbs) for form-heavy screens. */
+  plain?: boolean;
+  /** 2026 layout: hero photo header + rounded form sheet sliding up over it. */
+  sheet?: boolean;
 }) {
+  const focusIntoView = (e: React.FocusEvent) => {
+    const t = e.target as HTMLElement;
+    if (t.matches("input, textarea, select")) {
+      // Wait for the keyboard to finish resizing, then bring the field into view.
+      window.setTimeout(() => t.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+    }
+  };
+
+  if (sheet) {
+    return (
+      <div className="auth-sheet-layout" onFocus={focusIntoView}>
+        <div className="auth-sheet-hero">
+          <img src="/images/hero-couple.jpg" alt="" />
+          <div className="auth-sheet-scrim" aria-hidden />
+          {backTo ? (
+            <Link to={backTo} className="auth-back auth-sheet-back" aria-label="Back">
+              <ArrowLeft size={20} />
+            </Link>
+          ) : null}
+          <div className="auth-sheet-brand">
+            <img src="/brand/logo.svg" alt="" width={40} height={40} />
+            <span>{SITE_BRAND_NAME}</span>
+          </div>
+        </div>
+        <main className="auth-sheet">{children}</main>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn("auth-layout", hero && "auth-layout-hero")}
+      className={cn("auth-layout", hero && "auth-layout-hero", plain && "auth-layout-plain")}
       onFocus={(e) => {
         const t = e.target as HTMLElement;
         if (t.matches("input, textarea, select")) {
@@ -34,7 +69,7 @@ function AuthShell({
           <img src="/images/hero-couple.jpg" alt="" />
           <div className="auth-hero-scrim" />
         </div>
-      ) : (
+      ) : plain ? null : (
         <div className="auth-soft-bg" aria-hidden>
           <span className="auth-orb auth-orb-a" />
           <span className="auth-orb auth-orb-b" />
@@ -82,8 +117,7 @@ function AuthField({
   hint?: string;
 }) {
   return (
-    <label className="auth-field" htmlFor={id}>
-      <span className="auth-field-label">{label}</span>
+    <label className="auth-field float" htmlFor={id}>
       <span className={cn("auth-field-shell", Boolean(leading) && "has-leading")}>
         {leading ? <span className="auth-field-leading">{leading}</span> : null}
         <input
@@ -95,8 +129,9 @@ function AuthField({
           minLength={minLength}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={label}
+          placeholder=" "
         />
+        <span className="auth-field-label">{label}</span>
         {trailing}
       </span>
       {hint ? <span className="auth-field-hint">{hint}</span> : null}
@@ -245,22 +280,21 @@ export function LoginPage() {
 
   if (mfaToken) {
     return (
-      <AuthShell>
-        <div className="auth-card">
-          <BrandLogo size="md" className="auth-card-logo" />
-          <div className="auth-card-head">
-            <h1 className="font-display">Authenticator code</h1>
+      <AuthShell backTo="/login" sheet>
+        <div className="reg">
+          <header className="reg-head">
+            <h1 className="font-display">Verification code</h1>
             <p>
               Enter the 6-digit code from your authenticator app, or a recovery
               code.
             </p>
-          </div>
+          </header>
           {error && (
             <div className="form-error" role="alert">
               {error}
             </div>
           )}
-          <form className="auth-form" onSubmit={(ev) => void onVerifyMfa(ev)}>
+          <form className="auth-form reg-form" onSubmit={(ev) => void onVerifyMfa(ev)}>
             <AuthField
               id="mfa-code"
               label="Code"
@@ -273,7 +307,7 @@ export function LoginPage() {
               leading={<Lock size={18} aria-hidden />}
             />
             <button
-              className="btn btn-primary btn-block btn-lg"
+              className="btn btn-primary btn-block btn-lg reg-cta"
               disabled={busy || mfaCode.trim().length < 6}
               type="submit"
             >
@@ -297,19 +331,18 @@ export function LoginPage() {
   }
 
   return (
-    <AuthShell backTo="/welcome">
-      <div className="auth-card">
-        <BrandLogo size="md" className="auth-card-logo" />
-        <div className="auth-card-head">
-          <h1 className="font-display">Sign in</h1>
-          <p>Welcome back to {SITE_BRAND_NAME}. Use the email you registered with.</p>
-        </div>
+    <AuthShell backTo="/welcome" sheet>
+      <div className="reg">
+        <header className="reg-head">
+          <h1 className="font-display">Welcome back</h1>
+          <p>Sign in to continue to {SITE_BRAND_NAME}.</p>
+        </header>
         {error && (
           <div className="form-error" role="alert">
             {error}
           </div>
         )}
-        <form className="auth-form" onSubmit={onSubmit}>
+        <form className="auth-form reg-form" onSubmit={onSubmit}>
           <AuthField
             id="login-email"
             label="Email"
@@ -342,15 +375,18 @@ export function LoginPage() {
               </button>
             }
           />
-          <div className="auth-form-meta">
+          <div className="reg-forgot">
             <Link to="/forgot-password">Forgot password?</Link>
           </div>
-          <button className="btn btn-primary btn-block btn-lg" disabled={busy} type="submit">
+          <button className="btn btn-primary btn-block btn-lg reg-cta" disabled={busy} type="submit">
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <p className="auth-switch">
+        <p className="reg-switch">
           New here? <Link to="/register">Create account</Link>
+        </p>
+        <p className="reg-secure">
+          <Lock size={14} aria-hidden /> Your details are private and never shared.
         </p>
       </div>
     </AuthShell>
@@ -403,24 +439,21 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthShell backTo="/welcome">
-      <div className="auth-card">
-        <BrandLogo size="md" className="auth-card-logo" />
-        <div className="auth-card-head">
-          <h1 className="font-display">Create account</h1>
+    <AuthShell backTo="/welcome" sheet>
+      <div className="reg">
+        <header className="reg-head">
+          <h1 className="font-display">Create your account</h1>
           <p>Join {SITE_BRAND_NAME}. You must be 18 or older.</p>
-        </div>
-        <ol className="auth-steps" aria-label="Signup steps">
-          <li className="active">1. Account</li>
-          <li>2. Profile</li>
-          <li>3. Plan</li>
-        </ol>
+        </header>
         {(localError || error) && (
           <div className="form-error" role="alert">
-            {localError || error}
+            {localError ||
+              (/unable to create account/i.test(error ?? "")
+                ? "We couldn't create this account. If you already registered with this email, try signing in instead."
+                : error)}
           </div>
         )}
-        <form className="auth-form" onSubmit={onSubmit}>
+        <form className="auth-form reg-form" onSubmit={onSubmit}>
           <AuthField
             id="register-email"
             label="Email"
@@ -431,7 +464,6 @@ export function RegisterPage() {
             value={email}
             onChange={setEmail}
             leading={<Mail size={18} aria-hidden />}
-            hint="We’ll use this for login and important account emails."
           />
           <AuthField
             id="register-password"
@@ -453,7 +485,7 @@ export function RegisterPage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             }
-            hint="At least 8 characters."
+            hint={password ? undefined : "Use at least 8 characters."}
           />
           <PasswordStrength password={password} />
           <AuthField
@@ -488,15 +520,18 @@ export function RegisterPage() {
             </span>
           </label>
           <button
-            className="btn btn-primary btn-block btn-lg"
+            className="btn btn-primary btn-block btn-lg reg-cta"
             disabled={busy || !accepted || !matchOk}
             type="submit"
           >
             {busy ? "Creating…" : "Continue"}
           </button>
         </form>
-        <p className="auth-switch">
+        <p className="reg-switch">
           Already have an account? <Link to="/login">Sign in</Link>
+        </p>
+        <p className="reg-secure">
+          <Lock size={14} aria-hidden /> Your details are private and never shared.
         </p>
       </div>
     </AuthShell>
@@ -527,13 +562,12 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell backTo="/login">
-      <div className="auth-card">
-        <BrandLogo size="md" className="auth-card-logo" />
-        <div className="auth-card-head">
-          <h1 className="font-display">Reset password</h1>
-          <p>Enter your account email and we’ll send a reset link.</p>
-        </div>
+    <AuthShell backTo="/login" sheet>
+      <div className="reg">
+        <header className="reg-head">
+          <h1 className="font-display">Reset your password</h1>
+          <p>Enter your account email and we’ll send you a reset link.</p>
+        </header>
         {error && (
           <div className="form-error" role="alert">
             {error}
@@ -544,7 +578,7 @@ export function ForgotPasswordPage() {
             {message}
           </div>
         )}
-        <form className="auth-form" onSubmit={onSubmit}>
+        <form className="auth-form reg-form" onSubmit={onSubmit}>
           <AuthField
             id="forgot-email"
             label="Email"
@@ -556,11 +590,11 @@ export function ForgotPasswordPage() {
             onChange={setEmail}
             leading={<Mail size={18} aria-hidden />}
           />
-          <button className="btn btn-primary btn-block btn-lg" disabled={busy} type="submit">
+          <button className="btn btn-primary btn-block btn-lg reg-cta" disabled={busy} type="submit">
             {busy ? "Sending…" : "Send reset link"}
           </button>
         </form>
-        <p className="auth-switch">
+        <p className="reg-switch">
           <Link to="/login">Back to sign in</Link>
         </p>
       </div>

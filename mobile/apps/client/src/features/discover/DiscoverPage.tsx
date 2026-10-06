@@ -288,7 +288,7 @@ export function DiscoverPage() {
       />
 
       {offline && (
-        <div className="form-error" role="status">
+        <div className="form-notice" role="status">
           {t("discoverFeed.offline")}
         </div>
       )}

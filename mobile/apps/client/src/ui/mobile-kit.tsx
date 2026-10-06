@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { Network } from "@capacitor/network";
 import { Capacitor } from "@capacitor/core";
@@ -88,6 +88,23 @@ export function SkeletonCard() {
   return <div className="skeleton card" aria-hidden />;
 }
 
+/**
+ * Lets the Android back button close a dialog. `navigation/android-back.ts`
+ * dispatches `request-close` on the element marked `data-dialog-open`.
+ */
+export function useBackToClose(
+  ref: RefObject<HTMLElement | null>,
+  open: boolean,
+  onClose: () => void
+) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!open || !el) return;
+    el.addEventListener("request-close", onClose);
+    return () => el.removeEventListener("request-close", onClose);
+  });
+}
+
 export function BottomSheet({
   open,
   title,
@@ -99,6 +116,8 @@ export function BottomSheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useBackToClose(sheetRef, open, onClose);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -123,6 +142,7 @@ export function BottomSheet({
         onClick={onClose}
       />
       <div
+        ref={sheetRef}
         className="sheet"
         role="dialog"
         aria-modal="true"

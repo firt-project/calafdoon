@@ -1,4 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useBackToClose } from "@/ui/mobile-kit";
 import { createPortal } from "react-dom";
 import { MapPin, Shield, X } from "lucide-react";
 import { chat, matching, ApiClientError } from "@hel/api-client";
@@ -273,6 +274,7 @@ export function PeerProfileSheet({
 }) {
   const { t } = useTranslation();
   const titleId = useId();
+  const sheetRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<PeerProfileData | null>(seed ?? null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -338,6 +340,8 @@ export function PeerProfileSheet({
     };
   }, [open, onClose]);
 
+  useBackToClose(sheetRef, open, onClose);
+
   if (!open || typeof document === "undefined") return null;
 
   const location = [profile?.city, profile?.country].filter(Boolean).join(", ");
@@ -358,7 +362,9 @@ export function PeerProfileSheet({
       onClick={onClose}
     >
       <div
+        ref={sheetRef}
         className="partner-sheet"
+        data-dialog-open="true"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  apiClient,
   profile as profileApi,
   preferences as preferencesApi,
   photos as photosApi,
@@ -9,6 +10,8 @@ import {
 } from "@hel/api-client";
 import { useSession, securityHomeRoute } from "@/features/auth/SessionProvider";
 import { SafeImage } from "@/ui/SafeImage";
+import { useBackToClose } from "@/ui/mobile-kit";
+import { LogoutControl } from "@/features/auth/LogoutControl";
 import { userFacingError } from "@/platform/errors";
 import { markPhotoAdded } from "@/features/profile/photo-gate";
 import {
@@ -19,6 +22,8 @@ import {
 import { getCitiesForCountry } from "@/lib/constants";
 import { ALL_COUNTRIES } from "@/lib/countries";
 import { cn } from "@/utils/cn";
+import { MapPin } from "lucide-react";
+import { requestDeviceLocation } from "@/platform/location";
 import { PhoneNumberField } from "@/features/onboarding/PhoneNumberField";
 import { CountrySearchField } from "@/features/onboarding/CountrySearchField";
 
@@ -59,7 +64,6 @@ function buildQuestionScreens(
 ): QuestionScreen[] {
   const screens: QuestionScreen[] = [];
   for (const step of steps) {
-    if (step.phase === "photo") continue;
     if (skipGenderStep && step.id === 0) continue;
     for (const field of step.fields) {
       if (!fieldVisible(field, answers)) continue;
@@ -133,12 +137,16 @@ function answersFromServer(
     delete answers.height;
     delete answers.weight;
   } else {
-    if (height > 0) answers.height = height >= 200 ? "200+" : String(height);
+    if (height > 0) answers.height = String(height);
     else delete answers.height;
-    if (weight > 0) answers.weight = weight >= 100 ? "100+" : String(weight);
+    if (weight > 0) answers.weight = String(weight);
     else delete answers.weight;
   }
 
+  // Existing members with a saved place are not forced to re-verify when editing.
+  if (String(profile.country ?? "").trim() && String(profile.city ?? "").trim()) {
+    answers.locationMode = "gps";
+  }
   if (!String(profile.country ?? "").trim()) delete answers.country;
   if (!String(profile.city ?? "").trim()) delete answers.city;
 
@@ -172,13 +180,7 @@ function answersFromServer(
       ) {
         const n = Number(value);
         if (!Number.isFinite(n) || n <= 0) continue;
-        if ((key === "minHeight" || key === "maxHeight") && n >= 200) {
-          answers[`pref_${key}`] = "200+";
-        } else if ((key === "minWeight" || key === "maxWeight") && n >= 100) {
-          answers[`pref_${key}`] = "100+";
-        } else {
-          answers[`pref_${key}`] = String(n);
-        }
+        answers[`pref_${key}`] = String(n);
         continue;
       }
       answers[`pref_${key}`] = value;
@@ -219,8 +221,17 @@ function buildApiPayload(
         key === "minWeight" ||
         key === "maxWeight";
       preferences[key] = numericPref ? parseNumericOption(raw) : raw;
+      if (field.rangeMaxName) {
+        const upper = parseNumericOption(answers[field.rangeMaxName]);
+        if (Number.isFinite(upper) && upper > 0) {
+          preferences[field.rangeMaxName.replace(/^pref_/, "")] = upper;
+        }
+      }
       continue;
     }
+
+    // GPS location is saved by /profile/geolocation/verify, not this payload.
+    if (field.name === "locationMode" || field.name === "profilePhoto") continue;
 
     if (field.name === "substanceUse") {
       payload.smokes = String(raw);
@@ -318,15 +329,500 @@ function ChoicePill({
   );
 }
 
+function ageFromDob(iso: string): number {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return 0;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < d.getMonth() ||
+    (now.getMonth() === d.getMonth() && now.getDate() < d.getDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const WHEEL_ITEM_PX = 44;
+
+/** One snapping column. `selected` is the item index, or -1 when nothing is chosen yet. */
+function WheelColumn({
+  items,
+  selected,
+  onSelect,
+  label,
+  initialIndex = 0,
+}: {
+  items: string[];
+  selected: number;
+  onSelect: (index: number) => void;
+  label: string;
+  /** Where an unset wheel opens (it only becomes a value once the user moves it). */
+  initialIndex?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const ignoreUntil = useRef(0);
+  const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastSelected = useRef(selected);
+
+  // Keep the wheel in sync when the value changes from outside (e.g. day clamped).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const target = (selected >= 0 ? selected : initialIndex) * WHEEL_ITEM_PX;
+    if (Math.abs(el.scrollTop - target) > 2) {
+      ignoreUntil.current = Date.now() + 300; // our own scroll must not count as a choice
+      el.scrollTo({ top: target });
+    }
+    lastSelected.current = selected;
+  }, [selected, items.length, initialIndex]);
+
+  function onScroll() {
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => {
+      const el = ref.current;
+      if (!el || Date.now() < ignoreUntil.current) return;
+      const index = Math.min(
+        items.length - 1,
+        Math.max(0, Math.round(el.scrollTop / WHEEL_ITEM_PX))
+      );
+      if (index !== lastSelected.current) {
+        lastSelected.current = index;
+        onSelect(index);
+      } else if (selected < 0) {
+        onSelect(index);
+      }
+    }, 90);
+  }
+
+  useEffect(() => () => clearTimeout(settle.current), []);
+
+  return (
+    <div
+      ref={ref}
+      className="dob-wheel"
+      role="listbox"
+      aria-label={label}
+      onScroll={onScroll}
+    >
+      {items.map((item, i) => (
+        <button
+          key={item}
+          type="button"
+          role="option"
+          aria-selected={i === selected}
+          className={cn("dob-item", i === selected && "is-selected")}
+          onClick={() => {
+            ref.current?.scrollTo({ top: i * WHEEL_ITEM_PX, behavior: "smooth" });
+            onSelect(i);
+          }}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Date of birth → age. 18+ is enforced by the year range and by validation. */
+function DobField({
+  age,
+  value,
+  onChange,
+}: {
+  age: unknown;
+  value: string;
+  onChange: (dob: string, age: number) => void;
+}) {
+  const thisYear = new Date().getFullYear();
+  const years = useMemo(
+    () => Array.from({ length: 82 }, (_, i) => String(thisYear - 18 - i)),
+    [thisYear]
+  );
+  const [y, m, d] = value ? value.split("-").map(Number) : [0, 0, 0];
+  const yearIdx = y ? years.indexOf(String(y)) : -1;
+  const monthIdx = m ? m - 1 : -1;
+  const daysInMonth = new Date(y || 2000, m || 1, 0).getDate();
+  const days = useMemo(
+    () => Array.from({ length: daysInMonth }, (_, i) => String(i + 1)),
+    [daysInMonth]
+  );
+  const dayIdx = d ? Math.min(d, daysInMonth) - 1 : -1;
+
+  function commit(nextY: number, nextM: number, nextD: number) {
+    const maxDay = new Date(nextY, nextM, 0).getDate();
+    const day = Math.min(nextD, maxDay);
+    const iso = `${nextY}-${String(nextM).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    onChange(iso, ageFromDob(iso));
+  }
+
+  // Unset parts fall back to sensible defaults the first time any wheel moves.
+  const curY = y || Number(years[Math.min(years.length - 1, 7)]);
+  const curM = m || 1;
+  const curD = d || 1;
+
+  const computed = value ? ageFromDob(value) : 0;
+  const knownAge = Number(age);
+  const summary = value
+    ? `${Math.min(d, daysInMonth)} ${MONTHS[m - 1]} ${y}`
+    : null;
+
+  return (
+    <div className="q-field dob">
+      <div className="dob-picker">
+        <div className="dob-band" aria-hidden />
+        <WheelColumn
+          label="Day"
+          items={days}
+          selected={dayIdx}
+          onSelect={(i) => commit(curY, curM, i + 1)}
+        />
+        <WheelColumn
+          label="Month"
+          items={MONTHS}
+          selected={monthIdx}
+          onSelect={(i) => commit(curY, i + 1, curD)}
+        />
+        <WheelColumn
+          label="Year"
+          items={years}
+          selected={yearIdx}
+          onSelect={(i) => commit(Number(years[i]), curM, curD)}
+        />
+      </div>
+      <p className={cn("dob-summary", computed >= 18 && "is-ready")} role="status">
+        {summary ? (
+          <>
+            <strong>{summary}</strong> · You are {computed} years old
+          </>
+        ) : knownAge > 0 ? (
+          `Saved age: ${knownAge}. Scroll to enter your date of birth.`
+        ) : (
+          "Scroll each column to pick your birthday"
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** Preferred range (age / height / weight): two wheels, From and To, kept in order. */
+function RangeWheelField({
+  field,
+  answers,
+  onChange,
+}: {
+  field: FieldConfig;
+  answers: Record<string, unknown>;
+  onChange: (name: string, value: unknown) => void;
+}) {
+  const min = field.min ?? 0;
+  const max = field.max ?? 0;
+  const unit = field.unit ?? "";
+  const maxName = field.rangeMaxName ?? "";
+  const items = useMemo(
+    () => Array.from({ length: max - min + 1 }, (_, i) => String(min + i)),
+    [min, max]
+  );
+  const toIdx = (v: unknown) => {
+    const n = Number.parseInt(String(v ?? ""), 10);
+    return Number.isFinite(n) && n >= min && n <= max ? n - min : -1;
+  };
+  const lo = toIdx(answers[field.name]);
+  const hi = toIdx(answers[maxName]);
+  const defLo = Math.max(0, (field.defaultValue ?? min) - min);
+  const defHi = Math.max(0, (field.defaultMax ?? max) - min);
+
+  /** Always store both bounds together, with From never above To. */
+  function commit(nextLo: number, nextHi: number, moved: "lo" | "hi") {
+    let a = nextLo;
+    let b = nextHi;
+    if (a > b) {
+      if (moved === "lo") b = a;
+      else a = b;
+    }
+    onChange(field.name, items[a]);
+    onChange(maxName, items[b]);
+  }
+
+  return (
+    <div className="q-field nw">
+      <div className="nw-readout" role="status">
+        {lo >= 0 && hi >= 0 ? (
+          <>
+            <strong>
+              {items[lo]} – {items[hi]}
+            </strong>{" "}
+            <span>{unit}</span>
+          </>
+        ) : (
+          <small>Scroll From and To</small>
+        )}
+      </div>
+      <div className="rw-heads" aria-hidden>
+        <span>From</span>
+        <span>To</span>
+      </div>
+      <div className="nw-picker rw-picker">
+        <div className="dob-band" aria-hidden />
+        <WheelColumn
+          label={`${field.label} from`}
+          items={items}
+          selected={lo}
+          initialIndex={defLo}
+          onSelect={(i) => commit(i, hi >= 0 ? hi : Math.max(i, defHi), "lo")}
+        />
+        <WheelColumn
+          label={`${field.label} to`}
+          items={items}
+          selected={hi}
+          initialIndex={defHi}
+          onSelect={(i) => commit(lo >= 0 ? lo : Math.min(i, defLo), i, "hi")}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** One big number wheel (height in cm, weight in kg) with a live imperial hint. */
+function NumberWheelField({
+  field,
+  value,
+  onChange,
+}: {
+  field: FieldConfig;
+  value: unknown;
+  onChange: (next: string) => void;
+}) {
+  const min = field.min ?? 0;
+  const max = field.max ?? 0;
+  const unit = field.unit ?? "";
+  const items = useMemo(
+    () => Array.from({ length: max - min + 1 }, (_, i) => String(min + i)),
+    [min, max]
+  );
+  const n = Number.parseInt(String(value ?? ""), 10);
+  const idx = Number.isFinite(n) && n >= min && n <= max ? n - min : -1;
+  const initial = Math.max(0, (field.defaultValue ?? min) - min);
+
+  let hint = "";
+  if (idx >= 0) {
+    if (unit === "cm") {
+      const totalIn = Math.round(n / 2.54);
+      hint = `${Math.floor(totalIn / 12)} ft ${totalIn % 12} in`;
+    } else if (unit === "kg") {
+      hint = `${Math.round(n * 2.2046)} lb`;
+    }
+  }
+
+  return (
+    <div className="q-field nw">
+      <div className="nw-readout" role="status">
+        {idx >= 0 ? (
+          <>
+            <strong>{n}</strong> <span>{unit}</span>
+            <small>{hint}</small>
+          </>
+        ) : (
+          <small>Scroll to choose</small>
+        )}
+      </div>
+      <div className="nw-picker">
+        <div className="dob-band" aria-hidden />
+        <WheelColumn
+          label={field.label}
+          items={items}
+          selected={idx}
+          initialIndex={initial}
+          onSelect={(i) => onChange(items[i])}
+        />
+      </div>
+    </div>
+  );
+}
+
+type GeoState = "idle" | "busy" | "denied" | "failed";
+
+/**
+ * Location, like other dating apps: one clear permission request, no way around it.
+ * The position is verified on the server, which saves the city and country.
+ */
+function LocationField({
+  mode,
+  city,
+  country,
+  onGps,
+}: {
+  mode: string;
+  city: string;
+  country: string;
+  onGps: (country: string, city: string) => void;
+}) {
+  const [state, setState] = useState<GeoState>("idle");
+  const [note, setNote] = useState<string | null>(null);
+
+  async function turnOn() {
+    setState("busy");
+    setNote(null);
+    const pos = await requestDeviceLocation();
+    if (!pos.ok) {
+      setState(pos.reason === "denied" ? "denied" : "failed");
+      return;
+    }
+    try {
+      const res = await apiClient.post<{ country: string; city: string }>(
+        "/profile/geolocation/verify",
+        {
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          accuracy: pos.accuracy,
+        }
+      );
+      onGps(res.country, res.city);
+      setState("idle");
+    } catch (e) {
+      const msg = e instanceof ApiClientError ? e.message : "";
+      setNote(
+        /COUNTRY_UNSUPPORTED/.test(msg)
+          ? "HelCalaf isn't available in your area yet."
+          : null
+      );
+      setState("failed");
+    }
+  }
+
+  const confirmed = mode === "gps" && Boolean(city) && Boolean(country);
+
+  return (
+    <div className="q-field q-location">
+      <div className="q-location-card">
+        <MapPin size={22} aria-hidden />
+        {confirmed ? (
+          <div>
+            <strong>
+              {city}, {country}
+            </strong>
+            <p className="muted">Location confirmed</p>
+          </div>
+        ) : (
+          <p>
+            We use your location to show you people nearby. Only your city is
+            shown to others, never your exact position.
+          </p>
+        )}
+      </div>
+      {state === "denied" && (
+        <p className="q-location-note" role="status">
+          Location is needed to find people near you. If you blocked it, open
+          your phone Settings, then Apps, HelCalaf, Permissions, Location, and
+          allow it. Then tap the button again.
+        </p>
+      )}
+      {state === "failed" && (
+        <p className="q-location-note" role="status">
+          {note ??
+            "We couldn't get your location. Make sure location is switched on, then try again."}
+        </p>
+      )}
+      <button
+        type="button"
+        className={confirmed ? "btn btn-ghost btn-block" : "btn btn-primary btn-block"}
+        disabled={state === "busy"}
+        onClick={() => void turnOn()}
+      >
+        {state === "busy"
+          ? "Finding you…"
+          : confirmed
+            ? "Update my location"
+            : "Turn on location"}
+      </button>
+    </div>
+  );
+}
+
+const POPULAR_COUNTRIES = [
+  "Somalia", "Kenya", "Ethiopia", "Djibouti", "United Arab Emirates",
+  "Saudi Arabia", "Qatar", "United Kingdom", "United States", "Canada",
+  "Sweden", "Norway", "Netherlands", "Australia", "Finland", "Denmark",
+  "Germany", "Turkey",
+];
+
+/** Multi-country picker: selected chips on top, search, popular countries first. */
+function CountryMultiField({
+  selected,
+  onChange,
+  label,
+  hideLabel,
+}: {
+  selected: string[];
+  onChange: (next: string[]) => void;
+  label: string;
+  hideLabel: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const pool = q
+    ? (ALL_COUNTRIES as readonly string[]).filter((c) => c.toLowerCase().includes(q))
+    : POPULAR_COUNTRIES;
+  const shown = pool.filter((c) => !selected.includes(c));
+
+  function toggle(c: string) {
+    onChange(selected.includes(c) ? selected.filter((x) => x !== c) : [...selected, c]);
+  }
+
+  return (
+    <div className="q-field">
+      {!hideLabel && <p className="q-label">{label}</p>}
+      {selected.length > 0 && (
+        <div className="chips" style={{ marginBottom: "0.75rem" }}>
+          {selected.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className="chip selected"
+              aria-pressed
+              onClick={() => toggle(c)}
+            >
+              {c} ✕
+            </button>
+          ))}
+        </div>
+      )}
+      <input
+        className="q-input"
+        type="search"
+        placeholder="Search any country…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <p className="muted" style={{ margin: "0.75rem 0 0.5rem" }}>
+        {q ? "Results" : "Popular"}
+      </p>
+      <div className="chips">
+        {shown.map((c) => (
+          <button key={c} type="button" className="chip" onClick={() => toggle(c)}>
+            {c}
+          </button>
+        ))}
+        {shown.length === 0 && <span className="muted">No countries found</span>}
+      </div>
+    </div>
+  );
+}
+
 function QuestionnaireField({
   field,
   answers,
   onChange,
+  onSingleSelect,
   hideLabel = false,
 }: {
   field: FieldConfig;
   answers: Record<string, unknown>;
   onChange: (name: string, value: unknown) => void;
+  /** Called after a single-choice tap so the page can auto-advance. */
+  onSingleSelect?: (name: string, value: unknown) => void;
   hideLabel?: boolean;
 }) {
   const value = answers[field.name];
@@ -339,6 +835,56 @@ function QuestionnaireField({
       ) : null}
     </p>
   );
+
+  if (field.type === "photo") {
+    return (
+      <PhotoStepBody
+        onCountChange={(n) => onChange(field.name, n > 0 ? String(n) : "")}
+      />
+    );
+  }
+
+  if (field.type === "range") {
+    return <RangeWheelField field={field} answers={answers} onChange={onChange} />;
+  }
+
+  if (field.type === "wheel") {
+    return (
+      <NumberWheelField
+        field={field}
+        value={value}
+        onChange={(next) => onChange(field.name, next)}
+      />
+    );
+  }
+
+  if (field.type === "dob") {
+    return (
+      <DobField
+        age={answers.age}
+        value={typeof answers.dateOfBirth === "string" ? answers.dateOfBirth : ""}
+        onChange={(dob, age) => {
+          onChange("dateOfBirth", dob);
+          onChange(field.name, age > 0 ? String(age) : "");
+        }}
+      />
+    );
+  }
+
+  if (field.type === "location") {
+    return (
+      <LocationField
+        mode={typeof value === "string" ? value : ""}
+        city={typeof answers.city === "string" ? answers.city : ""}
+        country={typeof answers.country === "string" ? answers.country : ""}
+        onGps={(country, city) => {
+          onChange("country", country);
+          onChange("city", city);
+          onChange(field.name, "gps");
+        }}
+      />
+    );
+  }
 
   if (field.type === "textarea") {
     return (
@@ -403,7 +949,10 @@ function QuestionnaireField({
               large
               label={g === "male" ? "Man" : "Woman"}
               selected={value === g}
-              onClick={() => onChange(field.name, g)}
+              onClick={() => {
+                onChange(field.name, g);
+                onSingleSelect?.(field.name, g);
+              }}
             />
           ))}
         </div>
@@ -411,10 +960,18 @@ function QuestionnaireField({
     );
   }
 
-  if (
-    (field.type === "multi-select" || field.type === "country-multi") &&
-    options.length > 0
-  ) {
+  if (field.type === "country-multi") {
+    return (
+      <CountryMultiField
+        selected={Array.isArray(value) ? (value as string[]) : []}
+        onChange={(next) => onChange(field.name, next)}
+        label={field.label}
+        hideLabel={hideLabel}
+      />
+    );
+  }
+
+  if (field.type === "multi-select" && options.length > 0) {
     const selected = Array.isArray(value) ? (value as string[]) : [];
     const max = field.maxSelect;
     return (
@@ -459,7 +1016,10 @@ function QuestionnaireField({
                 key={optStr}
                 label={optStr}
                 selected={String(value ?? "") === optStr}
-                onClick={() => onChange(field.name, optStr)}
+                onClick={() => {
+                  onChange(field.name, optStr);
+                  onSingleSelect?.(field.name, optStr);
+                }}
               />
             );
           })}
@@ -483,7 +1043,10 @@ function QuestionnaireField({
                   role="option"
                   label={optStr}
                   selected={cityValue === optStr}
-                  onClick={() => onChange("city", optStr)}
+                  onClick={() => {
+                    onChange("city", optStr);
+                    onSingleSelect?.("city", optStr);
+                  }}
                 />
               );
             })}
@@ -528,6 +1091,7 @@ function QuestionnaireField({
                 onClick={() => {
                   onChange(field.name, optStr);
                   if (field.name === "country") onChange("city", "");
+                  else onSingleSelect?.(field.name, optStr);
                 }}
               />
             );
@@ -595,8 +1159,12 @@ export function GenderOnboardingPage() {
 
   return (
     <div className="screen q-screen">
-      <div className="q-progress" aria-hidden>
-        <div className="progress-track">
+      <div className="q-progress">
+        <div className="q-progress-meta">
+          <span aria-hidden />
+          <LogoutControl />
+        </div>
+        <div className="progress-track" aria-hidden>
           <div className="progress-fill" style={{ width: "8%" }} />
         </div>
       </div>
@@ -638,7 +1206,12 @@ export function QuestionnaireOnboardingPage() {
   const { refresh, accessState } = useSession();
   const navigate = useNavigate();
   const [screenIndex, setScreenIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [answersState, setAnswers] = useState<Record<string, unknown>>({});
+  const answers = answersState;
+  const [showList, setShowList] = useState(false);
+  const reviewRef = useRef<HTMLDivElement>(null);
+  useBackToClose(reviewRef, showList, () => setShowList(false));
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [editing, setEditing] = useState(false);
   const [genderAlreadySet, setGenderAlreadySet] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -736,15 +1309,39 @@ export function QuestionnaireOnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessState?.questionnaireComplete]);
 
+  // A pending auto-advance must not fire after the user navigates elsewhere.
+  useEffect(() => {
+    clearTimeout(autoAdvanceTimer.current);
+    return () => clearTimeout(autoAdvanceTimer.current);
+  }, [screenIndex]);
+
+  /** Single-choice tap: save and move on after a short beat (not on the last screen). */
+  function autoAdvance(name: string, value: unknown) {
+    if (busy || screenIndex >= screens.length - 1) return;
+    const next = { ...answers, [name]: value };
+    clearTimeout(autoAdvanceTimer.current);
+    autoAdvanceTimer.current = setTimeout(() => {
+      void saveAndContinue(undefined, next);
+    }, 250);
+  }
+
   function setField(name: string, value: unknown) {
     setAnswers((prev) => ({ ...prev, [name]: value }));
   }
 
-  function validateCurrent(): string | null {
+  function validateCurrent(answers: Record<string, unknown>): string | null {
     if (!screen) return "No question available.";
     const field = screen.field;
     if (!field.required) return null;
-    if (!isAnswered(field, answers)) return `${field.label} is required.`;
+    if (!isAnswered(field, answers)) {
+      return field.type === "photo"
+        ? "Add a photo to continue."
+        : `${field.label} is required.`;
+    }
+    if (field.name === "age") {
+      const dob = typeof answers.dateOfBirth === "string" ? answers.dateOfBirth : "";
+      if (dob && ageFromDob(dob) < 18) return "You must be 18 or older to join.";
+    }
     if (field.name === "name" && !looksLikeName(answers.name)) {
       return "Enter your full name (at least 2 characters).";
     }
@@ -754,10 +1351,14 @@ export function QuestionnaireOnboardingPage() {
     return null;
   }
 
-  async function saveAndContinue(e?: FormEvent) {
+  async function saveAndContinue(
+    e?: FormEvent,
+    answersOverride?: Record<string, unknown>
+  ) {
     e?.preventDefault();
     if (!screen) return;
-    const problem = validateCurrent();
+    const answers = answersOverride ?? answersState;
+    const problem = validateCurrent(answers);
     if (problem) {
       setError(problem);
       return;
@@ -788,32 +1389,26 @@ export function QuestionnaireOnboardingPage() {
           setStatus("Questionnaire updated.");
           navigate("/profile");
         } else {
-          // Photo is optional — finish after contact details.
+          // Check EVERYTHING required before finishing, and say exactly what is missing.
+          const missing = nextScreens.filter(
+            (sc) => sc.field.required && !isAnswered(sc.field, answers)
+          );
+          if (missing.length > 0) {
+            const idx = nextScreens.findIndex(
+              (sc) => sc.field.name === missing[0].field.name
+            );
+            if (idx >= 0) setScreenIndex(idx);
+            const names = missing.map((sc) => sc.field.label.replace(/\?$/, ""));
+            const shown = names.slice(0, 4).join(", ");
+            const more = names.length > 4 ? ` and ${names.length - 4} more` : "";
+            throw new Error(`Almost there. Still needed: ${shown}${more}.`);
+          }
           if (!looksLikeName(answers.name)) {
             throw new Error("Enter your full name before finishing.");
           }
           if (!looksLikePhone(answers.phone)) {
             throw new Error(
               "Enter your mobile number before finishing (use the country code button if needed)."
-            );
-          }
-
-          // Block Finish if basic fields were skipped (e.g. age:0 signup placeholder).
-          const basicFields =
-            STEPS.find((s) => s.id === 1)?.fields ??
-            STEPS.flatMap((s) => s.fields).filter((f) =>
-              ["age", "country", "city", "height", "weight", "languagesSpoken"].includes(
-                f.name
-              )
-            );
-          const missingBasic = basicFields.filter((f) => !isAnswered(f, answers));
-          if (missingBasic.length > 0) {
-            const idx = screens.findIndex((s) =>
-              missingBasic.some((f) => f.name === s.field.name)
-            );
-            if (idx >= 0) setScreenIndex(idx);
-            throw new Error(
-              `Please answer: ${missingBasic.map((f) => f.label).join(", ")}.`
             );
           }
 
@@ -870,33 +1465,92 @@ export function QuestionnaireOnboardingPage() {
   const progress = ((screenIndex + 1) / screens.length) * 100;
   const isLast = screenIndex >= screens.length - 1;
   const hint =
-    screen.field.name === "phone"
+    screen.field.type === "photo"
+      ? "A clear photo of your face is required"
+      : screen.field.type === "range"
+      ? "Scroll both wheels, then tap Continue"
+      : screen.field.type === "wheel"
+      ? "Scroll to your number, then tap Continue"
+      : screen.field.type === "dob"
+      ? "We only show your age, never your birthday"
+      : screen.field.type === "location"
+        ? "We need your location to show people near you"
+        : screen.field.name === "phone"
       ? "Add your number, then tap Finish"
       : screen.field.type === "multi-select" || screen.field.type === "country-multi"
-        ? screen.field.maxSelect
-          ? `Pick up to ${screen.field.maxSelect}`
-          : "Select all that apply"
-        : "Tap an answer to continue";
+        ? `${screen.field.maxSelect ? `Pick up to ${screen.field.maxSelect}` : "Select all that apply"}${screen.field.required ? "" : " · or skip"}`
+        : "Tap an answer";
 
   return (
     <div className="screen q-screen">
       <div className="q-progress">
         <div className="q-progress-meta">
-          <span>
-            {screenIndex + 1} of {screens.length}
-          </span>
+          <button
+            type="button"
+            className="q-jump"
+            onClick={() => setShowList(true)}
+            aria-label="Review and edit all answers"
+          >
+            {screenIndex + 1} of {screens.length} · Review ▾
+          </button>
           {editing ? (
             <Link to="/profile" className="q-close">
               Close
             </Link>
           ) : (
-            <span>{editing ? "Edit" : screen.section}</span>
+            <LogoutControl />
           )}
         </div>
         <div className="progress-track" aria-hidden>
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
       </div>
+
+      {showList && (
+        <div
+          ref={reviewRef}
+          className="q-review"
+          role="dialog"
+          aria-label="All answers"
+          data-dialog-open="true"
+        >
+          <div className="q-review-head">
+            <strong>Your answers</strong>
+            <button type="button" className="q-close" onClick={() => setShowList(false)}>
+              Close
+            </button>
+          </div>
+          <ul className="q-review-list">
+            {screens.map((sc, i) => {
+              const v = answers[sc.field.name];
+              const text = !isAnswered(sc.field, answers)
+                ? "Not answered"
+                : Array.isArray(v)
+                  ? v.join(", ")
+                  : sc.field.type === "photo"
+                    ? `${String(v)} photo${Number(v) === 1 ? "" : "s"}`
+                    : sc.field.rangeMaxName
+                    ? `${String(v)} – ${String(answers[sc.field.rangeMaxName] ?? "")} ${sc.field.unit ?? ""}`.trim()
+                    : String(v);
+              return (
+                <li key={sc.field.name}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      setScreenIndex(i);
+                      setShowList(false);
+                    }}
+                  >
+                    <span className="q-review-q">{sc.field.label}</span>
+                    <span className="q-review-a">{text}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <header className="q-head">
         <h1 className="font-display">{screen.field.label}</h1>
@@ -921,6 +1575,7 @@ export function QuestionnaireOnboardingPage() {
             field={screen.field}
             answers={answers}
             onChange={setField}
+            onSingleSelect={autoAdvance}
             hideLabel
           />
         </div>
@@ -945,7 +1600,9 @@ export function QuestionnaireOnboardingPage() {
           <button type="submit" className="btn btn-primary q-continue" disabled={busy}>
             {busy
               ? "Saving…"
-              : isLast
+              : !screen.field.required && !isLast && !isAnswered(screen.field, answers)
+                ? "Skip"
+                : isLast
                 ? editing
                   ? "Save changes"
                   : "Finish"
@@ -960,34 +1617,38 @@ export function QuestionnaireOnboardingPage() {
 
 type OnboardingPhoto = { mediaId?: string; url?: string | null; isMain?: boolean };
 
-/**
- * Mandatory photo step. Sits between the questionnaire and payment — a member
- * cannot reach Home, Discover, Matches or the paywall without one clear photo.
- */
-export function PhotoOnboardingPage() {
-  const { user, accessState, refresh } = useSession();
-  const navigate = useNavigate();
+/** Photo grid + uploader, shared by the questionnaire's last question and the standalone page. */
+function PhotoStepBody({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [list, setList] = useState<OnboardingPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reload = async () => {
+    let items: OnboardingPhoto[] = [];
     try {
       const res = (await photosApi.listMine()) as
         | { photos?: OnboardingPhoto[] }
         | OnboardingPhoto[];
-      const items = Array.isArray(res) ? res : (res?.photos ?? []);
-      setList(items.filter((p) => p && (p.url || p.mediaId)));
+      items = (Array.isArray(res) ? res : (res?.photos ?? [])).filter(
+        (p) => p && (p.url || p.mediaId)
+      );
     } catch {
-      setList([]);
+      items = [];
     } finally {
+      setList(items);
       setLoading(false);
+      onCountChange?.(items.length);
     }
   };
 
   useEffect(() => {
     void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function addPhoto() {
@@ -1019,41 +1680,13 @@ export function PhotoOnboardingPage() {
     }
   }
 
-  async function continueOn() {
-    setBusy(true);
-    try {
-      await refresh();
-    } catch {
-      /* non-blocking */
-    }
-    markPhotoAdded();
-    navigate(securityHomeRoute(user, accessState), { replace: true });
-  }
-
-  const hasPhoto = list.length > 0;
-
   return (
-    <div className="screen q-screen">
-      <div className="q-progress" aria-hidden>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: "92%" }} />
-        </div>
-      </div>
-      <header className="q-head">
-        <p className="q-kicker">Profile setup</p>
-        <h1 className="font-display">Add your photo</h1>
-        <p className="muted">
-          One clear photo of your face is required — profiles without a photo
-          can't be shown to anyone. You can add more or change it later.
-        </p>
-      </header>
-
+    <div className="q-field">
       {error && (
         <div className="form-error" role="alert">
           {error}
         </div>
       )}
-
       <div className="onboard-photo-grid">
         {loading ? (
           <p className="muted small">Loading…</p>
@@ -1080,6 +1713,54 @@ export function PhotoOnboardingPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Mandatory photo step. Sits between the questionnaire and payment — a member
+ * cannot reach Home, Discover, Matches or the paywall without one clear photo.
+ */
+export function PhotoOnboardingPage() {
+  const { user, accessState, refresh } = useSession();
+  const navigate = useNavigate();
+  const [photoCount, setPhotoCount] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  async function continueOn() {
+    setBusy(true);
+    try {
+      await refresh();
+    } catch {
+      /* non-blocking */
+    }
+    markPhotoAdded();
+    navigate(securityHomeRoute(user, accessState), { replace: true });
+  }
+
+  const hasPhoto = photoCount > 0;
+
+  return (
+    <div className="screen q-screen">
+      <div className="q-progress">
+        <div className="q-progress-meta">
+          <span aria-hidden />
+          <LogoutControl />
+        </div>
+        <div className="progress-track" aria-hidden>
+          <div className="progress-fill" style={{ width: "92%" }} />
+        </div>
+      </div>
+      <header className="q-head">
+        <p className="q-kicker">Profile setup</p>
+        <h1 className="font-display">Add your photo</h1>
+        <p className="muted">
+          One clear photo of your face is required — profiles without a photo
+          can't be shown to anyone. You can add more or change it later.
+        </p>
+      </header>
+
+      <PhotoStepBody onCountChange={setPhotoCount} />
 
       <div className="q-actions">
         <span />

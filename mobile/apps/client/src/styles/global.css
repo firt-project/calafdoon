@@ -1,22 +1,22 @@
 :root {
   /* "Xeedho" — frankincense green on raw woven cotton */
-  --background: #ede7da;
-  --foreground: #20211c;
-  --card: #f6f2e9;
-  --card-foreground: #20211c;
-  --muted: #eae3d3;
-  --muted-foreground: #5c5a4e;
-  --border: #d8d0bf;
-  --input: #f6f2e9;
+  --background: #f5f4f1;
+  --foreground: #1c1d1b;
+  --card: #ffffff;
+  --card-foreground: #1c1d1b;
+  --muted: #efeeea;
+  --muted-foreground: #62615b;
+  --border: #e3e1db;
+  --input: #ffffff;
   --ring: #2e5e4e;
   --primary: #2e5e4e;
   --primary-foreground: #f6f2e9;
-  --accent: #e4ebe3;
-  --accent-foreground: #1f4a3c;
+  --accent: #efeeea;
+  --accent-foreground: #1c1d1b;
   --destructive: #a8402e;
-  --navy: #20211c;
+  --navy: #1c1d1b;
   --brand-dark: #1f4a3c;
-  --gold: #9a6a3c;
+  --gold: #86592f;
   --gold-foreground: #2a1c0c;
   --radius: 0.875rem;
   --radius-sm: 0.625rem;
@@ -32,22 +32,22 @@
 }
 
 .dark {
-  --background: #16180f;
-  --foreground: #ece7d7;
-  --card: #20231a;
-  --card-foreground: #ece7d7;
-  --muted: #272b20;
-  --muted-foreground: #a29e8b;
-  --border: #343829;
-  --input: #20231a;
+  --background: #111312;
+  --foreground: #ecebe6;
+  --card: #1a1c1b;
+  --card-foreground: #ecebe6;
+  --muted: #232625;
+  --muted-foreground: #a3a29b;
+  --border: #2e3130;
+  --input: #1a1c1b;
   --ring: #63ad8f;
   --primary: #63ad8f;
-  --primary-foreground: #16180f;
-  --accent: #22301f;
-  --accent-foreground: #bfe0cf;
+  --primary-foreground: #111312;
+  --accent: #232625;
+  --accent-foreground: #ecebe6;
   --destructive: #e07a5f;
   --gold: #c79461;
-  --gold-foreground: #16180f;
+  --gold-foreground: #111312;
   --brand-dark: #4c9277;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.36);

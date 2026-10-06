@@ -423,7 +423,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       </BottomSheet>
 
       {offline && (
-        <div className="form-error" role="status">
+        <div className="form-notice" role="status">
           {t("chatPage.offlineDraft")}
         </div>
       )}

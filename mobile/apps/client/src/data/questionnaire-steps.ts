@@ -1,7 +1,4 @@
 import {
-  AGE_OPTIONS,
-  HEIGHT_OPTIONS,
-  WEIGHT_OPTIONS,
   PRAYER_FREQUENCY,
   EDUCATION_LEVELS,
   OCCUPATIONS,
@@ -40,6 +37,10 @@ export interface FieldConfig {
     | "country-search"
     | "country-multi"
     | "gender-select"
+    | "dob"
+    | "wheel"
+    | "photo"
+    | "location"
     | "text";
   options?: readonly string[] | number[];
   required?: boolean;
@@ -50,6 +51,12 @@ export interface FieldConfig {
   min?: number;
   max?: number;
   maxSelect?: number;
+  /** `wheel` fields: label shown after the number, and the value the wheel opens on. */
+  unit?: string;
+  defaultValue?: number;
+  /** `range` fields: the answer key holding the upper bound (this field is the lower bound). */
+  rangeMaxName?: string;
+  defaultMax?: number;
   preferences?: boolean;
   uiOnly?: boolean;
   /** Override i18n key for FIELD_LABELS (defaults to `name`). */
@@ -80,11 +87,26 @@ const ABOUT_YOU_STEPS: StepConfig[] = [
     description: "Tell us about yourself",
     phase: "about",
     fields: [
-      { name: "age", label: "Age", type: "select", options: AGE_OPTIONS, required: true },
-      { name: "country", label: "Country", type: "country-search", required: true },
-      { name: "city", label: "City", type: "select", options: [], required: true },
-      { name: "height", label: "Height (cm)", type: "select", options: HEIGHT_OPTIONS, required: true },
-      { name: "weight", label: "Weight (kg)", type: "select", options: WEIGHT_OPTIONS, required: true },
+      // Location is mandatory and verified server-side (no manual entry, like other dating apps).
+      { name: "locationMode", label: "Turn on your location", type: "location", required: true },
+      {
+        name: "country",
+        label: "Country",
+        type: "country-search",
+        required: true,
+        hideWhen: { field: "locationMode", values: ["gps"] },
+      },
+      {
+        name: "city",
+        label: "City",
+        type: "select",
+        options: [],
+        required: true,
+        hideWhen: { field: "locationMode", values: ["gps"] },
+      },
+      { name: "age", label: "Date of birth", type: "dob", required: true },
+      { name: "height", label: "How tall are you?", type: "wheel", min: 140, max: 210, unit: "cm", defaultValue: 170, required: true },
+      { name: "weight", label: "What is your weight?", type: "wheel", min: 40, max: 150, unit: "kg", defaultValue: 70, required: true },
       {
         name: "languagesSpoken",
         label: "Languages you speak",
@@ -235,25 +257,40 @@ const PARTNER_PREFERENCES_STEPS: StepConfig[] = [
       },
       {
         name: "pref_minAge",
-        label: "Preferred Age",
-        type: "select",
-        options: AGE_OPTIONS,
+        label: "Preferred age",
+        type: "range",
+        rangeMaxName: "pref_maxAge",
+        min: 18,
+        max: 70,
+        unit: "years",
+        defaultValue: 25,
+        defaultMax: 35,
         preferences: true,
         required: true,
       },
       {
         name: "pref_minHeight",
-        label: "Preferred Height",
-        type: "select",
-        options: HEIGHT_OPTIONS,
+        label: "Preferred height",
+        type: "range",
+        rangeMaxName: "pref_maxHeight",
+        min: 140,
+        max: 210,
+        unit: "cm",
+        defaultValue: 160,
+        defaultMax: 185,
         preferences: true,
         required: true,
       },
       {
         name: "pref_minWeight",
-        label: "Preferred Weight (kg)",
-        type: "select",
-        options: WEIGHT_OPTIONS,
+        label: "Preferred weight",
+        type: "range",
+        rangeMaxName: "pref_maxWeight",
+        min: 40,
+        max: 150,
+        unit: "kg",
+        defaultValue: 50,
+        defaultMax: 80,
         preferences: true,
         required: true,
       },
@@ -290,9 +327,11 @@ const CONTACT_STEP: StepConfig = {
 const PROFILE_PHOTO_STEP: StepConfig = {
   id: 10,
   title: "Profile Photo",
-  description: "Optional — a clear photo helps matches recognize you",
+  description: "A clear photo of your face",
   phase: "photo",
-  fields: [],
+  fields: [
+    { name: "profilePhoto", label: "Add your photo", type: "photo", required: true },
+  ],
 };
 
 export const STEPS: StepConfig[] = [

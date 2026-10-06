@@ -355,7 +355,7 @@ export function SettingsHomePage() {
       <PageTitle title={t("app.settings")} />
 
       {offline && (
-        <div className="form-error" role="status">
+        <div className="form-notice" role="status">
           {t("settingsPage.offline")}
         </div>
       )}

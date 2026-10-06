@@ -167,10 +167,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         await rememberLastUserId(boot.user.id);
         connectRealtime();
       } else disconnectRealtime();
-    } catch (e) {
+    } catch {
       // Keep the current session on blips (common right after payment).
-      if (e instanceof ApiClientError && e.status === 0) setOffline(true);
-      else setOffline(true);
+      // A slow or failing server is not "offline" — only trust real connectivity.
+      setOffline(!navigator.onLine);
       setBootSlow(true);
     }
   }, []);
@@ -206,7 +206,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         // Start session bootstrap but do not block UI past BOOT_READY_MS.
         const bootPromise = refresh().catch(() => {
-          setOffline(true);
+          setOffline(!navigator.onLine);
           setBootSlow(true);
         });
         const raced = await Promise.race([
@@ -215,7 +215,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         ]);
         if (raced === "timeout" && !cancelled) {
           setBootSlow(true);
-          setOffline(true);
+          setOffline(!navigator.onLine);
         }
         // Let a late bootstrap still populate the session.
         void bootPromise.finally(() => {
