@@ -103,4 +103,4 @@ Legacy offline code lives under `apps/client/src/mocks/` and is **excluded** fro
 | Easy Android APK | `npm run mobile:android:debug` | `eas build` after rewrite |
 | iOS on Linux | Needs Mac / cloud Mac | Same — still needs Apple tooling |
 
-If you want a greenfield Expo app later, say so and we can scaffold `apps/mobile-expo` and migrate screen-by-screen. Do **not** drop Capacitor until Expo feature parity exists.
+The old Expo prototype (`apps/mobile-expo`) was removed on 2026-10-06; the shipped app is the Capacitor client in `apps/client`.
