@@ -7,6 +7,15 @@ export const defaultLocale: Locale = "so";
 /** @deprecated App shell follows the user language preference (SO/EN toggle). */
 export const appShellLocale: Locale = "en";
 export const LOCALE_STORAGE_KEY = "calaf-locale";
+/** Written only when the user picks a language, so the device language wins until then. */
+export const LOCALE_CHOICE_KEY = "calaf-locale-choice";
+
+/** Somali only when the phone itself is set to Somali; everything else gets English. */
+export function deviceLocale(): Locale {
+  const lang =
+    typeof navigator !== "undefined" ? (navigator.language ?? "").toLowerCase() : "";
+  return lang.startsWith("so") ? "so" : "en";
+}
 
 export const translations = {
   en,

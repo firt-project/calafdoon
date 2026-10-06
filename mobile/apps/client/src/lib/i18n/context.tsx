@@ -8,8 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import {
-  defaultLocale,
-  LOCALE_STORAGE_KEY,
+  deviceLocale,
+  LOCALE_CHOICE_KEY,
   translate,
   type Locale,
   type TranslationPath,
@@ -25,21 +25,21 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
+  const [locale, setLocaleState] = useState<Locale>(deviceLocale);
 
   useEffect(() => {
-    void prefsStore.get(LOCALE_STORAGE_KEY).then((stored) => {
+    void prefsStore.get(LOCALE_CHOICE_KEY).then((stored) => {
       if (stored === "en" || stored === "so") setLocaleState(stored);
     });
   }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
-    void prefsStore.set(LOCALE_STORAGE_KEY, locale);
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
+    void prefsStore.set(LOCALE_CHOICE_KEY, next);
   }, []);
 
   const t = useCallback(
