@@ -73,9 +73,9 @@ describe("preferred Argon2id + rehash policy", () => {
 });
 
 describe("session policy constants", () => {
-  it("idle 3h and absolute 7d", () => {
-    assert.equal(SESSION_IDLE_MS, 3 * 60 * 60 * 1000);
-    assert.equal(SESSION_ABSOLUTE_MS, 7 * 24 * 60 * 60 * 1000);
+  it("idle 90d and absolute 365d", () => {
+    assert.equal(SESSION_IDLE_MS, 90 * 24 * 60 * 60 * 1000);
+    assert.equal(SESSION_ABSOLUTE_MS, 365 * 24 * 60 * 60 * 1000);
   });
 
   it("stores only token hashes", () => {

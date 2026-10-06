@@ -8,8 +8,8 @@ import {
   sha256Hex,
 } from "./crypto-util";
 
-export const SESSION_IDLE_MS = 3 * 60 * 60 * 1000; // 3 hours
-export const SESSION_ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const SESSION_IDLE_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+export const SESSION_ABSOLUTE_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 export const SESSION_TOUCH_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
 
 @Injectable()
