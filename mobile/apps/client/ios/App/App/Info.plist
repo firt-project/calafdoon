@@ -45,7 +45,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>HelCalaf uses the camera so you can take a profile photo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>HelCalaf uses your location to show you people nearby. Only your city is shown to others.</string>
+	<string>HelCalaf uses your approximate location to show you people nearby. Only your city and country are shown to others.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>HelCalaf needs photo access so you can choose a profile picture from your library.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

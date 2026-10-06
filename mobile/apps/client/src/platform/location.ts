@@ -14,13 +14,14 @@ const TIMEOUT_MS = 15_000;
 export async function requestDeviceLocation(): Promise<DeviceLocation> {
   try {
     if (Capacitor.isNativePlatform()) {
+      // City-level is all we need, so ask for approximate location only.
       let perm = await Geolocation.checkPermissions();
-      if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+      if (perm.coarseLocation !== "granted" && perm.location !== "granted") {
         perm = await Geolocation.requestPermissions({
-          permissions: ["location", "coarseLocation"],
+          permissions: ["coarseLocation"],
         });
       }
-      if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+      if (perm.coarseLocation !== "granted" && perm.location !== "granted") {
         return { ok: false, reason: "denied" };
       }
       const pos = await Geolocation.getCurrentPosition({
