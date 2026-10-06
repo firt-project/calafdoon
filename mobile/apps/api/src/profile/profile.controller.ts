@@ -215,6 +215,8 @@ export class ProfileController {
   @Post("geolocation/verify")
   @HttpCode(200)
   @RequireProfile()
+  // Each call makes an outbound reverse-geocode request — cap it per user (30/h).
+  @UseGuards(RateLimitGuard)
   async verifyGeolocation(
     @CurrentUser() user: RequestUser,
     @Body() body: unknown
