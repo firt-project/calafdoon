@@ -37,7 +37,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (!user) return <Navigate to="/welcome" replace />;
+  // Signed out (logout, expired session or deep link): go straight to Sign in.
+  if (!user) return <Navigate to="/login" replace />;
   const gate = securityGateRouteForUser(user);
   if (gate && pathname !== gate && !pathname.startsWith(`${gate}/`)) {
     return <Navigate to={gate} replace />;
@@ -59,7 +60,8 @@ export function RequireMemberAccess({
       </div>
     );
   }
-  if (!user) return <Navigate to="/welcome" replace />;
+  // Signed out (logout, expired session or deep link): go straight to Sign in.
+  if (!user) return <Navigate to="/login" replace />;
   const gate = securityGateRouteForUser(user);
   if (gate) return <Navigate to={gate} replace />;
   if (isStaffUser(user, accessState)) return <Navigate to="/admin" replace />;

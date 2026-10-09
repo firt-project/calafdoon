@@ -43,8 +43,9 @@ export function PlansPage() {
   const { accessState, refresh, logout } = useSession();
 
   async function handleLogout() {
-    await logout();
-    navigate("/welcome", { replace: true });
+    const done = logout();
+    navigate("/login", { replace: true });
+    await done;
   }
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);

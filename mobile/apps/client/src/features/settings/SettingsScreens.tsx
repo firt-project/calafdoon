@@ -328,9 +328,11 @@ export function SettingsHomePage() {
   }, []);
 
   async function onLogout() {
-    await logout();
+    // logout() signs out in the UI synchronously; go to Sign in in the same tick.
+    const done = logout();
     queryClient.clear();
-    navigate("/welcome", { replace: true });
+    navigate("/login", { replace: true });
+    await done;
   }
 
   async function clearCache() {

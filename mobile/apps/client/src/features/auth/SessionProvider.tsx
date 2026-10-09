@@ -322,13 +322,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setError(null);
+    // Sign out in the UI first, synchronously: otherwise the screen the user is on
+    // keeps fetching with a wiped session and flashes "could not load" errors.
+    setUser(null);
+    setAccessState(null);
+    disconnectRealtime();
     try {
       await auth.logout();
     } finally {
       await clearAllClientData();
-      setUser(null);
-      setAccessState(null);
-      disconnectRealtime();
     }
   }, []);
 

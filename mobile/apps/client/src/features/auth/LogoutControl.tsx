@@ -17,12 +17,14 @@ export function LogoutControl({ className }: { className?: string }) {
 
   async function confirm() {
     setBusy(true);
+    setOpen(false);
+    // logout() signs out in the UI synchronously; go to Sign in in the same tick.
+    const done = logout();
+    navigate("/login", { replace: true });
     try {
-      await logout();
+      await done;
     } finally {
       setBusy(false);
-      setOpen(false);
-      navigate("/welcome", { replace: true });
     }
   }
 
