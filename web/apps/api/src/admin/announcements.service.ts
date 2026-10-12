@@ -3,25 +3,55 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { isStaffRole } from "../common/access";
 import { AuditLogService } from "./audit-log.service";
 import { AnnouncementQueueService } from "../queue/announcement-queue.service";
+import { MAIL_ADAPTER } from "../auth/auth.service";
+import type { MailAdapter } from "../auth/mail.adapter";
+import { escapeHtml } from "../mail/html-escape";
 import { parseLimit } from "./admin-auth.helpers";
+
+const EMAIL_CONCURRENCY = 5;
 
 export type AnnouncementAudience = "all" | "paid" | "trial" | "unpaid";
 
 @Injectable()
 export class AnnouncementsService {
+  private readonly logger = new Logger(AnnouncementsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditLogService,
     @Inject(forwardRef(() => AnnouncementQueueService))
-    private readonly queue: AnnouncementQueueService
+    private readonly queue: AnnouncementQueueService,
+    @Optional() @Inject(MAIL_ADAPTER) private readonly mail?: MailAdapter
   ) {}
+
+  private async emailAnnouncement(
+    to: string,
+    title: string,
+    body: string
+  ): Promise<void> {
+    if (!this.mail) return;
+    try {
+      await this.mail.send({
+        to,
+        subject: title,
+        text: body,
+        html: `<h2>${escapeHtml(title)}</h2><p>${escapeHtml(body).replace(/\n/g, "<br/>")}</p>`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Announcement email failed: ${err instanceof Error ? err.message : "unknown"}`
+      );
+    }
+  }
 
   async list(opts?: { cursor?: string; limit?: number }) {
     const limit = parseLimit(String(opts?.limit ?? 50), 50, 100);
@@ -188,11 +218,12 @@ export class AnnouncementsService {
           role: true,
           hasPaid: true,
           trialEndsAt: true,
-          user: { select: { convexId: true } },
+          user: { select: { convexId: true, email: true } },
         },
       });
       if (page.length === 0) break;
 
+      const emails: Array<{ to: string }> = [];
       for (const profile of page) {
         if (isStaffRole(profile.role)) continue;
         if (audience === "paid" && !profile.hasPaid) continue;
@@ -221,9 +252,23 @@ export class AnnouncementsService {
             },
           });
           delivered += 1;
-        } catch {
-          // unique sourceKey → already delivered
+          if (profile.user.email) emails.push({ to: profile.user.email });
+        } catch (err) {
+          // unique sourceKey → already delivered; anything else is a real failure
+          if ((err as { code?: string })?.code !== "P2002") {
+            this.logger.error(
+              `Announcement ${announcementId} notify failed for ${profile.userId}: ${err instanceof Error ? err.message : "unknown"}`
+            );
+          }
         }
+      }
+
+      for (let i = 0; i < emails.length; i += EMAIL_CONCURRENCY) {
+        await Promise.all(
+          emails
+            .slice(i, i + EMAIL_CONCURRENCY)
+            .map((e) => this.emailAnnouncement(e.to, a.title, a.body))
+        );
       }
 
       cursor = page[page.length - 1]!.id;
