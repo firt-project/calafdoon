@@ -15,6 +15,7 @@ import { AnnouncementQueueService } from "../queue/announcement-queue.service";
 import { MAIL_ADAPTER } from "../auth/auth.service";
 import type { MailAdapter } from "../auth/mail.adapter";
 import { escapeHtml } from "../mail/html-escape";
+import { PushService } from "../push/push.service";
 import { parseLimit } from "./admin-auth.helpers";
 
 const EMAIL_CONCURRENCY = 5;
@@ -30,7 +31,8 @@ export class AnnouncementsService {
     private readonly audit: AuditLogService,
     @Inject(forwardRef(() => AnnouncementQueueService))
     private readonly queue: AnnouncementQueueService,
-    @Optional() @Inject(MAIL_ADAPTER) private readonly mail?: MailAdapter
+    @Optional() @Inject(MAIL_ADAPTER) private readonly mail?: MailAdapter,
+    @Optional() private readonly push?: PushService
   ) {}
 
   private async emailAnnouncement(
@@ -224,6 +226,7 @@ export class AnnouncementsService {
       if (page.length === 0) break;
 
       const emails: Array<{ to: string }> = [];
+      const pushed: string[] = [];
       for (const profile of page) {
         if (isStaffRole(profile.role)) continue;
         if (audience === "paid" && !profile.hasPaid) continue;
@@ -252,6 +255,7 @@ export class AnnouncementsService {
             },
           });
           delivered += 1;
+          pushed.push(profile.userId);
           if (profile.user.email) emails.push({ to: profile.user.email });
         } catch (err) {
           // unique sourceKey → already delivered; anything else is a real failure
@@ -261,6 +265,14 @@ export class AnnouncementsService {
             );
           }
         }
+      }
+
+      if (pushed.length) {
+        await this.push?.sendToUsers(pushed, {
+          title: a.title,
+          body: a.body,
+          data: { type: "announcement", route: "/notifications" },
+        });
       }
 
       for (let i = 0; i < emails.length; i += EMAIL_CONCURRENCY) {

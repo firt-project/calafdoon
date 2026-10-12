@@ -3,7 +3,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
+import { PushService } from "../push/push.service";
 import type { LikeAction, MatchStatus, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -44,7 +46,8 @@ export class MatchService {
     private readonly scores: ScoreService,
     private readonly media: MediaAccessService,
     private readonly presence: PresenceService,
-    private readonly realtime: ChatRealtimeService
+    private readonly realtime: ChatRealtimeService,
+    @Optional() private readonly push?: PushService
   ) {}
 
   private async requireMatchAccess(userId: string): Promise<AccessCtx> {
@@ -751,6 +754,11 @@ export class MatchService {
     } catch {
       /* realtime is best-effort; the notification row is already saved */
     }
+    void this.push?.sendToUsers([data.userId], {
+      title: data.title,
+      body: data.body,
+      data: { type: data.type, route: "/notifications" },
+    });
   }
 
   private async createOrReactivateMatch(

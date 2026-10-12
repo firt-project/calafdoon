@@ -27,6 +27,7 @@ export const envSchema = z.object({
   TRUST_PROXY: z.string().optional(),
   APP_URL: z.string().optional(),
   MAIL_DRIVER: z.enum(["console", "resend", "disabled"]).default("console"),
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
   /** Legacy Convex / Render aliases — preferred names are RESEND_*. */

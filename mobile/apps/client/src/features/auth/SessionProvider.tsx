@@ -28,6 +28,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { registerAndroidBackHandler } from "@/navigation/android-back";
+import { registerPush, unregisterPush } from "@/platform/push";
 import { securityGateRouteForUser } from "@/lib/security-gate-codes";
 
 type SessionContextValue = {
@@ -166,6 +167,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const { rememberLastUserId } = await import("@/platform/secure-storage");
         await rememberLastUserId(boot.user.id);
         connectRealtime();
+        void registerPush((route) =>
+          window.dispatchEvent(new CustomEvent("hel:navigate", { detail: route }))
+        );
       } else disconnectRealtime();
     } catch {
       // Keep the current session on blips (common right after payment).
@@ -328,6 +332,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setAccessState(null);
     disconnectRealtime();
     try {
+      await unregisterPush();
       await auth.logout();
     } finally {
       await clearAllClientData();

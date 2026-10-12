@@ -21,6 +21,7 @@ import { ObservabilityModule } from "./observability/observability.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProfileModule } from "./profile/profile.module";
+import { PushModule } from "./push/push.module";
 import { QueueModule } from "./queue/queue.module";
 import { RedisModule } from "./redis/redis.module";
 
@@ -61,6 +62,7 @@ import { RedisModule } from "./redis/redis.module";
     MatchingModule,
     ChatModule,
     NotificationsModule,
+    PushModule,
     PaymentsModule,
     AdminModule,
     DownloadModule,

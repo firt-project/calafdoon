@@ -5,8 +5,10 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { PushService } from "../push/push.service";
 import { ConfigService } from "@nestjs/config";
 import type { Conversation, Match, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -50,7 +52,8 @@ export class ConversationService {
     private readonly realtime: ChatRealtimeService,
     private readonly notificationQueue: NotificationQueueService,
     private readonly presence: PresenceService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    @Optional() private readonly push?: PushService
   ) {
     this.chatBucket = this.config.get<string>("S3_BUCKET_CHAT") ?? "hel-chat";
   }
@@ -768,6 +771,11 @@ export class ConversationService {
       });
 
       if (result.notification) {
+        void this.push?.sendToUsers([otherId], {
+          title: result.notification.title,
+          body: result.notification.body,
+          data: { type: "message", route: `/chat/${conversationId}` },
+        });
         const notifPayload = {
           id: result.notification.id,
           type: result.notification.type,

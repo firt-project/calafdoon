@@ -201,6 +201,7 @@ enum PasswordAlgo {
 }
 
 model User {
+  devicePushTokens       DevicePushToken[]
   id                     String    @id @default(uuid()) @db.Uuid
   convexId               String    @unique @map("convex_id")
   email                  String?   @unique
@@ -721,6 +722,19 @@ model Payment {
   @@index([userId, status])
   @@index([status, paymentCreatedAt])
   @@map("payments")
+}
+
+model DevicePushToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("device_push_tokens")
 }
 
 model Announcement {

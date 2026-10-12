@@ -16,5 +16,14 @@ export function DeepLinkNavigator() {
     });
   }, [navigate]);
 
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const route = (e as CustomEvent<string>).detail;
+      if (typeof route === "string") navigate(route);
+    };
+    window.addEventListener("hel:navigate", onNav);
+    return () => window.removeEventListener("hel:navigate", onNav);
+  }, [navigate]);
+
   return null;
 }
