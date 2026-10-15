@@ -135,7 +135,23 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       normalizeMessage(m, userId)
     );
     setMessages((prev) => {
-      const locals = prev.filter((m) => m.pending || m.failed);
+      // A pending local copy is replaced by the server message with the same text.
+      const claimed = new Set<string>();
+      const locals = prev.filter((m) => {
+        if (m.failed) return true;
+        if (!m.pending) return false;
+        const text = String(m.message ?? "");
+        const since = Number(m.createdAt ?? 0) - 10_000;
+        const twin = normalized.find(
+          (n) =>
+            n.mine &&
+            !claimed.has(messageKey(n, 0)) &&
+            String(n.message ?? n.body ?? n.text ?? "") === text &&
+            new Date(n.createdAt ?? 0).getTime() >= since
+        );
+        if (twin) claimed.add(messageKey(twin, 0));
+        return !twin;
+      });
       return dedupeMessages([...normalized, ...locals]);
     });
     try {
@@ -264,6 +280,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         message: text,
         idempotencyKey: `${conversationId}-${tempId}`,
       });
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       await hapticLight();
       await loadMessages();
     } catch (err) {
