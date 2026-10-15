@@ -157,6 +157,11 @@ const AdminVerificationsPage = lazy(() =>
     default: m.AdminVerificationsPage,
   }))
 );
+const AccountStatusPage = lazy(() =>
+  import("@/features/settings/AccountStatusPage").then((m) => ({
+    default: m.AccountStatusPage,
+  }))
+);
 const MemberSupportPage = lazy(() =>
   import("@/features/settings/MemberSupportPage").then((m) => ({
     default: m.MemberSupportPage,
@@ -555,6 +560,16 @@ export default function App() {
             <RequireAuth>
               <LazyRoute>
                 <VerificationPage />
+              </LazyRoute>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings/account-status"
+          element={
+            <RequireAuth>
+              <LazyRoute>
+                <AccountStatusPage />
               </LazyRoute>
             </RequireAuth>
           }

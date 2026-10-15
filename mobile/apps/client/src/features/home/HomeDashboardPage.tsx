@@ -9,7 +9,11 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { matching, profile as profileApi, ApiClientError } from "@hel/api-client";
+import { apiClient, matching, profile as profileApi, ApiClientError } from "@hel/api-client";
+import {
+  statusNeedsAttention,
+  type AccountStatus,
+} from "@/features/settings/AccountStatusPage";
 import { useSession } from "@/features/auth/SessionProvider";
 import { useTranslation } from "@/lib/i18n/context";
 import { SkeletonCard } from "@/ui/mobile-kit";
@@ -184,6 +188,14 @@ export function HomeDashboardPage() {
   const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
 
   const aliveRef = useRef(true);
+  const [acct, setAcct] = useState<AccountStatus | null>(null);
+
+  useEffect(() => {
+    apiClient
+      .get<AccountStatus>("/account-status")
+      .then(setAcct)
+      .catch(() => undefined);
+  }, []);
 
   const reload = useCallback(
     async (showSpinner: boolean) => {
@@ -325,6 +337,18 @@ export function HomeDashboardPage() {
         </p>
         <h1 className="hm-title">{t("dashboard.hello", { name })}</h1>
       </header>
+
+      {acct && statusNeedsAttention(acct.currentStatus) && (
+        <Link
+          to="/settings/account-status"
+          className="form-notice"
+          role="status"
+          style={{ display: "block", textDecoration: "none" }}
+        >
+          <strong>Your account needs attention.</strong>{" "}
+          {acct.latestPublicReason ?? acct.nextStep} Tap to see what to do.
+        </Link>
+      )}
 
       {offline && (
         <div className="form-notice" role="status">

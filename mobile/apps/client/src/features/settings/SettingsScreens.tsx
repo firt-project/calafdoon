@@ -419,6 +419,13 @@ export function SettingsHomePage() {
               subtitle={t("settingsPage.profilePhotosDesc")}
             />
             <SettingsLinkRow
+              to="/settings/account-status"
+              icon={ClipboardList}
+              tone="green"
+              title="Account status"
+              subtitle="Review decisions, messages from our team, appeals"
+            />
+            <SettingsLinkRow
               to="/settings/verification"
               icon={Shield}
               tone="blue"
