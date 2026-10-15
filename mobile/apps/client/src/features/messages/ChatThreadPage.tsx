@@ -42,6 +42,7 @@ type UiMessage = {
   read?: boolean;
   failed?: boolean;
   pending?: boolean;
+  deleted?: boolean;
   imageUrl?: string | null;
   imageMediaId?: string;
 };
@@ -92,6 +93,7 @@ function toChatList(messages: UiMessage[]): ChatListMessage[] {
       mine: Boolean(m.mine),
       createdAt: m.createdAt,
       pending: m.pending,
+      deleted: m.deleted,
       failed: m.failed,
       read: m.read,
       delivery: m.delivery,
@@ -120,6 +122,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [safetyBusy, setSafetyBusy] = useState(false);
+  const [menuMessageId, setMenuMessageId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const userId = user?.id ? String(user.id) : null;
   const canSend = Boolean(body.trim());
@@ -210,6 +214,11 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       if (p?.conversationId && p.conversationId !== conversationId) return;
       if (alive) void loadMessages();
     });
+    const unsubDeleted = subscribeRealtime("message:deleted", (payload) => {
+      const p = payload as { conversationId?: string } | undefined;
+      if (p?.conversationId && p.conversationId !== conversationId) return;
+      if (alive) void loadMessages();
+    });
     const unsubTyping = subscribeRealtime("typing:update", (payload) => {
       const p = payload as {
         conversationId?: string;
@@ -237,6 +246,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     return () => {
       alive = false;
       unsubMsg();
+      unsubDeleted();
       unsubTyping();
       leaveConversation(conversationId);
       window.clearInterval(tick);
@@ -295,6 +305,27 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       setError(userFacingError(err));
     } finally {
       setSending(false);
+    }
+  }
+
+  async function deleteMine() {
+    const id = menuMessageId;
+    if (!id || deleting) return;
+    setDeleting(true);
+    try {
+      await chat.deleteMessage(conversationId, id);
+      setMessages((prev) =>
+        prev.map((m) =>
+          messageKey(m, 0) === id ? { ...m, deleted: true } : m
+        )
+      );
+      await hapticLight();
+    } catch (err) {
+      await hapticError();
+      setError(userFacingError(err));
+    } finally {
+      setDeleting(false);
+      setMenuMessageId(null);
     }
   }
 
@@ -464,7 +495,32 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           setShowJump(false);
         }}
         onRetry={(id) => void retry(id)}
+        onMessageMenu={(id) => setMenuMessageId(id)}
       />
+      <BottomSheet
+        open={menuMessageId != null}
+        onClose={() => setMenuMessageId(null)}
+        title="Delete message?"
+      >
+        <p className="muted small">
+          This removes the message for both of you. It cannot be undone.
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={deleting}
+          onClick={() => void deleteMine()}
+        >
+          {deleting ? "Deleting…" : "Delete for everyone"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => setMenuMessageId(null)}
+        >
+          Cancel
+        </button>
+      </BottomSheet>
 
       <form className="composer wa-composer" onSubmit={(e) => void send(e)}>
         <textarea

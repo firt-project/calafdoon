@@ -252,9 +252,9 @@ export class ConversationService {
         const last = await this.prisma.message.findFirst({
           where: { conversationId: conversation.id },
           orderBy: [{ messageCreatedAt: "desc" }, { id: "desc" }],
-          select: { body: true },
+          select: { body: true, deletedAt: true },
         });
-        lastMessage = last?.body ?? null;
+        lastMessage = last?.deletedAt ? null : (last?.body ?? null);
       }
 
       const unreadCount = conversation
@@ -810,6 +810,7 @@ export class ConversationService {
       read: boolean;
       messageCreatedAt: Date;
       idempotencyKey: string | null;
+      deletedAt?: Date | null;
     },
     viewerId: string,
     conversationId: string,
@@ -842,7 +843,42 @@ export class ConversationService {
       read: msg.read,
       createdAt: msg.messageCreatedAt.toISOString(),
       idempotencyKey: msg.idempotencyKey,
+      deleted: Boolean(msg.deletedAt),
     };
+  }
+
+  /** Sender-only "delete for everyone": clears text/image, keeps the row. */
+  async deleteMessage(
+    userId: string,
+    conversationId: string,
+    messageId: string
+  ) {
+    await this.requireProfile(userId);
+    const conv = await this.loadConversation(conversationId);
+    this.assertParticipant(conv, userId);
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
+    if (!msg || msg.conversationId !== conversationId) {
+      throw new NotFoundException("Message not found");
+    }
+    if (msg.senderId !== userId) {
+      throw new ForbiddenException("You can only delete your own messages");
+    }
+    if (!msg.deletedAt) {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { deletedAt: new Date(), body: "", imageMediaId: null },
+      });
+    }
+    try {
+      const payload = { conversationId, messageId };
+      this.realtime.emitToConversation(conversationId, "message:deleted", payload);
+      this.realtime.emitToUsers(this.participantIds(conv), "message:deleted", payload);
+    } catch {
+      /* realtime is best-effort */
+    }
+    return { ok: true as const };
   }
 
   async markRead(userId: string, conversationId: string) {

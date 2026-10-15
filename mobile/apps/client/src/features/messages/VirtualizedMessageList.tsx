@@ -11,6 +11,7 @@ export type ChatListMessage = {
   createdAt?: number | string;
   pending?: boolean;
   failed?: boolean;
+  deleted?: boolean;
   read?: boolean;
   delivery?: string;
   dateLabel?: string;
@@ -19,6 +20,8 @@ export type ChatListMessage = {
 type Props = {
   messages: ChatListMessage[];
   onRetry?: (id: string) => void;
+  /** Long-press / right-click on my own bubble. */
+  onMessageMenu?: (id: string) => void;
   onLoadOlder?: () => void;
   hasOlder?: boolean;
   loadingOlder?: boolean;
@@ -46,6 +49,7 @@ function Receipt({ m }: { m: ChatListMessage }) {
 export function VirtualizedMessageList({
   messages,
   onRetry,
+  onMessageMenu,
   onLoadOlder,
   hasOlder,
   loadingOlder,
@@ -56,6 +60,13 @@ export function VirtualizedMessageList({
   showJump,
 }: Props) {
   const parentRef = useRef<HTMLDivElement | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const cancelPress = () => {
+    if (pressTimer.current != null) {
+      window.clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
 
   const virtualizer = useVirtualizer({
     count: messages.length,
@@ -121,8 +132,32 @@ export function VirtualizedMessageList({
                     {m.dateLabel}
                   </p>
                 )}
-                <div className={cn("bubble", m.mine ? "me" : "peer", m.failed && "failed")}>
-                  {m.imageUrl ? (
+                <div
+                  className={cn("bubble", m.mine ? "me" : "peer", m.failed && "failed")}
+                  onPointerDown={() => {
+                    if (!m.mine || m.pending || m.failed || m.deleted) return;
+                    cancelPress();
+                    pressTimer.current = window.setTimeout(() => {
+                      pressTimer.current = null;
+                      onMessageMenu?.(m.id);
+                    }, 450);
+                  }}
+                  onPointerUp={cancelPress}
+                  onPointerLeave={cancelPress}
+                  onPointerCancel={cancelPress}
+                  onPointerMove={cancelPress}
+                  onContextMenu={(e) => {
+                    if (!m.mine || m.pending || m.failed || m.deleted) return;
+                    e.preventDefault();
+                    onMessageMenu?.(m.id);
+                  }}
+                >
+                  {m.deleted ? (
+                    <span className="bubble-text" style={{ fontStyle: "italic", opacity: 0.7 }}>
+                      This message was deleted
+                    </span>
+                  ) : null}
+                  {m.imageUrl && !m.deleted ? (
                     <img
                       src={m.imageUrl}
                       alt=""
@@ -135,7 +170,7 @@ export function VirtualizedMessageList({
                       }}
                     />
                   ) : null}
-                  {m.text ? <span className="bubble-text">{m.text}</span> : null}
+                  {m.text && !m.deleted ? <span className="bubble-text">{m.text}</span> : null}
                   <span
                     className={cn("bubble-meta", m.read && "is-read")}
                   >

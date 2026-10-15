@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -104,6 +105,16 @@ export class ConversationController {
       body
     );
     return this.conversations.sendMessage(user.id, id, parsed);
+  }
+
+  @Delete(":id/messages/:messageId")
+  @HttpCode(200)
+  async deleteMessage(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Param("messageId") messageId: string
+  ) {
+    return this.conversations.deleteMessage(user.id, id, messageId);
   }
 
   @Post(":id/read")

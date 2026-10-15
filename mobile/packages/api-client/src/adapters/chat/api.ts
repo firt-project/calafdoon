@@ -59,6 +59,11 @@ export const apiChat: ChatAdapter = {
       return { ...m, _id: m._id ?? m.id, createdAt };
     });
   },
+  async deleteMessage(conversationId, messageId) {
+    return apiClient.delete(
+      `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`
+    );
+  },
   async sendMessage(conversationId, body) {
     try {
       return await apiClient.post(

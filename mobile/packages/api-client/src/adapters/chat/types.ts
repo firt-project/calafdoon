@@ -20,6 +20,8 @@ export type ChatAdapter = {
     conversationId: string,
     file: File
   ): Promise<{ mediaId: string }>;
+  /** Delete one of my own messages for everyone. */
+  deleteMessage(conversationId: string, messageId: string): Promise<unknown>;
   markAsRead(conversationId: string): Promise<unknown>;
   setTyping(conversationId: string, typing: boolean): Promise<unknown>;
   getTypingStatus(conversationId: string): Promise<unknown>;
@@ -32,6 +34,7 @@ export const CHAT_METHOD_NAMES = [
   "getMessages",
   "sendMessage",
   "uploadChatImage",
+  "deleteMessage",
   "markAsRead",
   "setTyping",
   "getTypingStatus",
