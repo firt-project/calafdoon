@@ -1381,6 +1381,14 @@ export class MatchService {
       isOnline: profile.showOnlineStatus
         ? await this.presence.isOnline(targetUserId)
         : false,
+      lastSeenAt: profile.showOnlineStatus
+        ? ((
+            await this.prisma.user.findUnique({
+              where: { id: targetUserId },
+              select: { lastActiveAt: true },
+            })
+          )?.lastActiveAt?.toISOString() ?? null)
+        : null,
     };
   }
 

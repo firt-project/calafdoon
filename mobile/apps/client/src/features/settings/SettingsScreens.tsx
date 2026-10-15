@@ -538,16 +538,16 @@ export function SettingsHomePage() {
           <SettingsControlRow
             icon={Shield}
             tone="blue"
-            title="Show when I'm online"
+            title="Show online & last seen"
             subtitle={
               showOnline
-                ? "Matches can see when you are online"
-                : "Hidden — nobody sees your online status"
+                ? "Matches can see when you are online and when you were last seen"
+                : "Hidden — nobody sees your online status or last seen"
             }
             control={
               <NativeSwitch
                 checked={showOnline}
-                aria-label="Show when I'm online"
+                aria-label="Show online and last seen"
                 onChange={(next) => void toggleShowOnline(next)}
               />
             }

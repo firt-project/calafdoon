@@ -206,6 +206,10 @@ export class ChatGateway
     if (!userId) return;
     const wentOffline = await this.presence.markDisconnected(userId, client.id);
     if (wentOffline) {
+      // Remember when they were last around, for "last seen".
+      await this.prisma?.user
+        .update({ where: { id: userId }, data: { lastActiveAt: new Date() } })
+        .catch(() => undefined);
       await this.broadcastPresence(userId, false);
     }
   }

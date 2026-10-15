@@ -190,6 +190,14 @@ export class ConversationService {
       isOnline: other.showOnlineStatus
         ? await this.presence.isOnline(otherUserId)
         : false,
+      lastSeenAt: other.showOnlineStatus
+        ? ((
+            await this.prisma.user.findUnique({
+              where: { id: otherUserId },
+              select: { lastActiveAt: true },
+            })
+          )?.lastActiveAt?.toISOString() ?? null)
+        : null,
     };
   }
 

@@ -29,6 +29,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet } from "@/ui/mobile-kit";
 import { Avatar } from "@/ui/design-system";
 import { cn } from "@/utils/cn";
+import { formatLastSeen } from "@/utils/last-seen";
 
 type UiMessage = {
   id?: string;
@@ -125,6 +126,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     userId: string | null;
     imageUrl: string | null;
     online?: boolean;
+    lastSeenAt?: string | null;
   }>({ name: "Chat", userId: null, imageUrl: null });
   const [matchId, setMatchId] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
@@ -195,6 +197,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
             name?: string | null;
             userId?: string;
             imageUrl?: string | null;
+            isOnline?: boolean;
+            lastSeenAt?: string | null;
           } | null;
           peerName?: string;
           title?: string;
@@ -206,7 +210,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           name: String(name),
           userId: c.profile?.userId ? String(c.profile.userId) : null,
           imageUrl: c.profile?.imageUrl ?? null,
-          online: Boolean(c.online),
+          online: Boolean(c.profile?.isOnline ?? c.online),
+          lastSeenAt: c.profile?.lastSeenAt ?? null,
         });
       })
       .catch(() => undefined);
@@ -386,6 +391,19 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const list = useMemo(() => toChatList(messages, userId), [messages, userId]);
 
   useEffect(() => {
+    if (!peer.userId) return;
+    return subscribeRealtime("presence:update", (payload) => {
+      const p = payload as { userId?: string; isOnline?: boolean } | undefined;
+      if (!p || p.userId !== peer.userId) return;
+      setPeer((prev) => ({
+        ...prev,
+        online: Boolean(p.isOnline),
+        lastSeenAt: p.isOnline ? prev.lastSeenAt : new Date().toISOString(),
+      }));
+    });
+  }, [peer.userId]);
+
+  useEffect(() => {
     apiClient
       .get<{ muted: boolean }>(`/conversations/${encodeURIComponent(conversationId)}/mute`)
       .then((r) => setMuted(Boolean(r?.muted)))
@@ -455,7 +473,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     ? t("chatPage.typing")
     : peer.online
       ? t("chatPage.activeNow")
-      : t("chatPage.tapForInfo");
+      : (formatLastSeen(peer.lastSeenAt) ?? t("chatPage.tapForInfo"));
 
   return (
     <div className="screen chat-screen wa-chat">
