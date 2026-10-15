@@ -8,7 +8,8 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { Logger } from "@nestjs/common";
+import { Logger, Optional } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import type { Server, Socket } from "socket.io";
 import { SessionService } from "../auth/session.service";
@@ -64,7 +65,8 @@ export class ChatGateway
     private readonly realtime: ChatRealtimeService,
     private readonly redis: RedisService,
     private readonly presence: PresenceService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    @Optional() private readonly prisma?: PrismaService
   ) {}
 
   afterInit(server: Server) {
@@ -168,6 +170,11 @@ export class ChatGateway
   /** Notify everyone connected that this user's online status changed. */
   private async broadcastPresence(userId: string, isOnline: boolean) {
     try {
+      const hidden = await this.prisma?.profile.findUnique({
+        where: { userId },
+        select: { showOnlineStatus: true },
+      });
+      if (hidden && hidden.showOnlineStatus === false) return;
       this.realtime.emitToAll("presence:update", {
         userId,
         isOnline,

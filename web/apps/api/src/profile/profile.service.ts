@@ -888,6 +888,21 @@ export class ProfileService {
     }
     return result;
   }
+
+  async getPrivacy(userId: string) {
+    const p = await this.requireProfile(userId);
+    return { showOnlineStatus: p.showOnlineStatus };
+  }
+
+  async setPrivacy(userId: string, patch: { showOnlineStatus?: boolean }) {
+    await this.requireProfile(userId);
+    const updated = await this.prisma.profile.update({
+      where: { userId },
+      data: patch,
+      select: { showOnlineStatus: true },
+    });
+    return updated;
+  }
 }
 
 export type { Preference };

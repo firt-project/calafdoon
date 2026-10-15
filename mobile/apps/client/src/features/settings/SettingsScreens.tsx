@@ -318,6 +318,24 @@ export function SettingsHomePage() {
   const [message, setMessage] = useState<string | null>(null);
   const roleLabel = staffRoleLabel(user, accessState);
   const isStaff = Boolean(roleLabel);
+  const [showOnline, setShowOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isStaff) return;
+    apiClient
+      .get<{ showOnlineStatus: boolean }>("/profile/privacy")
+      .then((r) => setShowOnline(r.showOnlineStatus))
+      .catch(() => undefined);
+  }, [isStaff]);
+
+  async function toggleShowOnline(next: boolean) {
+    setShowOnline(next);
+    try {
+      await apiClient.post("/profile/privacy", { showOnlineStatus: next });
+    } catch {
+      setShowOnline(!next);
+    }
+  }
 
   async function onLogout() {
     // logout() signs out in the UI synchronously; go to Sign in in the same tick.
@@ -516,6 +534,25 @@ export function SettingsHomePage() {
       </SettingsGroup>
 
       <SettingsGroup title={t("settingsPage.privacy")}>
+        {!isStaff && showOnline !== null && (
+          <SettingsControlRow
+            icon={Shield}
+            tone="blue"
+            title="Show when I'm online"
+            subtitle={
+              showOnline
+                ? "Matches can see when you are online"
+                : "Hidden — nobody sees your online status"
+            }
+            control={
+              <NativeSwitch
+                checked={showOnline}
+                aria-label="Show when I'm online"
+                onChange={(next) => void toggleShowOnline(next)}
+              />
+            }
+          />
+        )}
         <SettingsLinkRow
           to="/legal/privacy"
           icon={Shield}

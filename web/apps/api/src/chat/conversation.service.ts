@@ -187,7 +187,9 @@ export class ConversationService {
       photoVisibility: other.photoVisibility,
       approved: other.approved,
       reviewStatus: other.reviewStatus,
-      isOnline: await this.presence.isOnline(otherUserId),
+      isOnline: other.showOnlineStatus
+        ? await this.presence.isOnline(otherUserId)
+        : false,
     };
   }
 

@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "show_online_status" BOOLEAN NOT NULL DEFAULT true;

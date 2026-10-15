@@ -1378,7 +1378,9 @@ export class MatchService {
       hasPersonalSupport: !!profile.hasPersonalSupport,
       questionnaireComplete: profile.questionnaireComplete,
       verified: profile.verified,
-      isOnline: await this.presence.isOnline(targetUserId),
+      isOnline: profile.showOnlineStatus
+        ? await this.presence.isOnline(targetUserId)
+        : false,
     };
   }
 

@@ -119,6 +119,23 @@ export class ProfileController {
     return this.profiles.getAccessState(user.id);
   }
 
+  @Get("privacy")
+  @RequireProfile()
+  async getPrivacy(@CurrentUser() user: RequestUser) {
+    return this.profiles.getPrivacy(user.id);
+  }
+
+  @Post("privacy")
+  @HttpCode(200)
+  @RequireProfile()
+  async setPrivacy(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = parseBody(
+      z.object({ showOnlineStatus: z.boolean().optional() }).strict(),
+      body
+    );
+    return this.profiles.setPrivacy(user.id, parsed);
+  }
+
   @Post("ensure")
   @HttpCode(200)
   async ensure(@CurrentUser() user: RequestUser) {
