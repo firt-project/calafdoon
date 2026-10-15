@@ -1424,6 +1424,8 @@ export const en = {
     waafiSearchEmpty: "No Waafi payments matched.",
     analyticsDesc: "Match rate, conversion, and where members are from.",
     announcementsDesc: "Send one message to every member.",
+    verification: "Verification",
+    verificationDesc: "Review member selfies and award the verified badge.",
     reportsDesc: "Review reports and ban if needed.",
     noReports: "No reports yet.",
     reportReason: "Reason",

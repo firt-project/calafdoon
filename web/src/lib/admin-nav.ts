@@ -7,6 +7,7 @@ import {
   Headphones,
   LayoutDashboard,
   Megaphone,
+  BadgeCheck,
   MessageCircle,
   Settings,
   TrendingUp,
@@ -44,6 +45,12 @@ export const ADMIN_NAV_TABS = [
     titleKey: "adminPage.reports" as TranslationPath,
     descKey: "adminPage.reportsDesc" as TranslationPath,
     icon: Flag,
+  },
+  {
+    tab: "verification",
+    titleKey: "adminPage.verification" as TranslationPath,
+    descKey: "adminPage.verificationDesc" as TranslationPath,
+    icon: BadgeCheck,
   },
   {
     tab: "payments",
@@ -96,6 +103,7 @@ export const ADMIN_MOBILE_PRIMARY_TABS = [
 export const ADMIN_MOBILE_MORE_TABS = [
   "contacts",
   "reports",
+  "verification",
   "payments",
   "announcements",
   "analytics",

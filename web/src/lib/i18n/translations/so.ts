@@ -1435,6 +1435,8 @@ export const so: Translations = {
     waafiSearchEmpty: "Lacag bixin Waafi lama helin.",
     analyticsDesc: "Arag dhaqdhaqaaqa platform-ka iyo aragtida beddelka.",
     announcementsDesc: "U dir ogeysiis dhammaan xubnaha.",
+    verification: "Xaqiijin",
+    verificationDesc: "Dib u eeg sawirada xubnaha oo sii calaamadda xaqiijinta.",
     reportsDesc: "Eeg warbixinada xubnaha oo tallaabo qaado.",
     needsAttention: "U baahan fiiro",
     attentionIncomplete: "{{count}} profile oo aan dhammaystirnayn",

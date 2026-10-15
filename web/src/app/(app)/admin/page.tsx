@@ -49,6 +49,7 @@ import { AdminStaffInvitesPanel } from "@/components/admin/admin-staff-invites-p
 import { AdminUserDetailPanel } from "@/components/admin/admin-user-detail-panel";
 import { AdminMessagesInbox } from "@/components/admin/admin-messages-inbox";
 import { AdminContactsInbox } from "@/components/admin/admin-contacts-inbox";
+import { AdminVerificationPanel } from "@/components/admin/admin-verification-panel";
 import { AdminPaymentsDashboardPanel } from "@/components/admin/admin-payments-dashboard-panel";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { LoadingRecovery } from "@/components/auth/loading-recovery";
@@ -1134,6 +1135,8 @@ export default function AdminPage() {
         {activeTab === "contacts" && (
           <AdminContactsInbox onOpenUser={openUserProfile} />
         )}
+
+        {activeTab === "verification" && <AdminVerificationPanel />}
 
         {activeTab === "reports" && (
           <div className="space-y-3">
