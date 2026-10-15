@@ -1,19 +1,20 @@
 import "./admin.css";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Ban,
   Camera,
   Check,
   Mail,
   MapPin,
+  MoreHorizontal,
   Phone,
   UserRound,
   X,
 } from "lucide-react";
-import { admin } from "@hel/api-client";
+import { admin, apiClient } from "@hel/api-client";
 import { useTranslation } from "@/lib/i18n/context";
-import { SkeletonCard } from "@/ui/mobile-kit";
+import { BottomSheet, SkeletonCard } from "@/ui/mobile-kit";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 
@@ -143,6 +144,13 @@ export function AdminMemberDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const [sheet, setSheet] = useState<
+    null | "menu" | "reject" | "changes" | "pause" | "suspend" | "delete"
+  >(null);
+  const [reasonText, setReasonText] = useState("");
+  const [messageText, setMessageText] = useState("");
+  const [confirmName, setConfirmName] = useState("");
 
   const reload = useCallback(async () => {
     if (!profileId) return;
@@ -185,6 +193,18 @@ export function AdminMemberDetailPage() {
       setBusy(false);
     }
   }
+
+  function closeSheet() {
+    setSheet(null);
+    setReasonText("");
+    setMessageText("");
+    setConfirmName("");
+  }
+
+  const enc = encodeURIComponent(profileId);
+  const status = profile?.reviewStatus ?? "";
+  const isPaused = status === "paused";
+  const isSuspended = status === "suspended";
 
   const isStaffMember =
     profile?.role === "admin" || profile?.role === "owner";
@@ -284,11 +304,7 @@ export function AdminMemberDetailPage() {
                 type="button"
                 className="btn btn-secondary"
                 disabled={busy}
-                onClick={() =>
-                  void run(() =>
-                    admin.users.reject(profileId, "Rejected from mobile admin")
-                  )
-                }
+                onClick={() => setSheet("reject")}
               >
                 <X size={15} /> Reject
               </button>
@@ -301,6 +317,14 @@ export function AdminMemberDetailPage() {
                 }
               >
                 <Camera size={15} /> Request photo
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => setSheet("menu")}
+              >
+                <MoreHorizontal size={15} /> More
               </button>
               {!profile.banned ? (
                 <button
@@ -696,6 +720,181 @@ export function AdminMemberDetailPage() {
           </p>
         </>
       )}
+      <BottomSheet open={sheet === "menu"} title="More actions" onClose={closeSheet}>
+        <div className="stack">
+          <button type="button" className="btn btn-secondary btn-block" onClick={() => setSheet("changes")}>
+            Request changes
+          </button>
+          {isPaused ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-block"
+              disabled={busy}
+              onClick={() => {
+                closeSheet();
+                void run(() => apiClient.post(`/admin/users/${enc}/resume`, {}));
+              }}
+            >
+              Resume account
+            </button>
+          ) : (
+            <button type="button" className="btn btn-secondary btn-block" onClick={() => setSheet("pause")}>
+              Pause account
+            </button>
+          )}
+          {isSuspended ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-block"
+              disabled={busy}
+              onClick={() => {
+                closeSheet();
+                void run(() => apiClient.post(`/admin/users/${enc}/unsuspend`, {}));
+              }}
+            >
+              Lift suspension
+            </button>
+          ) : (
+            <button type="button" className="btn btn-secondary btn-block" onClick={() => setSheet("suspend")}>
+              Suspend account
+            </button>
+          )}
+          <button type="button" className="btn btn-danger btn-block" onClick={() => setSheet("delete")}>
+            Delete member…
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === "reject"} title="Reject this profile?" onClose={closeSheet}>
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>The member sees this reason.</p>
+          <textarea rows={3} value={reasonText} onChange={(e) => setReasonText(e.target.value)} placeholder="e.g. Photo does not show your face" />
+          <button
+            type="button"
+            className="btn btn-danger btn-block"
+            disabled={busy || reasonText.trim().length < 3}
+            onClick={() => {
+              const reason = reasonText.trim();
+              closeSheet();
+              void run(() => admin.users.reject(profileId, reason));
+            }}
+          >
+            Reject
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === "changes"} title="Request changes" onClose={closeSheet}>
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            Ask the member to fix something and resubmit, without rejecting them.
+          </p>
+          <textarea rows={3} value={reasonText} onChange={(e) => setReasonText(e.target.value)} placeholder="What must change? e.g. Add a clear photo of your face" />
+          <button
+            type="button"
+            className="btn btn-primary btn-block"
+            disabled={busy || reasonText.trim().length < 3}
+            onClick={() => {
+              const text = reasonText.trim();
+              closeSheet();
+              void run(() =>
+                apiClient.post(`/admin/users/${enc}/request-changes`, {
+                  whatMustChange: text,
+                  publicInstructions: text,
+                })
+              );
+            }}
+          >
+            Send request
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === "pause"} title="Pause account" onClose={closeSheet}>
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            The member cannot use the app until you resume the account.
+          </p>
+          <textarea rows={2} value={reasonText} onChange={(e) => setReasonText(e.target.value)} placeholder="Internal reason (optional)" />
+          <textarea rows={2} value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Message shown to the member (optional)" />
+          <button
+            type="button"
+            className="btn btn-primary btn-block"
+            disabled={busy}
+            onClick={() => {
+              const body = {
+                reason: reasonText.trim() || undefined,
+                publicUserMessage: messageText.trim() || undefined,
+              };
+              closeSheet();
+              void run(() => apiClient.post(`/admin/users/${enc}/pause`, body));
+            }}
+          >
+            Pause account
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === "suspend"} title="Suspend account" onClose={closeSheet}>
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            Use for rule violations. The member is locked out until you lift it.
+          </p>
+          <textarea rows={2} value={reasonText} onChange={(e) => setReasonText(e.target.value)} placeholder="Internal reason" />
+          <textarea rows={2} value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Message shown to the member (optional)" />
+          <button
+            type="button"
+            className="btn btn-danger btn-block"
+            disabled={busy || reasonText.trim().length < 3}
+            onClick={() => {
+              const body = {
+                reason: reasonText.trim(),
+                publicUserMessage: messageText.trim() || undefined,
+              };
+              closeSheet();
+              void run(() => apiClient.post(`/admin/users/${enc}/suspend`, body));
+            }}
+          >
+            Suspend
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === "delete"} title="Delete this member?" onClose={closeSheet}>
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            This permanently removes {profile?.name ?? "the member"} and cannot be undone. Type their name to confirm.
+          </p>
+          <input value={confirmName} onChange={(e) => setConfirmName(e.target.value)} placeholder={String(profile?.name ?? "Name")} />
+          <button
+            type="button"
+            className="btn btn-danger btn-block"
+            disabled={
+              busy ||
+              confirmName.trim().toLowerCase() !==
+                String(profile?.name ?? "").trim().toLowerCase() ||
+              !profile?.name
+            }
+            onClick={() => {
+              closeSheet();
+              setBusy(true);
+              admin.users
+                .delete(profileId)
+                .then(() => {
+                  void hapticSuccess();
+                  navigate("/admin/members", { replace: true });
+                })
+                .catch((e) => {
+                  void hapticError();
+                  setError(userFacingError(e));
+                })
+                .finally(() => setBusy(false));
+            }}
+          >
+            Delete permanently
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

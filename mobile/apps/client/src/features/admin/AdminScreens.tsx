@@ -18,7 +18,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { admin, support } from "@hel/api-client";
+import { admin, apiClient, support } from "@hel/api-client";
 import {
   staffRoleLabel,
   useSession,
@@ -142,6 +142,22 @@ export function AdminHomePage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingSelfies, setPendingSelfies] = useState(0);
+  const [openSupport, setOpenSupport] = useState(0);
+
+  useEffect(() => {
+    apiClient
+      .get<{ count: number }>("/admin/verifications/count")
+      .then((r) => setPendingSelfies(r?.count ?? 0))
+      .catch(() => undefined);
+    support.admin
+      .list({ status: "open", limit: 50 })
+      .then((r) => {
+        const items = (r as { items?: unknown[] })?.items;
+        setOpenSupport(Array.isArray(items) ? items.length : 0);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     admin
@@ -234,8 +250,13 @@ export function AdminHomePage() {
           </span>
           <span className="meta">
             <strong>Messages</strong>
-            <span>Support inbox + member chats</span>
+            <span>
+              {openSupport > 0
+                ? `${openSupport} open support ${openSupport === 1 ? "request" : "requests"}`
+                : "Support inbox + member chats"}
+            </span>
           </span>
+          {openSupport > 0 && <span className="tab-badge">{openSupport}</span>}
           <ChevronRight size={16} aria-hidden />
         </Link>
         <Link className="admin-nav-card" to="/admin/analytics">
@@ -276,8 +297,13 @@ export function AdminHomePage() {
           </span>
           <span className="meta">
             <strong>Verifications</strong>
-            <span>Review member selfies</span>
+            <span>
+              {pendingSelfies > 0
+                ? `${pendingSelfies} waiting for review`
+                : "Review member selfies"}
+            </span>
           </span>
+          {pendingSelfies > 0 && <span className="tab-badge">{pendingSelfies}</span>}
           <ChevronRight size={16} aria-hidden />
         </Link>
         <Link className="admin-nav-card" to="/admin/announcements">
