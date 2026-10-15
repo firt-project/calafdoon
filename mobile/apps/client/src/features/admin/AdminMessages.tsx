@@ -1,6 +1,6 @@
 import "./admin.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MessageCircle, Search, X } from "lucide-react";
 import { admin, support } from "@hel/api-client";
 import { EmptyState, SkeletonCard } from "@/ui/mobile-kit";
@@ -105,13 +105,23 @@ type ThreadMsg = {
 /* ───────── Messages hub: Support | Member chats ───────── */
 
 export function AdminMessagesPage() {
-  const [tab, setTab] = useState<"support" | "chats">("support");
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const tab: "support" | "chats" = params.get("tab") === "chats" ? "chats" : "support";
+  // Tab lives in the URL (replace, no history entry) so Back from a person returns here.
+  const setTab = (next: "support" | "chats") => setParams({ tab: next }, { replace: true });
   return (
     <div className="screen pad-tab">
       <header className="screen-header">
-        <Link to="/admin" className="back-btn" aria-label="Back">
-          ←
-        </Link>
+        {params.get("c") ? (
+          <button type="button" className="back-btn" aria-label="Back" onClick={() => navigate(-1)}>
+            ←
+          </button>
+        ) : (
+          <Link to="/admin" className="back-btn" aria-label="Back">
+            ←
+          </Link>
+        )}
         <h1>Messages</h1>
       </header>
       <div className="adm-seg" role="tablist" aria-label="Message type">
@@ -130,6 +140,9 @@ export function AdminMessagesPage() {
 /* ───────── Support ───────── */
 
 function SupportInbox() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const selectedId = params.get("c");
   const [status, setStatus] = useState<"all" | "open" | "reviewed" | "closed">("open");
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<SupportContact[]>([]);
@@ -171,22 +184,39 @@ function SupportInbox() {
     );
   }, [items, search]);
 
-  async function open(c: SupportContact) {
+  // Opening a person pushes a history entry, so Back returns to this list.
+  function open(c: SupportContact) {
     const id = c.id ?? c._id;
-    if (!id) return;
+    if (id) navigate(`/admin/messages?tab=support&c=${encodeURIComponent(id)}`);
+  }
+
+  useEffect(() => {
+    if (!selectedId) {
+      setSelected(null);
+      return;
+    }
+    let alive = true;
     setBusy(true);
     setError(null);
-    try {
-      const detail = (await support.admin.get(id)) as SupportContact & { messages?: SupportMsg[] };
-      setSelected({ ...c, ...detail, thread: detail.messages ?? detail.thread ?? c.thread ?? [] });
-      setReply("");
-      setNotice(null);
-    } catch (e) {
-      setError(userFacingError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
+    support.admin
+      .get(selectedId)
+      .then((raw) => {
+        if (!alive) return;
+        const detail = raw as SupportContact & { messages?: SupportMsg[] };
+        setSelected({ ...detail, thread: detail.messages ?? detail.thread ?? [] });
+        setReply("");
+        setNotice(null);
+      })
+      .catch((e) => {
+        if (alive) setError(userFacingError(e));
+      })
+      .finally(() => {
+        if (alive) setBusy(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [selectedId]);
 
   async function refreshSelected(id: string, base: SupportContact) {
     const detail = (await support.admin.get(id)) as SupportContact & { messages?: SupportMsg[] };
@@ -230,11 +260,22 @@ function SupportInbox() {
     }
   }
 
+  if (selectedId && !selected) {
+    return (
+      <div className="adm-detail">
+        <button type="button" className="adm-back" onClick={() => navigate(-1)}>
+          ← All support messages
+        </button>
+        {error ? <div className="form-error" role="alert">{error}</div> : <SkeletonCard />}
+      </div>
+    );
+  }
+
   if (selected) {
     const thread = selected.thread ?? [];
     return (
       <div className="adm-detail">
-        <button type="button" className="adm-back" onClick={() => setSelected(null)}>
+        <button type="button" className="adm-back" onClick={() => navigate(-1)}>
           ← All support messages
         </button>
         <div className="adm-person">
@@ -339,7 +380,7 @@ function SupportInbox() {
       {shown.map((c) => {
         const last = c.thread?.[c.thread.length - 1];
         return (
-          <button key={c.id ?? c._id} type="button" className="adm-row" onClick={() => void open(c)}>
+          <button key={c.id ?? c._id} type="button" className="adm-row" onClick={() => open(c)}>
             <Avatar name={c.name} />
             <span className="adm-row-body">
               <span className="adm-row-top">
