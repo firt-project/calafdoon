@@ -2,7 +2,7 @@
   "name": "hel-calafkaaga",
   "version": "1.0.0",
   "private": true,
-  "description": "Hel Calafkaaga monorepo — NestJS API + client apps",
+  "description": "Hel Calafkaaga monorepo \u2014 NestJS API + client apps",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -45,6 +45,9 @@
   },
   "overrides": {
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    }
   }
 }

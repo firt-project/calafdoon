@@ -104,5 +104,10 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    }
   }
 }
