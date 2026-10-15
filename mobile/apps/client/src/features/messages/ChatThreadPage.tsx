@@ -117,6 +117,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   }>({ name: "Chat", userId: null, imageUrl: null });
   const [matchId, setMatchId] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [unmatchOpen, setUnmatchOpen] = useState(false);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -364,16 +365,17 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
 
   async function unmatchUser() {
     if (!matchId || safetyBusy || offline) return;
-    if (!window.confirm(`Unmatch with ${peer.name}? You will no longer be able to chat.`)) return;
     setSafetyBusy(true);
     setError(null);
     try {
       await matching.unmatch(matchId);
       await hapticMedium();
+      setUnmatchOpen(false);
       setSafetyOpen(false);
       navigate("/messages", { replace: true });
     } catch (e) {
       await hapticError();
+      setUnmatchOpen(false);
       setError(userFacingError(e));
     } finally {
       setSafetyBusy(false);
@@ -512,7 +514,10 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
             type="button"
             className="btn btn-secondary btn-block"
             disabled={safetyBusy || offline || !matchId}
-            onClick={() => void unmatchUser()}
+            onClick={() => {
+              setSafetyOpen(false);
+              setUnmatchOpen(true);
+            }}
           >
             Unmatch
           </button>
@@ -523,6 +528,34 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
             onClick={() => void reportOrBlock("block")}
           >
             <Ban size={16} /> {t("safety.blockUser")}
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
+        open={unmatchOpen}
+        title={`Unmatch with ${peer.name}?`}
+        onClose={() => setUnmatchOpen(false)}
+      >
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            You will no longer be able to chat with {peer.name}, and the
+            conversation will disappear for both of you.
+          </p>
+          <button
+            type="button"
+            className="btn btn-danger btn-block"
+            disabled={safetyBusy || offline}
+            onClick={() => void unmatchUser()}
+          >
+            {safetyBusy ? "Unmatching…" : "Yes, unmatch"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            onClick={() => setUnmatchOpen(false)}
+          >
+            Cancel
           </button>
         </div>
       </BottomSheet>
