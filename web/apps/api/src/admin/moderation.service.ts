@@ -234,6 +234,8 @@ export class ModerationService {
           reportedProfileId: reported?.id ?? null,
           reportedBanned: reported?.banned ?? false,
           reporterName: reporter?.name ?? "Unknown",
+          reporterUserId: report.reporterId,
+          reporterProfileId: reporter?.id ?? null,
         };
       })
     );

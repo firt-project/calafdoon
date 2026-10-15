@@ -97,8 +97,13 @@ const AdminReportsPage = lazy(() =>
     default: m.AdminReportsPage,
   }))
 );
+const AdminChatTranscriptPage = lazy(() =>
+  import("@/features/admin/AdminMessages").then((m) => ({
+    default: m.AdminChatTranscriptPage,
+  }))
+);
 const AdminMessagesPage = lazy(() =>
-  import("@/features/admin/AdminScreens").then((m) => ({
+  import("@/features/admin/AdminMessages").then((m) => ({
     default: m.AdminMessagesPage,
   }))
 );
@@ -409,6 +414,16 @@ export default function App() {
               <LazyRoute label="Loading invites…">
                 <RequireStaff>
                   <AdminInvitePage />
+                </RequireStaff>
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/admin/chats/:conversationId"
+            element={
+              <LazyRoute label="Opening chat…">
+                <RequireStaff>
+                  <AdminChatTranscriptPage />
                 </RequireStaff>
               </LazyRoute>
             }

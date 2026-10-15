@@ -1,6 +1,6 @@
 import "./admin.css";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   Activity,
   Bell,
@@ -67,16 +67,11 @@ type ReportRow = {
   reportedName?: string;
   reporterName?: string;
   reportedProfileId?: string | null;
+  reportedUserId?: string;
+  reporterUserId?: string;
+  reporterProfileId?: string | null;
   reportedBanned?: boolean;
   createdAt?: number;
-};
-
-type ConvRow = {
-  conversationId?: string;
-  lastMessageAt?: number;
-  lastMessage?: { body?: string } | null;
-  memberA?: { name?: string };
-  memberB?: { name?: string };
 };
 
 type AnnounceRow = {
@@ -1146,6 +1141,7 @@ export function AdminPaymentsPage() {
 }
 
 export function AdminReportsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<ReportRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1171,6 +1167,18 @@ export function AdminReportsPage() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  async function viewChat(a: string, b: string) {
+    try {
+      const res = await apiClient.get<{ conversationId: string | null }>(
+        `/admin/conversations/between?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`
+      );
+      if (res.conversationId) navigate(`/admin/chats/${res.conversationId}`);
+      else setError("These two members have no chat together.");
+    } catch (e) {
+      setError(userFacingError(e));
+    }
+  }
 
   async function act(id: string, fn: () => Promise<unknown>) {
     setBusyId(id);
@@ -1229,6 +1237,27 @@ export function AdminReportsPage() {
                 {r.details ? ` — ${r.details}` : ""}
               </p>
               <div className="admin-actions">
+                {r.reportedProfileId && (
+                  <Link to={`/admin/members/${r.reportedProfileId}`} className="btn btn-secondary btn-sm">
+                    Reported profile
+                  </Link>
+                )}
+                {r.reporterProfileId && (
+                  <Link to={`/admin/members/${r.reporterProfileId}`} className="btn btn-secondary btn-sm">
+                    Reporter profile
+                  </Link>
+                )}
+                {r.reportedUserId && r.reporterUserId && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => void viewChat(r.reporterUserId!, r.reportedUserId!)}
+                  >
+                    View their chat
+                  </button>
+                )}
+              </div>
+              <div className="admin-actions">
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -1277,26 +1306,6 @@ export function AdminReportsPage() {
   );
 }
 
-type SupportMsg = {
-  id?: string;
-  authorRole?: string;
-  body?: string;
-  createdAt?: string | number;
-};
-
-type SupportContact = {
-  id?: string;
-  _id?: string;
-  name?: string | null;
-  email?: string | null;
-  topic?: string;
-  subject?: string;
-  status?: string;
-  canReply?: boolean;
-  createdAt?: number;
-  thread?: SupportMsg[];
-};
-
 type InviteRow = {
   id?: string;
   _id?: string;
@@ -1306,332 +1315,6 @@ type InviteRow = {
   createdAt?: string;
   expiresAt?: number;
 };
-
-export function AdminMessagesPage() {
-  const [tab, setTab] = useState<"support" | "platform">("support");
-  const [supportStatus, setSupportStatus] = useState<
-    "all" | "open" | "reviewed" | "closed"
-  >("open");
-  const [contacts, setContacts] = useState<SupportContact[]>([]);
-  const [selected, setSelected] = useState<SupportContact | null>(null);
-  const [reply, setReply] = useState("");
-  const [items, setItems] = useState<ConvRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  const loadSupport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = (await support.admin.list({
-        status: supportStatus === "all" ? undefined : supportStatus,
-        limit: 50,
-      })) as { items?: SupportContact[] };
-      setContacts(Array.isArray(res?.items) ? res.items : []);
-    } catch (e) {
-      setError(userFacingError(e));
-      setContacts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [supportStatus]);
-
-  const loadPlatform = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await admin.conversations.list({ limit: 40 });
-      setItems(Array.isArray(res) ? (res as ConvRow[]) : []);
-    } catch (e) {
-      setError(userFacingError(e));
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (tab === "support") void loadSupport();
-    else void loadPlatform();
-  }, [tab, loadSupport, loadPlatform]);
-
-  async function openContact(c: SupportContact) {
-    const id = c.id ?? c._id;
-    if (!id) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const detail = (await support.admin.get(id)) as SupportContact & {
-        messages?: SupportMsg[];
-      };
-      setSelected({
-        ...c,
-        ...detail,
-        thread: detail.messages ?? detail.thread ?? c.thread ?? [],
-      });
-      setReply("");
-    } catch (e) {
-      setError(userFacingError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function sendReply() {
-    const id = selected?.id ?? selected?._id;
-    if (!id || !reply.trim()) return;
-    setBusy(true);
-    setError(null);
-    setStatus(null);
-    try {
-      await support.admin.reply(id, reply.trim());
-      await hapticSuccess();
-      setStatus("Reply sent");
-      setReply("");
-      const detail = (await support.admin.get(id)) as SupportContact & {
-        messages?: SupportMsg[];
-      };
-      setSelected({
-        ...selected,
-        ...detail,
-        thread: detail.messages ?? detail.thread ?? [],
-      });
-      await loadSupport();
-    } catch (e) {
-      await hapticError();
-      setError(userFacingError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function setContactStatus(next: "open" | "reviewed" | "closed") {
-    const id = selected?.id ?? selected?._id;
-    if (!id) return;
-    setBusy(true);
-    try {
-      await support.admin.updateStatus(id, next);
-      await hapticSuccess();
-      setSelected((prev) => (prev ? { ...prev, status: next } : prev));
-      await loadSupport();
-    } catch (e) {
-      await hapticError();
-      setError(userFacingError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (selected) {
-    const thread = selected.thread ?? [];
-    return (
-      <div className="screen pad-tab">
-        <header className="screen-header">
-          <button
-            type="button"
-            className="back-btn"
-            aria-label="Back"
-            onClick={() => setSelected(null)}
-          >
-            ←
-          </button>
-          <h1>{selected.name ?? "Support"}</h1>
-        </header>
-        <p className="muted small" style={{ marginTop: 0 }}>
-          {selected.subject ?? selected.topic ?? "Support"} · {selected.status ?? "—"}
-          {selected.email ? ` · ${selected.email}` : ""}
-        </p>
-        {error && (
-          <div className="form-error" role="alert">
-            {error}
-          </div>
-        )}
-        {status && (
-          <div className="form-success" role="status">
-            {status}
-          </div>
-        )}
-        <div className="admin-thread">
-          {thread.map((m, i) => (
-            <div
-              key={m.id ?? i}
-              className={`admin-bubble ${m.authorRole === "admin" || m.authorRole === "owner" ? "staff" : "member"}`}
-            >
-              <strong>{m.authorRole ?? "member"}</strong>
-              <p>{m.body}</p>
-              {m.createdAt != null && (
-                <span className="muted small">
-                  {new Date(m.createdAt).toLocaleString()}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="admin-chip-row" style={{ marginTop: "0.75rem" }}>
-          <button type="button" className="admin-chip" disabled={busy} onClick={() => void setContactStatus("open")}>
-            Open
-          </button>
-          <button type="button" className="admin-chip" disabled={busy} onClick={() => void setContactStatus("reviewed")}>
-            Reviewed
-          </button>
-          <button type="button" className="admin-chip" disabled={busy} onClick={() => void setContactStatus("closed")}>
-            Closed
-          </button>
-        </div>
-        {selected.canReply !== false && (
-          <form
-            className="form"
-            style={{ marginTop: "0.75rem" }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              void sendReply();
-            }}
-          >
-            <label>
-              Reply as admin
-              <textarea
-                rows={3}
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-                placeholder="Write a helpful reply…"
-                required
-                minLength={2}
-              />
-            </label>
-            <button className="btn btn-primary btn-block" disabled={busy || !reply.trim()} type="submit">
-              {busy ? "Sending…" : "Send reply"}
-            </button>
-          </form>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="screen pad-tab">
-      <header className="screen-header">
-        <Link to="/admin" className="back-btn" aria-label="Back">
-          ←
-        </Link>
-        <h1>Messages</h1>
-      </header>
-
-      <div className="admin-chip-row" role="tablist" aria-label="Message type">
-        <button
-          type="button"
-          className={`admin-chip${tab === "support" ? " active" : ""}`}
-          onClick={() => setTab("support")}
-        >
-          Support (members ↔ staff)
-        </button>
-        <button
-          type="button"
-          className={`admin-chip${tab === "platform" ? " active" : ""}`}
-          onClick={() => setTab("platform")}
-        >
-          Match chats
-        </button>
-      </div>
-
-      {tab === "support" && (
-        <>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Messages members send to owners/admins. This is where staff support lives.
-          </p>
-          <div className="admin-chip-row" role="tablist" aria-label="Support status">
-            {(
-              [
-                ["open", "Open"],
-                ["reviewed", "Reviewed"],
-                ["closed", "Closed"],
-                ["all", "All"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={`admin-chip${supportStatus === key ? " active" : ""}`}
-                onClick={() => setSupportStatus(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {tab === "platform" && (
-        <p className="muted" style={{ marginTop: 0 }}>
-          Match conversations between members (read-only). Staff never appear here because they are not in Discover.
-        </p>
-      )}
-
-      {loading && <SkeletonCard />}
-      {error && (
-        <div className="form-error" role="alert">
-          {error}
-        </div>
-      )}
-
-      {tab === "support" && !loading && contacts.length === 0 ? (
-        <EmptyState
-          icon={<MessageCircle size={22} />}
-          title="No support messages"
-          body="When members message support from Settings, they show up here for owners and admins."
-        />
-      ) : null}
-
-      {tab === "support" &&
-        contacts.map((c) => {
-          const id = c.id ?? c._id ?? "";
-          const last = c.thread?.[c.thread.length - 1]?.body;
-          return (
-            <button
-              key={id}
-              type="button"
-              className="admin-msg-card admin-msg-btn"
-              onClick={() => void openContact(c)}
-            >
-              <strong>{c.name ?? "Member"}</strong>
-              <p className="muted small" style={{ margin: "0.35rem 0 0" }}>
-                {c.subject ?? c.topic ?? "Support"} · {c.status ?? "—"}
-              </p>
-              <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
-                {last ?? "Open thread"}
-              </p>
-            </button>
-          );
-        })}
-
-      {tab === "platform" && !loading && items.length === 0 ? (
-        <EmptyState
-          icon={<MessageCircle size={22} />}
-          title="No match chats yet"
-          body="When members match and chat, threads will show here."
-        />
-      ) : null}
-
-      {tab === "platform" &&
-        items.map((c) => (
-          <article key={c.conversationId} className="admin-msg-card">
-            <strong>
-              {c.memberA?.name ?? "A"} · {c.memberB?.name ?? "B"}
-            </strong>
-            <p className="muted small" style={{ margin: "0.35rem 0 0" }}>
-              {c.lastMessage?.body ?? "No messages"}
-            </p>
-            {c.lastMessageAt ? (
-              <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
-                {new Date(c.lastMessageAt).toLocaleString()}
-              </p>
-            ) : null}
-          </article>
-        ))}
-    </div>
-  );
-}
 
 export function AdminInvitePage() {
   const { user, accessState } = useSession();

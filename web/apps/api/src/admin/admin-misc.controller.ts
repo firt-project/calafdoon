@@ -6,7 +6,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { Roles } from "../auth/auth.guards";
+import { CurrentUser, Roles, type RequestUser } from "../auth/auth.guards";
 import { CsrfGuard } from "../auth/csrf";
 import { RateLimitGuard } from "../redis/rate-limit.guard";
 import { AdminChatService } from "./admin-chat.service";
@@ -40,16 +40,32 @@ export class AdminMiscController {
   }
 
   @Get("conversations")
-  listConversations(@Query("limit") limit?: string) {
-    return this.chat.listConversations(limit ? Number(limit) : 40);
+  listConversations(
+    @CurrentUser() user: RequestUser,
+    @Query("limit") limit?: string,
+    @Query("search") search?: string
+  ) {
+    return this.chat.listConversations(limit ? Number(limit) : 40, search, {
+      userId: user.id,
+      role: user.role === "owner" ? "owner" : "admin",
+    });
+  }
+
+  @Get("conversations/between")
+  between(@Query("a") a: string, @Query("b") b: string) {
+    return this.chat.findBetween(a, b);
   }
 
   @Get("conversations/:id")
   getConversation(
+    @CurrentUser() user: RequestUser,
     @Param("id") id: string,
     @Query("limit") limit?: string
   ) {
-    return this.chat.getThread(id, limit ? Number(limit) : 500);
+    return this.chat.getThread(id, limit ? Number(limit) : 500, {
+      userId: user.id,
+      role: user.role === "owner" ? "owner" : "admin",
+    });
   }
 
   @Get("site-metrics")

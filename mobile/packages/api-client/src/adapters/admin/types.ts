@@ -42,7 +42,7 @@ export type AdminAdapter = {
   };
   auditLogs(opts?: Record<string, unknown>): Promise<unknown>;
   conversations: {
-    list(opts?: { limit?: number }): Promise<unknown>;
+    list(opts?: { limit?: number; search?: string }): Promise<unknown>;
     thread(id: string, opts?: { limit?: number }): Promise<unknown>;
   };
   staffInvites: {
