@@ -167,6 +167,15 @@ export class MatchController {
     return this.matches.archive(user.id, matchId, parsed.archived);
   }
 
+  @Post(":matchId/unmatch")
+  @HttpCode(200)
+  async unmatch(
+    @CurrentUser() user: RequestUser,
+    @Param("matchId") matchId: string
+  ) {
+    return this.matches.unmatch(user.id, matchId);
+  }
+
   @Get(":matchId/wali")
   async wali(
     @CurrentUser() user: RequestUser,

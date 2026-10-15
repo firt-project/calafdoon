@@ -157,6 +157,9 @@ export const apiMatching: MatchingAdapter = {
   async markMatchSeen(matchId) {
     return apiClient.post(`/matches/${encodeURIComponent(matchId)}/seen`, {});
   },
+  async unmatch(matchId) {
+    return apiClient.post(`/matches/${encodeURIComponent(matchId)}/unmatch`, {});
+  },
   async archiveMatch(matchId, archived = true) {
     return apiClient.post(`/matches/${encodeURIComponent(matchId)}/archive`, {
       archived,

@@ -6,6 +6,7 @@ import {
   connectRealtime,
   joinConversation,
   leaveConversation,
+  matching,
   moderation,
   subscribeRealtime,
 } from "@hel/api-client";
@@ -113,6 +114,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     imageUrl: string | null;
     online?: boolean;
   }>({ name: "Chat", userId: null, imageUrl: null });
+  const [matchId, setMatchId] = useState<string | null>(null);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -172,6 +174,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       .then((raw) => {
         if (!alive || !raw || typeof raw !== "object") return;
         const c = raw as {
+          matchId?: string;
           profile?: {
             name?: string | null;
             userId?: string;
@@ -181,6 +184,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           title?: string;
           online?: boolean;
         };
+        if (c.matchId) setMatchId(String(c.matchId));
         const name = c.profile?.name ?? c.peerName ?? c.title ?? "Chat";
         setPeer({
           name: String(name),
@@ -339,6 +343,24 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
 
   const list = useMemo(() => toChatList(messages), [messages]);
 
+  async function unmatchUser() {
+    if (!matchId || safetyBusy || offline) return;
+    if (!window.confirm(`Unmatch with ${peer.name}? You will no longer be able to chat.`)) return;
+    setSafetyBusy(true);
+    setError(null);
+    try {
+      await matching.unmatch(matchId);
+      await hapticMedium();
+      setSafetyOpen(false);
+      navigate("/messages", { replace: true });
+    } catch (e) {
+      await hapticError();
+      setError(userFacingError(e));
+    } finally {
+      setSafetyBusy(false);
+    }
+  }
+
   async function reportOrBlock(kind: "report" | "block") {
     const targetId = peer.userId;
     if (!targetId || safetyBusy || offline) return;
@@ -458,6 +480,14 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
             onClick={() => void reportOrBlock("report")}
           >
             <ShieldAlert size={16} /> {t("safety.reportUser")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            disabled={safetyBusy || offline || !matchId}
+            onClick={() => void unmatchUser()}
+          >
+            Unmatch
           </button>
           <button
             type="button"

@@ -26,6 +26,7 @@ export type MatchingAdapter = {
   }>;
   markMatchSeen(matchId: string): Promise<unknown>;
   archiveMatch(matchId: string, archived?: boolean): Promise<unknown>;
+  unmatch(matchId: string): Promise<unknown>;
 };
 
 export const MATCHING_METHOD_NAMES = [
@@ -41,4 +42,5 @@ export const MATCHING_METHOD_NAMES = [
   "startChat",
   "markMatchSeen",
   "archiveMatch",
+  "unmatch",
 ] as const;

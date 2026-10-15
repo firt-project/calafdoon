@@ -913,6 +913,31 @@ export class MatchService {
     return { ok: true };
   }
 
+  /** Either member can end a match; chat closes for both. */
+  async unmatch(userId: string, matchId: string) {
+    const match = await this.prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) throw new NotFoundException("Match not found");
+    if (match.userAId !== userId && match.userBId !== userId) {
+      throw new ForbiddenException("Not authorized");
+    }
+    if (match.status !== "unmatched") {
+      await this.prisma.match.update({
+        where: { id: matchId },
+        data: { status: "unmatched", archivedAt: null },
+      });
+    }
+    const otherId = match.userAId === userId ? match.userBId : match.userAId;
+    try {
+      this.realtime.emitToUser(otherId, "unread:update", {});
+      this.realtime.emitToUsers([userId, otherId], "match:unmatched", {
+        matchId,
+      });
+    } catch {
+      /* realtime is best-effort */
+    }
+    return { ok: true };
+  }
+
   async breakdown(viewerId: string, targetUserId: string) {
     const access = await this.requireMatchAccess(viewerId);
     if (await this.isEitherBlocked(viewerId, targetUserId)) {

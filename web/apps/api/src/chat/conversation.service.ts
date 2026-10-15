@@ -534,6 +534,10 @@ export class ConversationService {
     const conv = await this.loadConversation(conversationId);
     this.assertParticipant(conv, userId);
 
+    if (conv.match.status === "unmatched") {
+      throw new ForbiddenException("This match has ended.");
+    }
+
     if (!hasPaidAccess(profile) && !conv.match.chatUnlocked) {
       throw new ForbiddenException("Please complete payment to unlock chat.");
     }
