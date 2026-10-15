@@ -384,9 +384,9 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
       where: { id: contactId },
     });
     if (!contact) throw new NotFoundException("Contact not found");
-    if (!contact.userId) {
+    if (!contact.userId && !contact.email) {
       throw new BadRequestException(
-        "This contact has no member account — reply by email instead."
+        "This contact left no email or member account, so they cannot be reached."
       );
     }
     const message = messageRaw.trim();
@@ -419,6 +419,21 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
         reviewedById: adminId,
       },
     });
+
+    if (!contact.userId) {
+      // Website visitor without an account: answer by email only.
+      await this.mail.send({
+        to: contact.email!,
+        subject: `Re: ${contact.subject}`,
+        text: message,
+      });
+      await this.audit.write({
+        actorUserId: adminId,
+        action: "support_contact_reply",
+        metadata: { contactId, viaEmail: true },
+      });
+      return { ok: true, status: nextStatus, purgeInMinutes: 30 };
+    }
 
     const member = await this.prisma.user.findUniqueOrThrow({
       where: { id: contact.userId },

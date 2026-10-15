@@ -675,3 +675,19 @@
   width: 100%; border: 1px solid var(--border); background: var(--input);
   border-radius: 0.95rem; padding: 0.7rem 2.6rem 0.7rem 0.95rem;
 }
+
+.adm-searchrow { display: flex; align-items: center; gap: 0.5rem; }
+.adm-searchrow .admin-search { flex: 1; min-width: 0; }
+.adm-compose-btn {
+  flex: none; width: 2.9rem; height: 2.9rem; border-radius: 0.95rem;
+  border: 1px solid var(--border); background: var(--card); color: var(--primary, #2e5e4e);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.adm-quick-reply {
+  flex: none; border: 0; border-radius: 999px; padding: 0.4rem 0.85rem;
+  background: var(--primary, #2e5e4e); color: #fff; font-weight: 600; font-size: 0.8rem;
+}
+.adm-reply {
+  bottom: calc(var(--safe-bottom, 0px) + var(--tabbar-gap, 0.45rem) + var(--tabbar-h, 3.75rem) + 0.5rem);
+  z-index: 4;
+}

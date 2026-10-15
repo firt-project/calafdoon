@@ -492,7 +492,7 @@ function SupportInbox() {
             </button>
           ))}
         </div>
-        {selected.canReply !== false && (
+        {(
           <form
             className="adm-reply"
             onSubmit={(e) => {
@@ -504,8 +504,9 @@ function SupportInbox() {
               rows={2}
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              placeholder="Write a reply…"
+              placeholder={selected.canReply === false ? "Reply by email…" : "Write a reply…"}
               aria-label="Reply"
+              autoFocus={params.get("reply") === "1"}
             />
             <button className="btn btn-primary" disabled={busy || reply.trim().length < 2} type="submit">
               {busy ? "…" : "Send"}
@@ -518,11 +519,13 @@ function SupportInbox() {
 
   return (
     <>
-      <button type="button" className="btn btn-primary btn-block" style={{ marginBottom: "0.7rem" }} onClick={() => setComposeOpen(true)}>
-        <PenSquare size={16} /> New message to a member
-      </button>
       <ComposeSupportSheet open={composeOpen} onClose={() => setComposeOpen(false)} />
-      <SearchBox value={search} onChange={setSearch} placeholder="Search name, email, phone, subject…" />
+      <div className="adm-searchrow">
+        <SearchBox value={search} onChange={setSearch} placeholder="Search name, email, phone, subject…" />
+        <button type="button" className="adm-compose-btn" aria-label="New message to a member" onClick={() => setComposeOpen(true)}>
+          <PenSquare size={18} />
+        </button>
+      </div>
       <div className="admin-chip-row" role="tablist" aria-label="Support status">
         {(
           [
@@ -572,13 +575,26 @@ function SupportInbox() {
             )}
             <span className="adm-row-body">
               <span className="adm-row-top">
-                <strong>{c.name ?? "Member"}</strong>
+                <strong>
+                  <span className={`adm-dot ${c.status ?? "open"}`} title={c.status} style={{ display: "inline-block", marginRight: 6 }} />
+                  {c.name ?? "Member"}
+                </strong>
                 <span className="muted small">{ago(last?.createdAt ?? c.createdAt)}</span>
               </span>
               <span className="adm-row-sub">{c.subject ?? c.topic ?? "Support"}</span>
               <span className="adm-row-prev">{last?.body ?? "Open thread"}</span>
             </span>
-            <span className={`adm-dot ${c.status ?? "open"}`} title={c.status} />
+            <button
+              type="button"
+              className="adm-quick-reply"
+              onClick={(e) => {
+                e.stopPropagation();
+                const id = c.id ?? c._id;
+                if (id) navigate(`/admin/messages?tab=support&c=${encodeURIComponent(id)}&reply=1`);
+              }}
+            >
+              Reply
+            </button>
           </div>
         );
       })}
