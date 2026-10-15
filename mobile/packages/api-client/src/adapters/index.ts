@@ -14,6 +14,7 @@ export {
 } from "./api-client";
 export { track } from "./telemetry";
 export { prepareImageForUpload } from "./lib/prepare-image";
+export { putToStorage } from "./photos/api";
 export { auth, getAuthAdapter } from "./auth";
 export type { AuthAdapter, LoginResult } from "./auth";
 export { profile, getProfileAdapter } from "./profile";

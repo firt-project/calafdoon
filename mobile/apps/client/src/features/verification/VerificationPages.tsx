@@ -1,11 +1,47 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Camera } from "lucide-react";
-import { apiClient, prepareImageForUpload } from "@hel/api-client";
+import { apiClient, prepareImageForUpload, putToStorage } from "@hel/api-client";
 import { BottomSheet, EmptyState, SkeletonCard } from "@/ui/mobile-kit";
 import { userFacingError } from "@/platform/errors";
 import { isPhotoPickCancelled, pickProfilePhoto } from "@/platform/camera";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
+
+const POSES: Record<string, { hand: string; hint: string }> = {
+  "Hold up two fingers": { hand: "✌️", hint: "Show two fingers next to your face" },
+  "Give a thumbs up": { hand: "👍", hint: "Show a thumbs up next to your face" },
+  "Hold up three fingers": { hand: "🤟", hint: "Show three fingers next to your face" },
+  "Touch your chin with one finger": { hand: "☝️", hint: "Touch your chin with one finger" },
+  "Hold your open palm next to your face": { hand: "🖐️", hint: "Show your open palm next to your face" },
+};
+
+function PoseExample({ prompt }: { prompt: string }) {
+  const pose = POSES[prompt] ?? { hand: "🙂", hint: prompt };
+  return (
+    <div
+      aria-hidden
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.6rem",
+        padding: "1rem",
+        borderRadius: "1rem",
+        background: "var(--muted)",
+        border: "2px dashed var(--border)",
+      }}
+    >
+      <svg width="96" height="110" viewBox="0 0 96 110">
+        <ellipse cx="48" cy="46" rx="30" ry="36" fill="none" stroke="currentColor" strokeWidth="3" />
+        <circle cx="37" cy="40" r="3" fill="currentColor" />
+        <circle cx="59" cy="40" r="3" fill="currentColor" />
+        <path d="M36 60 Q48 70 60 60" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        <path d="M14 108 Q48 80 82 108" fill="none" stroke="currentColor" strokeWidth="3" />
+      </svg>
+      <span style={{ fontSize: "3.4rem", lineHeight: 1 }}>{pose.hand}</span>
+    </div>
+  );
+}
 
 type VStatus = {
   verified: boolean;
@@ -42,26 +78,39 @@ export function VerificationPage() {
         quality: 0.8,
       });
       const contentType = prepared.type || "image/jpeg";
-      const signed = await apiClient.post<{ mediaId: string; uploadUrl: string }>(
-        "/verification/sign-upload",
-        { contentType, sizeBytes: prepared.size }
-      );
-      const res = await fetch(String(signed.uploadUrl), {
-        method: "PUT",
-        headers: { "Content-Type": contentType },
-        body: prepared,
-      });
-      if (!res.ok) throw new Error("Upload failed. Please try again.");
-      await apiClient.post("/verification/submit", {
-        mediaId: signed.mediaId,
-        prompt: data.prompt,
-      });
+      let step = "prepare";
+      let signed: { mediaId: string; uploadUrl: string };
+      try {
+        step = "sign";
+        signed = await apiClient.post<{ mediaId: string; uploadUrl: string }>(
+          "/verification/sign-upload",
+          { contentType, sizeBytes: prepared.size }
+        );
+        step = "upload";
+        // Inside the app a plain fetch corrupts the bytes (403); use the native uploader.
+        const ok = await putToStorage(String(signed.uploadUrl), prepared, contentType);
+        if (!ok) throw new Error("storage rejected the file");
+        step = "submit";
+        await apiClient.post("/verification/submit", {
+          mediaId: signed.mediaId,
+          prompt: data.prompt,
+        });
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        throw new Error(
+          `Could not send your selfie (${step} step: ${detail}). Please try again.`
+        );
+      }
       await hapticSuccess();
       await load();
     } catch (e) {
       if (isPhotoPickCancelled(e)) return;
       await hapticError();
-      setError(userFacingError(e));
+      setError(
+        e instanceof Error && e.message.startsWith("Could not send")
+          ? e.message
+          : userFacingError(e)
+      );
     } finally {
       setBusy(false);
     }
@@ -99,9 +148,8 @@ export function VerificationPage() {
           ) : (
             <>
               <p className="muted">
-                Verified members get a blue tick and more trust. Take a quick
-                selfie and our team will check it matches your profile photos.
-                Your selfie is private and never shown to other members.
+                A blue tick shows other members that your photos are really you.
+                Your selfie is private: only our team sees it, never other members.
               </p>
               {data.status === "rejected" && data.rejectReason && (
                 <div className="form-notice" role="status">
@@ -109,12 +157,18 @@ export function VerificationPage() {
                 </div>
               )}
               <div className="card" style={{ padding: "1rem" }}>
-                <strong>Your pose</strong>
-                <p style={{ margin: "0.4rem 0 0" }}>{data.prompt}</p>
-                <p className="muted small" style={{ margin: "0.4rem 0 0" }}>
-                  Face the camera in good light, with your face clearly visible.
+                <strong>Your pose today</strong>
+                <p style={{ margin: "0.4rem 0 0.8rem", fontSize: "1.05rem" }}>
+                  {(POSES[data.prompt]?.hint ?? data.prompt)}
                 </p>
+                <PoseExample prompt={data.prompt} />
               </div>
+              <ol className="muted small" style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.6 }}>
+                <li>Find good light and face the camera.</li>
+                <li>Make the pose above, with your face fully visible.</li>
+                <li>No hat, sunglasses or filters.</li>
+                <li>Tap the button, take the photo, and wait for review.</li>
+              </ol>
               <button
                 type="button"
                 className="btn btn-primary btn-block"

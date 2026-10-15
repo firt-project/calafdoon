@@ -32,7 +32,7 @@ function blobToBase64(blob: Blob): Promise<string> {
  * text (corrupting the JPEG and breaking the signed Content-Length), so send the
  * bytes through the native HTTP plugin as a base64 "file" instead.
  */
-async function putToStorage(url: string, body: Blob, contentType: string): Promise<boolean> {
+export async function putToStorage(url: string, body: Blob, contentType: string): Promise<boolean> {
   const cap = (globalThis as { Capacitor?: CapacitorGlobal }).Capacitor;
   const http = cap?.isNativePlatform?.() ? cap.Plugins?.CapacitorHttp : undefined;
   if (http) {
