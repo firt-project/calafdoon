@@ -563,9 +563,17 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
       where: { id: contactId },
     });
     if (!contact) throw new NotFoundException("Contact not found");
+    const profile = contact.userId
+      ? await this.prisma.profile.findUnique({
+          where: { userId: contact.userId },
+          select: { id: true, phone: true },
+        })
+      : null;
     return {
       ...contact,
       email: maskEmail(contact.email),
+      phone: profile?.phone ?? contact.phone ?? null,
+      profileId: profile?.id ?? null,
       canReply: !!contact.userId,
       messages: await this.loadThread(contact.id, contact),
     };

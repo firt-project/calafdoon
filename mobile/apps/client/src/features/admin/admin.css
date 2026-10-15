@@ -691,3 +691,7 @@
   bottom: calc(var(--safe-bottom, 0px) + var(--tabbar-gap, 0.45rem) + var(--tabbar-h, 3.75rem) + 0.5rem);
   z-index: 4;
 }
+
+.adm-person-link { text-decoration: none; color: inherit; padding: 0.6rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--card); }
+.adm-open-profile { font-size: 0.78rem; font-weight: 700; color: var(--primary, #2e5e4e); }
+.adm-reply-profile { flex: none; align-self: center; }

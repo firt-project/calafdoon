@@ -443,25 +443,35 @@ function SupportInbox() {
         <button type="button" className="adm-back" onClick={() => navigate(-1)}>
           ← All support messages
         </button>
-        <div className="adm-person">
-          <Avatar name={selected.name} size={52} />
-          <div className="adm-person-meta">
-            <strong>{selected.name ?? "Member"}</strong>
-            <span className="muted small">
-              {[selected.email, selected.phone].filter(Boolean).join(" · ") || "No contact details"}
+        {selected.profileId ? (
+          <Link to={`/admin/members/${selected.profileId}`} className="adm-person adm-person-link" aria-label={`Open ${selected.name ?? "member"} profile`}>
+            <Avatar name={selected.name} size={52} />
+            <div className="adm-person-meta">
+              <strong>{selected.name ?? "Member"}</strong>
+              <span className="muted small">
+                {[selected.email, selected.phone].filter(Boolean).join(" · ") || "No contact details"}
+              </span>
+              <span className="muted small">{selected.subject ?? selected.topic ?? "Support"}</span>
+              <span className="adm-open-profile">View profile →</span>
+            </div>
+            <span className={`admin-pill${selected.status === "closed" ? "" : selected.status === "reviewed" ? " ok" : " danger"}`}>
+              {selected.status ?? "open"}
             </span>
-            <span className="muted small">
-              {selected.subject ?? selected.topic ?? "Support"}
+          </Link>
+        ) : (
+          <div className="adm-person">
+            <Avatar name={selected.name} size={52} />
+            <div className="adm-person-meta">
+              <strong>{selected.name ?? "Visitor"}</strong>
+              <span className="muted small">
+                {[selected.email, selected.phone].filter(Boolean).join(" · ") || "No contact details"}
+              </span>
+              <span className="muted small">No member account — replies go by email</span>
+            </div>
+            <span className={`admin-pill${selected.status === "closed" ? "" : selected.status === "reviewed" ? " ok" : " danger"}`}>
+              {selected.status ?? "open"}
             </span>
           </div>
-          <span className={`admin-pill${selected.status === "closed" ? "" : selected.status === "reviewed" ? " ok" : " danger"}`}>
-            {selected.status ?? "open"}
-          </span>
-        </div>
-        {selected.profileId && (
-          <Link to={`/admin/members/${selected.profileId}`} className="btn btn-secondary btn-block">
-            View member profile
-          </Link>
         )}
         {error && <div className="form-error" role="alert">{error}</div>}
         {notice && <div className="form-success" role="status">{notice}</div>}
@@ -500,6 +510,15 @@ function SupportInbox() {
               void sendReply();
             }}
           >
+            {selected.profileId && (
+              <Link
+                to={`/admin/members/${selected.profileId}`}
+                className="adm-reply-profile"
+                aria-label="Open member profile"
+              >
+                <Avatar name={selected.name} size={36} />
+              </Link>
+            )}
             <textarea
               rows={2}
               value={reply}
