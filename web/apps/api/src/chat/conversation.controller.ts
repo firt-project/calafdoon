@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -101,10 +102,23 @@ export class ConversationController {
         message: z.string().optional(),
         imageMediaId: z.string().uuid().optional(),
         idempotencyKey: z.string().min(8).max(128).optional(),
+        replyToId: z.string().uuid().optional(),
       }),
       body
     );
     return this.conversations.sendMessage(user.id, id, parsed);
+  }
+
+  @Patch(":id/messages/:messageId")
+  @HttpCode(200)
+  async editMessage(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Param("messageId") messageId: string,
+    @Body() body: unknown
+  ) {
+    const parsed = parseBody(z.object({ message: z.string().min(1).max(4000) }), body);
+    return this.conversations.editMessage(user.id, id, messageId, parsed.message);
   }
 
   @Delete(":id/messages/:messageId")

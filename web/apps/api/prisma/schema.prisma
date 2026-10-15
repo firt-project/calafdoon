@@ -665,6 +665,8 @@ model Message {
   messageCreatedAt     DateTime @map("message_created_at")
   /// Sender "delete for everyone": body/image cleared, row kept for threading.
   deletedAt            DateTime? @map("deleted_at")
+  editedAt             DateTime? @map("edited_at")
+  replyToId            String?   @map("reply_to_id") @db.Uuid
   convexCreatedAt      DateTime? @map("convex_created_at")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")

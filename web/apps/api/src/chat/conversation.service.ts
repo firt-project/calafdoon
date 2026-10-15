@@ -357,6 +357,36 @@ export class ConversationService {
     };
   }
 
+  /** Short quoted preview of the messages being replied to (same conversation only). */
+  private async replyPreviews(conversationId: string, ids: string[]) {
+    const out = new Map<
+      string,
+      { id: string; senderId: string; text: string; deleted: boolean; hasImage: boolean }
+    >();
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return out;
+    const rows = await this.prisma.message.findMany({
+      where: { id: { in: unique }, conversationId },
+      select: {
+        id: true,
+        senderId: true,
+        body: true,
+        deletedAt: true,
+        imageMediaId: true,
+      },
+    });
+    for (const r of rows) {
+      out.set(r.id, {
+        id: r.id,
+        senderId: r.senderId,
+        text: r.deletedAt ? "" : r.body.slice(0, 140),
+        deleted: Boolean(r.deletedAt),
+        hasImage: Boolean(r.imageMediaId) && !r.deletedAt,
+      });
+    }
+    return out;
+  }
+
   async listMessages(
     userId: string,
     conversationId: string,
@@ -399,6 +429,10 @@ export class ConversationService {
     const page = hasMore ? rows.slice(0, limit) : rows;
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
 
+    const previews = await this.replyPreviews(
+      conversationId,
+      page.map((m) => m.replyToId ?? "")
+    );
     const items = [];
     for (const msg of page) {
       let imageUrl: string | null = null;
@@ -428,6 +462,9 @@ export class ConversationService {
         read: msg.read,
         createdAt: msg.messageCreatedAt.toISOString(),
         idempotencyKey: msg.idempotencyKey,
+        deleted: Boolean(msg.deletedAt),
+        edited: Boolean(msg.editedAt),
+        replyTo: msg.replyToId ? (previews.get(msg.replyToId) ?? null) : null,
       });
     }
 
@@ -523,6 +560,7 @@ export class ConversationService {
       message?: string;
       imageMediaId?: string;
       idempotencyKey?: string;
+      replyToId?: string;
     },
     opts?: { socketId?: string }
   ) {
@@ -632,6 +670,14 @@ export class ConversationService {
     }
 
     const body = trimmed || IMAGE_MESSAGE_PLACEHOLDER;
+    let replyToId: string | undefined;
+    if (input.replyToId) {
+      const target = await this.prisma.message.findFirst({
+        where: { id: input.replyToId, conversationId },
+        select: { id: true },
+      });
+      if (target) replyToId = target.id;
+    }
     const now = new Date();
     const otherUser = await this.prisma.user.findUnique({
       where: { id: otherId },
@@ -677,6 +723,7 @@ export class ConversationService {
             convexSenderId: senderUser?.convexId ?? profile.convexUserId,
             body,
             imageMediaId: imageMediaId ?? null,
+            replyToId: replyToId ?? null,
             ...(input.idempotencyKey
               ? { idempotencyKey: input.idempotencyKey }
               : {}),
@@ -818,6 +865,8 @@ export class ConversationService {
       messageCreatedAt: Date;
       idempotencyKey: string | null;
       deletedAt?: Date | null;
+      editedAt?: Date | null;
+      replyToId?: string | null;
     },
     viewerId: string,
     conversationId: string,
@@ -851,7 +900,61 @@ export class ConversationService {
       createdAt: msg.messageCreatedAt.toISOString(),
       idempotencyKey: msg.idempotencyKey,
       deleted: Boolean(msg.deletedAt),
+      edited: Boolean(msg.editedAt),
+      replyTo: msg.replyToId
+        ? ((await this.replyPreviews(conversationId, [msg.replyToId])).get(
+            msg.replyToId
+          ) ?? null)
+        : null,
     };
+  }
+
+  /** Sender-only edit of a text message, within 15 minutes. */
+  async editMessage(
+    userId: string,
+    conversationId: string,
+    messageId: string,
+    rawText: string
+  ) {
+    const profile = await this.requireProfile(userId);
+    const conv = await this.loadConversation(conversationId);
+    this.assertParticipant(conv, userId);
+    if (conv.match.status === "unmatched") {
+      throw new ForbiddenException("This match has ended.");
+    }
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.conversationId !== conversationId) {
+      throw new NotFoundException("Message not found");
+    }
+    if (msg.senderId !== userId) {
+      throw new ForbiddenException("You can only edit your own messages");
+    }
+    if (msg.deletedAt) throw new BadRequestException("Message was deleted");
+    if (msg.imageMediaId) {
+      throw new BadRequestException("Photo messages cannot be edited");
+    }
+    if (Date.now() - msg.messageCreatedAt.getTime() > 15 * 60 * 1000) {
+      throw new BadRequestException("You can only edit a message for 15 minutes");
+    }
+    const text = sanitizeMessageBody(rawText);
+    if (!text) throw new BadRequestException("Message cannot be empty");
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      throw new BadRequestException("Message is too long");
+    }
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { body: text, editedAt: new Date() },
+    });
+    const dto = await this.toMessageDto(updated, userId, conversationId, profile.role);
+    try {
+      this.realtime.emitToUsers(this.participantIds(conv), "message:edited", {
+        conversationId,
+        messageId,
+      });
+    } catch {
+      /* realtime is best-effort */
+    }
+    return dto;
   }
 
   /** Sender-only "delete for everyone": clears text/image, keeps the row. */

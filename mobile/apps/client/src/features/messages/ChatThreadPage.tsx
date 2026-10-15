@@ -45,6 +45,8 @@ type UiMessage = {
   failed?: boolean;
   pending?: boolean;
   deleted?: boolean;
+  edited?: boolean;
+  replyTo?: { senderId: string; text: string; deleted: boolean; hasImage: boolean } | null;
   imageUrl?: string | null;
   imageMediaId?: string;
 };
@@ -74,7 +76,7 @@ function dedupeMessages(list: UiMessage[]): UiMessage[] {
   return out;
 }
 
-function toChatList(messages: UiMessage[]): ChatListMessage[] {
+function toChatList(messages: UiMessage[], userId: string | null): ChatListMessage[] {
   let lastDay = "";
   return messages.map((m, i) => {
     const created = m.createdAt ? new Date(m.createdAt) : null;
@@ -96,6 +98,15 @@ function toChatList(messages: UiMessage[]): ChatListMessage[] {
       createdAt: m.createdAt,
       pending: m.pending,
       deleted: m.deleted,
+      edited: m.edited,
+      replyTo: m.replyTo
+        ? {
+            text: m.replyTo.text,
+            deleted: m.replyTo.deleted,
+            hasImage: m.replyTo.hasImage,
+            mine: userId != null && m.replyTo.senderId === userId,
+          }
+        : null,
       failed: m.failed,
       read: m.read,
       delivery: m.delivery,
@@ -128,6 +139,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [safetyBusy, setSafetyBusy] = useState(false);
   const [menuMessageId, setMenuMessageId] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<UiMessage | null>(null);
+  const [editing, setEditing] = useState<UiMessage | null>(null);
   const [deleting, setDeleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const userId = user?.id ? String(user.id) : null;
@@ -226,6 +239,11 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       if (p?.conversationId && p.conversationId !== conversationId) return;
       if (alive) void loadMessages();
     });
+    const unsubEdited = subscribeRealtime("message:edited", (payload) => {
+      const p = payload as { conversationId?: string } | undefined;
+      if (p?.conversationId && p.conversationId !== conversationId) return;
+      if (alive) void loadMessages();
+    });
     const unsubTyping = subscribeRealtime("typing:update", (payload) => {
       const p = payload as {
         conversationId?: string;
@@ -254,6 +272,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       alive = false;
       unsubMsg();
       unsubDeleted();
+      unsubEdited();
       unsubTyping();
       leaveConversation(conversationId);
       window.clearInterval(tick);
@@ -274,6 +293,25 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     if (sending || offline) return;
     const text = body.trim();
     if (!text) return;
+    if (editing) {
+      const target = editing;
+      setSending(true);
+      setError(null);
+      try {
+        await chat.editMessage(conversationId, messageKey(target, 0), text);
+        setEditing(null);
+        setBody("");
+        if (userId) await clearChatDraft(userId, conversationId);
+        await loadMessages();
+      } catch (err) {
+        setError(userFacingError(err));
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+    const replyId = replyTo ? messageKey(replyTo, 0) : undefined;
+    setReplyTo(null);
     const tempId = `local-${Date.now()}`;
     setSending(true);
     setError(null);
@@ -296,6 +334,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       await chat.sendMessage(conversationId, {
         message: text,
         idempotencyKey: `${conversationId}-${tempId}`,
+        replyToId: replyId,
       });
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       await hapticLight();
@@ -344,7 +383,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     setBody(text);
   }
 
-  const list = useMemo(() => toChatList(messages), [messages]);
+  const list = useMemo(() => toChatList(messages, userId), [messages, userId]);
 
   useEffect(() => {
     apiClient
@@ -590,27 +629,92 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
       <BottomSheet
         open={menuMessageId != null}
         onClose={() => setMenuMessageId(null)}
-        title="Delete message?"
+        title="Message"
       >
-        <p className="muted small">
-          This removes the message for both of you. It cannot be undone.
-        </p>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={deleting}
-          onClick={() => void deleteMine()}
-        >
-          {deleting ? "Deleting…" : "Delete for everyone"}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => setMenuMessageId(null)}
-        >
-          Cancel
-        </button>
+        {(() => {
+          const target = messages.find((m) => messageKey(m, 0) === menuMessageId);
+          if (!target) return null;
+          const text = String(target.message ?? target.body ?? target.text ?? "");
+          const mine = Boolean(target.mine);
+          const created = target.createdAt ? new Date(target.createdAt).getTime() : 0;
+          const canEdit =
+            mine && !target.imageUrl && Date.now() - created < 15 * 60 * 1000;
+          return (
+            <div className="stack">
+              <button
+                type="button"
+                className="btn btn-secondary btn-block"
+                onClick={() => {
+                  setEditing(null);
+                  setReplyTo(target);
+                  setMenuMessageId(null);
+                  textareaRef.current?.focus();
+                }}
+              >
+                Reply
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-block"
+                  onClick={() => {
+                    setReplyTo(null);
+                    setEditing(target);
+                    setBody(text);
+                    setMenuMessageId(null);
+                    textareaRef.current?.focus();
+                  }}
+                >
+                  Edit
+                </button>
+              )}
+              {mine && (
+                <button
+                  type="button"
+                  className="btn btn-danger btn-block"
+                  disabled={deleting}
+                  onClick={() => void deleteMine()}
+                >
+                  {deleting ? "Deleting…" : "Delete for everyone"}
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-secondary btn-block"
+                onClick={() => setMenuMessageId(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          );
+        })()}
       </BottomSheet>
+
+      {(replyTo || editing) && (
+        <div
+          className="form-notice"
+          role="status"
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "space-between" }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {editing ? "Editing message" : "Replying to"}
+            {": "}
+            {String((editing ?? replyTo)?.message ?? (editing ?? replyTo)?.body ?? "").slice(0, 80) || "Photo"}
+          </span>
+          <button
+            type="button"
+            className="linkish"
+            aria-label="Cancel"
+            onClick={() => {
+              if (editing) setBody("");
+              setEditing(null);
+              setReplyTo(null);
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <form className="composer wa-composer" onSubmit={(e) => void send(e)}>
         <textarea

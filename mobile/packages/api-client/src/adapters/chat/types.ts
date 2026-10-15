@@ -13,6 +13,7 @@ export type ChatAdapter = {
       message?: string;
       imageMediaId?: string;
       idempotencyKey?: string;
+      replyToId?: string;
     }
   ): Promise<unknown>;
   /** Upload a chat attachment; returns the media/storage id to send. */
@@ -20,6 +21,8 @@ export type ChatAdapter = {
     conversationId: string,
     file: File
   ): Promise<{ mediaId: string }>;
+  /** Edit one of my own text messages (15 minutes). */
+  editMessage(conversationId: string, messageId: string, message: string): Promise<unknown>;
   /** Delete one of my own messages for everyone. */
   deleteMessage(conversationId: string, messageId: string): Promise<unknown>;
   markAsRead(conversationId: string): Promise<unknown>;
@@ -34,6 +37,7 @@ export const CHAT_METHOD_NAMES = [
   "getMessages",
   "sendMessage",
   "uploadChatImage",
+  "editMessage",
   "deleteMessage",
   "markAsRead",
   "setTyping",

@@ -1,0 +1,2 @@
+ALTER TABLE "messages" ADD COLUMN IF NOT EXISTS "edited_at" TIMESTAMP(3);
+ALTER TABLE "messages" ADD COLUMN IF NOT EXISTS "reply_to_id" UUID;

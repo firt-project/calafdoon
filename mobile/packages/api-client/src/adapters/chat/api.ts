@@ -59,6 +59,12 @@ export const apiChat: ChatAdapter = {
       return { ...m, _id: m._id ?? m.id, createdAt };
     });
   },
+  async editMessage(conversationId, messageId, message) {
+    return apiClient.patch(
+      `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+      { message }
+    );
+  },
   async deleteMessage(conversationId, messageId) {
     return apiClient.delete(
       `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`
@@ -71,6 +77,7 @@ export const apiChat: ChatAdapter = {
         {
           message: body.message,
           imageMediaId: body.imageMediaId,
+          replyToId: body.replyToId,
         },
         { idempotencyKey: body.idempotencyKey }
       );

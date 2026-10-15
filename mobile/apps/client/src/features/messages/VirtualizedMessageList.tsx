@@ -12,6 +12,8 @@ export type ChatListMessage = {
   pending?: boolean;
   failed?: boolean;
   deleted?: boolean;
+  edited?: boolean;
+  replyTo?: { text: string; deleted: boolean; hasImage: boolean; mine: boolean } | null;
   read?: boolean;
   delivery?: string;
   dateLabel?: string;
@@ -135,7 +137,7 @@ export function VirtualizedMessageList({
                 <div
                   className={cn("bubble", m.mine ? "me" : "peer", m.failed && "failed")}
                   onPointerDown={() => {
-                    if (!m.mine || m.pending || m.failed || m.deleted) return;
+                    if (m.pending || m.failed || m.deleted) return;
                     cancelPress();
                     pressTimer.current = window.setTimeout(() => {
                       pressTimer.current = null;
@@ -147,11 +149,30 @@ export function VirtualizedMessageList({
                   onPointerCancel={cancelPress}
                   onPointerMove={cancelPress}
                   onContextMenu={(e) => {
-                    if (!m.mine || m.pending || m.failed || m.deleted) return;
+                    if (m.pending || m.failed || m.deleted) return;
                     e.preventDefault();
                     onMessageMenu?.(m.id);
                   }}
                 >
+                  {m.replyTo && !m.deleted ? (
+                    <div
+                      style={{
+                        borderLeft: "3px solid currentColor",
+                        opacity: 0.75,
+                        padding: "0.15rem 0.5rem",
+                        marginBottom: 6,
+                        fontSize: "0.82rem",
+                        borderRadius: 4,
+                      }}
+                    >
+                      <strong>{m.replyTo.mine ? "You" : "Them"}</strong>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "14rem" }}>
+                        {m.replyTo.deleted
+                          ? "Message deleted"
+                          : m.replyTo.text || (m.replyTo.hasImage ? "Photo" : "")}
+                      </div>
+                    </div>
+                  ) : null}
                   {m.deleted ? (
                     <span className="bubble-text" style={{ fontStyle: "italic", opacity: 0.7 }}>
                       This message was deleted
@@ -174,7 +195,10 @@ export function VirtualizedMessageList({
                   <span
                     className={cn("bubble-meta", m.read && "is-read")}
                   >
-                    <span className="bubble-time">{timeLabel(m)}</span>
+                    <span className="bubble-time">
+                      {m.edited && !m.deleted ? "edited · " : ""}
+                      {timeLabel(m)}
+                    </span>
                     {m.mine && !m.failed && (
                       <span className="bubble-receipt">
                         <Receipt m={m} />
