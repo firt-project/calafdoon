@@ -175,6 +175,7 @@ enum MediaPurpose {
   chat_image
   evc_screenshot
   support_attachment
+  verification_selfie
   unknown
 }
 
@@ -201,6 +202,7 @@ enum PasswordAlgo {
 }
 
 model User {
+  photoVerifications     PhotoVerification[]
   notificationPreference NotificationPreference?
   conversationMutes      ConversationMute[]
   devicePushTokens       DevicePushToken[]
@@ -308,6 +310,8 @@ model Profile {
   convexId                   String           @unique @map("convex_id")
   userId                     String           @unique @map("user_id") @db.Uuid
   convexUserId               String           @map("convex_user_id")
+  /// Selfie verified by staff (badge).
+  photoVerified              Boolean          @default(false) @map("photo_verified")
   name                       String
   gender                     Gender
   age                        Int
@@ -763,6 +767,29 @@ model ConversationMute {
 
   @@unique([userId, conversationId])
   @@map("conversation_mutes")
+}
+
+enum PhotoVerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+model PhotoVerification {
+  id           String                  @id @default(uuid()) @db.Uuid
+  userId       String                  @map("user_id") @db.Uuid
+  mediaId      String                  @map("media_id") @db.Uuid
+  prompt       String
+  status       PhotoVerificationStatus @default(pending)
+  rejectReason String?                 @map("reject_reason")
+  reviewedById String?                 @map("reviewed_by_id") @db.Uuid
+  reviewedAt   DateTime?               @map("reviewed_at")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("photo_verifications")
 }
 
 model Announcement {

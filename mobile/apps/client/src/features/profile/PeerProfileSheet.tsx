@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { useBackToClose } from "@/ui/mobile-kit";
 import { createPortal } from "react-dom";
 import { MapPin, Shield, X } from "lucide-react";
@@ -430,6 +431,7 @@ export function PeerProfileSheet({
                   <h3>
                     {profile.name ?? "Member"}
                     {profile.age != null ? `, ${profile.age}` : ""}
+                    <VerifiedBadge show={(profile as { photoVerified?: boolean }).photoVerified} />
                   </h3>
                   {location ? (
                     <p className="muted">

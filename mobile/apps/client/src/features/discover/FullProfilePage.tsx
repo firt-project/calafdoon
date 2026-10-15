@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Ban,
@@ -505,6 +506,7 @@ export function FullProfilePage() {
                 {member.age != null ? (
                   <span className="fp-age">, {member.age}</span>
                 ) : null}
+                <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={22} />
               </h1>
               <div className="fp-hero-meta">
                 {score != null ? <CompatBadge score={score} /> : null}

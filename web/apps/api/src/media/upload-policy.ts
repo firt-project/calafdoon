@@ -15,7 +15,8 @@ export type UploadPurpose =
   | "profile_additional"
   | "profile_private"
   | "chat_image"
-  | "evc_screenshot";
+  | "evc_screenshot"
+  | "verification_selfie";
 
 /** Max object size per purpose (bytes). */
 export const UPLOAD_MAX_BYTES: Record<UploadPurpose, number> = {
@@ -24,6 +25,7 @@ export const UPLOAD_MAX_BYTES: Record<UploadPurpose, number> = {
   profile_private: 2 * 1024 * 1024,
   chat_image: 2 * 1024 * 1024,
   evc_screenshot: 8 * 1024 * 1024,
+  verification_selfie: 2 * 1024 * 1024,
 };
 
 /** Canonical MIME allowlist after normalization (no octet-stream). */

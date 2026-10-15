@@ -161,6 +161,7 @@ export class ConversationService {
       userId: otherUserId,
       name: other.name,
       age: other.age,
+      photoVerified: other.photoVerified,
       gender: other.gender,
       country: other.country,
       city: other.city,

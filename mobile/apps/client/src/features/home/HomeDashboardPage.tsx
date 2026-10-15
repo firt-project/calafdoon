@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
@@ -113,6 +114,7 @@ function HeroMatch({
           <span className="hm-hero-name">
             {member.name ?? "Member"}
             {member.age != null ? `, ${member.age}` : ""}
+            <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={14} />
           </span>
           <span className="hm-hero-meta">
             <MapPin size={13} aria-hidden /> {place || labels.locationPrivate}
@@ -163,6 +165,7 @@ function MemberTile({
       <span className="hm-tile-name">
         {member.name ?? "Member"}
         {member.age != null ? `, ${member.age}` : ""}
+        <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={13} />
       </span>
       <span className="hm-tile-meta">{member.city || member.country || ""}</span>
     </button>

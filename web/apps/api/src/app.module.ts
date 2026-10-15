@@ -22,6 +22,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProfileModule } from "./profile/profile.module";
 import { PushModule } from "./push/push.module";
+import { VerificationModule } from "./verification/verification.module";
 import { QueueModule } from "./queue/queue.module";
 import { RedisModule } from "./redis/redis.module";
 
@@ -63,6 +64,7 @@ import { RedisModule } from "./redis/redis.module";
     ChatModule,
     NotificationsModule,
     PushModule,
+    VerificationModule,
     PaymentsModule,
     AdminModule,
     DownloadModule,

@@ -147,6 +147,16 @@ const NotificationSettingsPage = lazy(() =>
     default: m.NotificationSettingsPage,
   }))
 );
+const VerificationPage = lazy(() =>
+  import("@/features/verification/VerificationPages").then((m) => ({
+    default: m.VerificationPage,
+  }))
+);
+const AdminVerificationsPage = lazy(() =>
+  import("@/features/verification/VerificationPages").then((m) => ({
+    default: m.AdminVerificationsPage,
+  }))
+);
 const MemberSupportPage = lazy(() =>
   import("@/features/settings/MemberSupportPage").then((m) => ({
     default: m.MemberSupportPage,
@@ -399,6 +409,16 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/verifications"
+            element={
+              <LazyRoute label="Loading verifications…">
+                <RequireStaff>
+                  <AdminVerificationsPage />
+                </RequireStaff>
+              </LazyRoute>
+            }
+          />
+          <Route
             path="/admin/announcements"
             element={
               <LazyRoute label="Loading announcements…">
@@ -525,6 +545,16 @@ export default function App() {
             <RequireAuth>
               <LazyRoute label="Opening shared profile…">
                 <SharedProfilePage />
+              </LazyRoute>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings/verification"
+          element={
+            <RequireAuth>
+              <LazyRoute>
+                <VerificationPage />
               </LazyRoute>
             </RequireAuth>
           }

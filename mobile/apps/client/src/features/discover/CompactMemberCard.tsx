@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, MoreHorizontal, MapPin, UserRound } from "lucide-react";
+import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { CompatBadge } from "@/ui/design-system";
 import { cn } from "@/utils/cn";
 import {
@@ -130,6 +131,7 @@ export function CompactMemberCard({
             <h2 className="feed-row-name">
               {name}
               {age}
+              <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={15} />
             </h2>
             {score != null ? <CompatBadge score={score} /> : null}
           </div>
@@ -194,6 +196,7 @@ export function CompactMemberCard({
             <h2 className="feed-name">
               {name}
               {age}
+              <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={15} />
             </h2>
             {score != null ? <CompatibilityBadge score={score} /> : null}
           </div>

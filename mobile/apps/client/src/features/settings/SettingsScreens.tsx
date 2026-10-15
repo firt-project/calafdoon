@@ -419,6 +419,13 @@ export function SettingsHomePage() {
               subtitle={t("settingsPage.profilePhotosDesc")}
             />
             <SettingsLinkRow
+              to="/settings/verification"
+              icon={Shield}
+              tone="blue"
+              title="Photo verification"
+              subtitle="Get a blue tick on your profile"
+            />
+            <SettingsLinkRow
               to="/settings/change-password"
               icon={Lock}
               tone="gray"

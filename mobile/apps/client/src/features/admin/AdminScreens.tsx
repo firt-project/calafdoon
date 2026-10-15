@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Shield,
   UserPlus,
+  BadgeCheck,
   Search,
   Users,
   Wallet,
@@ -269,6 +270,16 @@ export function AdminHomePage() {
             <ChevronRight size={16} aria-hidden />
           </Link>
         )}
+        <Link className="admin-nav-card" to="/admin/verifications">
+          <span className="admin-nav-icon">
+            <BadgeCheck size={18} />
+          </span>
+          <span className="meta">
+            <strong>Verifications</strong>
+            <span>Review member selfies</span>
+          </span>
+          <ChevronRight size={16} aria-hidden />
+        </Link>
         <Link className="admin-nav-card" to="/admin/announcements">
           <span className="admin-nav-icon">
             <Bell size={18} />

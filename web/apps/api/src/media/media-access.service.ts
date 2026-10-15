@@ -236,6 +236,7 @@ export class MediaAccessService {
         ? contentType
         : purpose.startsWith("profile") ||
             purpose === "evc_screenshot" ||
+            purpose === "verification_selfie" ||
             purpose === "chat_image" ||
             purpose === "unknown"
           ? "image/jpeg"
