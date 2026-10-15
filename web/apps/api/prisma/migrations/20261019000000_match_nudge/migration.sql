@@ -1,0 +1,1 @@
+ALTER TABLE "matches" ADD COLUMN IF NOT EXISTS "nudged_at" TIMESTAMP(3);

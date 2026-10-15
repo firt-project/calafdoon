@@ -580,6 +580,8 @@ model Match {
   chatUnlocked    Boolean     @map("chat_unlocked")
   seenAtByUser    Json?       @map("seen_at_by_user")
   archivedAt      DateTime?   @map("archived_at")
+  /// One-time "say hello" reminder sent when a match stays silent.
+  nudgedAt        DateTime?   @map("nudged_at")
   convexCreatedAt DateTime?   @map("convex_created_at")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
