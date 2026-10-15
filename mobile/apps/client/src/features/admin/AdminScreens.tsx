@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Shield,
   UserPlus,
+  Search,
   Users,
   Wallet,
   X,
@@ -300,6 +301,7 @@ export function AdminMembersPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const searching = search.trim().length > 0;
 
   const fetchPage = useCallback(
     async (opts: { append: boolean; pageCursor: string | null }) => {
@@ -308,9 +310,10 @@ export function AdminMembersPage() {
       setError(null);
       try {
         const res = (await admin.users.list({
-          reviewStatus: filter === "all" ? undefined : filter,
-          role: roleFilter === "all" ? undefined : roleFilter,
-          payment: planFilter === "all" ? undefined : planFilter,
+          // Like the web admin: searching looks through ALL members, filters paused.
+          reviewStatus: searching || filter === "all" ? undefined : filter,
+          role: searching || roleFilter === "all" ? undefined : roleFilter,
+          payment: searching || planFilter === "all" ? undefined : planFilter,
           search: search.trim() || undefined,
           limit: 100,
           cursor: opts.pageCursor || undefined,
@@ -327,7 +330,7 @@ export function AdminMembersPage() {
         setLoadingMore(false);
       }
     },
-    [filter, roleFilter, planFilter, search]
+    [filter, roleFilter, planFilter, search, searching]
   );
 
   useEffect(() => {
@@ -366,14 +369,40 @@ export function AdminMembersPage() {
       </header>
 
       <div className="admin-search">
+        <Search size={18} className="admin-search-icon" aria-hidden />
         <input
+          type="search"
+          inputMode="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Name, email, country, city, phone…"
+          placeholder="Search name, email, phone, country…"
           aria-label="Search members"
         />
+        {searching && (
+          <button
+            type="button"
+            className="admin-search-clear"
+            aria-label="Clear search"
+            onClick={() => setSearch("")}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
+      {searching && (
+        <p className="muted small" style={{ margin: "0 0 0.65rem" }}>
+          {loading
+            ? "Searching all members…"
+            : `${items.length}${nextCursor ? "+" : ""} found · filters paused`}
+        </p>
+      )}
 
+      {!searching && (
+        <>
       <div className="admin-chip-row" role="tablist" aria-label="Review filters">
         {(
           [
@@ -435,7 +464,10 @@ export function AdminMembersPage() {
         ))}
       </div>
 
-      {!loading && items.length > 0 && (
+        </>
+      )}
+
+      {!loading && items.length > 0 && !searching && (
         <p className="muted small" style={{ margin: "0 0 0.65rem" }}>
           Showing {items.length}
           {nextCursor ? "+" : ""} members
