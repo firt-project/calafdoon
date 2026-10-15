@@ -1,6 +1,6 @@
 import "./admin.css";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Activity,
   Bell,
@@ -23,7 +23,7 @@ import {
   staffRoleLabel,
   useSession,
 } from "@/features/auth/SessionProvider";
-import { EmptyState, SkeletonCard } from "@/ui/mobile-kit";
+import { BottomSheet, EmptyState, SkeletonCard } from "@/ui/mobile-kit";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 import { securityGateRouteForUser } from "@/lib/security-gate-codes";
@@ -36,7 +36,13 @@ type AdminStats = {
   totalMatches?: number;
   totalMessages?: number;
   revenue?: number;
-  money?: { totalRevenueCents?: number };
+  approvedMale?: number;
+  approvedFemale?: number;
+  approvedTotal?: number;
+  paidBasicCount?: number;
+  paidPremiumCount?: number;
+  trialCount?: number;
+  money?: { totalRevenueCents?: number; basicPaidCount?: number };
 };
 
 type MemberRow = {
@@ -55,6 +61,9 @@ type MemberRow = {
   country?: string | null;
   imageUrl?: string | null;
   paidCents?: number;
+  phone?: string | null;
+  registeredAt?: string | null;
+  lastActiveAt?: string | null;
 };
 
 type ReportRow = {
@@ -131,14 +140,30 @@ export function RequireStaff({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+function shortAgo(iso?: string | null): string {
+  if (!iso) return "—";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "—";
+  const mins = Math.floor((Date.now() - t) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(t).toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" });
+}
+
 export function AdminHomePage() {
   const { user, accessState } = useSession();
   const roleLabel = staffRoleLabel(user, accessState) ?? "Admin";
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [insights, setInsights] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingSelfies, setPendingSelfies] = useState(0);
   const [openSupport, setOpenSupport] = useState(0);
+  const [openReports, setOpenReports] = useState(0);
 
   useEffect(() => {
     apiClient
@@ -146,11 +171,21 @@ export function AdminHomePage() {
       .then((r) => setPendingSelfies(r?.count ?? 0))
       .catch(() => undefined);
     support.admin
-      .list({ status: "open", limit: 50 })
+      .list({ status: "open", limit: 100 })
       .then((r) => {
         const items = (r as { items?: unknown[] })?.items;
         setOpenSupport(Array.isArray(items) ? items.length : 0);
       })
+      .catch(() => undefined);
+    admin.reports
+      .list({ status: "open", limit: 100 })
+      .then((r) => {
+        const items = (r as { items?: unknown[] })?.items;
+        setOpenReports(Array.isArray(items) ? items.length : 0);
+      })
+      .catch(() => undefined);
+    (admin.analytics() as Promise<AnalyticsData>)
+      .then((d) => setInsights(d && typeof d === "object" ? d : null))
       .catch(() => undefined);
   }, []);
 
@@ -162,8 +197,42 @@ export function AdminHomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const revenue =
-    stats?.money?.totalRevenueCents ?? stats?.revenue ?? 0;
+  const revenue = stats?.money?.totalRevenueCents ?? stats?.revenue ?? 0;
+  const pending = stats?.pendingApproval ?? 0;
+
+  const attention: Array<{ label: string; count: number; to: string }> = [
+    { label: "profiles to review", count: pending, to: "/admin/members?review=pending_review" },
+    { label: "selfies to verify", count: pendingSelfies, to: "/admin/verifications" },
+    { label: "open reports", count: openReports, to: "/admin/reports" },
+    { label: "support messages", count: openSupport, to: "/admin/messages?tab=support" },
+  ].filter((a) => a.count > 0);
+
+  const cards: Array<{ label: string; value: string | number; to: string }> = [
+    { label: "Members", value: stats?.totalUsers ?? 0, to: "/admin/members" },
+    { label: "Approved men", value: stats?.approvedMale ?? 0, to: "/admin/members?role=user&review=approved&gender=male" },
+    { label: "Approved women", value: stats?.approvedFemale ?? 0, to: "/admin/members?role=user&review=approved&gender=female" },
+    { label: "Approved total", value: stats?.approvedTotal ?? 0, to: "/admin/members?role=user&review=approved" },
+    { label: "Pending review", value: pending, to: "/admin/members?review=pending_review" },
+    { label: "Unpaid", value: stats?.unpaidCount ?? 0, to: "/admin/members?role=user&payment=unpaid" },
+    { label: "Basic paid", value: stats?.money?.basicPaidCount ?? stats?.paidBasicCount ?? 0, to: "/admin/members?role=user&payment=basic" },
+    { label: "Premium", value: stats?.paidPremiumCount ?? 0, to: "/admin/members?role=user&payment=premium" },
+    { label: "On trial", value: stats?.trialCount ?? 0, to: "/admin/members?role=user&payment=trial" },
+    { label: "Revenue", value: money(revenue), to: "/admin/payments" },
+    { label: "Matches", value: stats?.totalMatches ?? 0, to: "/admin/analytics" },
+    { label: "Messages sent", value: stats?.totalMessages ?? 0, to: "/admin/messages?tab=chats" },
+    { label: "Open reports", value: openReports, to: "/admin/reports" },
+    { label: "Open support", value: openSupport, to: "/admin/messages?tab=support" },
+    { label: "Banned", value: stats?.bannedUsers ?? 0, to: "/admin/members" },
+  ];
+
+  const gender = insights?.genderBreakdown ?? {};
+  const male = gender.male ?? 0;
+  const female = gender.female ?? 0;
+  const genderTotal = male + female || 1;
+  const months = Object.entries(insights?.monthlySignups ?? {})
+    .sort((x, y) => x[0].localeCompare(y[0]))
+    .slice(-6);
+  const maxMonth = Math.max(1, ...months.map(([, v]) => v));
 
   return (
     <div className="screen pad-tab">
@@ -183,29 +252,76 @@ export function AdminHomePage() {
         </div>
       )}
 
+      <section className="adm-attn" aria-label="Needs attention">
+        <h2>Needs your attention</h2>
+        {attention.length === 0 ? (
+          <p className="muted small" style={{ margin: 0 }}>
+            All clear — nothing is waiting for review.
+          </p>
+        ) : (
+          <div className="adm-attn-list">
+            {attention.map((a) => (
+              <Link key={a.label} to={a.to} className="adm-attn-item">
+                <strong>{a.count}</strong>
+                <span>{a.label}</span>
+                <ChevronRight size={16} aria-hidden />
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
       {stats && (
         <div className="admin-stat-grid reveal">
-          <div className="admin-stat">
-            <strong>{stats.totalUsers ?? 0}</strong>
-            <span>Members</span>
-          </div>
-          <div className="admin-stat">
-            <strong>{stats.pendingApproval ?? 0}</strong>
-            <span>Pending review</span>
-          </div>
-          <div className="admin-stat">
-            <strong>{money(revenue)}</strong>
-            <span>Revenue</span>
-          </div>
-          <div className="admin-stat">
-            <strong>{stats.unpaidCount ?? 0}</strong>
-            <span>Unpaid</span>
-          </div>
-          <div className="admin-stat">
-            <strong>{stats.totalMatches ?? 0}</strong>
-            <span>Matches</span>
-          </div>
+          {cards.map((c) => (
+            <Link key={c.label} to={c.to} className="admin-stat adm-stat-link">
+              <strong>{c.value}</strong>
+              <span>{c.label}</span>
+            </Link>
+          ))}
         </div>
+      )}
+
+      {insights && (
+        <section className="adm-insights" aria-label="Insights">
+          <div className="adm-insights-head">
+            <h2>Insights</h2>
+            <Link to="/admin/analytics">Full analytics →</Link>
+          </div>
+          <div className="adm-kpis">
+            <div>
+              <strong>{insights.conversionRate ?? 0}%</strong>
+              <span>Paid conversion</span>
+            </div>
+            <div>
+              <strong>{insights.matchRate ?? 0}%</strong>
+              <span>Complete profiles</span>
+            </div>
+          </div>
+          {(male > 0 || female > 0) && (
+            <div className="adm-gender">
+              <div className="adm-gender-bar" aria-hidden>
+                <span style={{ width: `${(male / genderTotal) * 100}%` }} className="m" />
+                <span style={{ width: `${(female / genderTotal) * 100}%` }} className="f" />
+              </div>
+              <div className="adm-gender-legend">
+                <span><i className="m" /> Men {male}</span>
+                <span><i className="f" /> Women {female}</span>
+              </div>
+            </div>
+          )}
+          {months.length > 0 && (
+            <div className="adm-bars" aria-label="Signups by month">
+              {months.map(([month, value]) => (
+                <div key={month} className="adm-bar">
+                  <span className="adm-bar-val">{value}</span>
+                  <span className="adm-bar-fill" style={{ height: `${Math.max(6, (value / maxMonth) * 100)}%` }} />
+                  <span className="adm-bar-lbl">{month.slice(5)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       <div className="admin-nav-grid">
@@ -317,16 +433,28 @@ export function AdminHomePage() {
 }
 
 export function AdminMembersPage() {
+  const [urlParams] = useSearchParams();
+  const pick = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
+    const v = urlParams.get(key);
+    return v && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+  };
   const [items, setItems] = useState<MemberRow[]>([]);
   const [filter, setFilter] = useState<
     "all" | "pending_review" | "approved" | "rejected"
-  >("all");
+  >(() => pick("review", ["all", "pending_review", "approved", "rejected"] as const, "all"));
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin" | "owner">(
-    "all"
+    () => pick("role", ["all", "user", "admin", "owner"] as const, "all")
   );
   const [planFilter, setPlanFilter] = useState<
-    "all" | "unpaid" | "paid" | "basic" | "premium"
-  >("all");
+    "all" | "unpaid" | "paid" | "basic" | "premium" | "trial"
+  >(() => pick("payment", ["all", "unpaid", "paid", "basic", "premium", "trial"] as const, "all"));
+  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">(
+    () => pick("gender", ["all", "male", "female"] as const, "all")
+  );
+  const [countryFilter, setCountryFilter] = useState("");
+  const [rejecting, setRejecting] = useState<{ id: string; name: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [summary, setSummary] = useState<AdminStats | null>(null);
   const [search, setSearch] = useState("");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -346,6 +474,8 @@ export function AdminMembersPage() {
           reviewStatus: searching || filter === "all" ? undefined : filter,
           role: searching || roleFilter === "all" ? undefined : roleFilter,
           payment: searching || planFilter === "all" ? undefined : planFilter,
+          gender: searching || genderFilter === "all" ? undefined : genderFilter,
+          country: searching ? undefined : countryFilter.trim() || undefined,
           search: search.trim() || undefined,
           limit: 100,
           cursor: opts.pageCursor || undefined,
@@ -362,8 +492,15 @@ export function AdminMembersPage() {
         setLoadingMore(false);
       }
     },
-    [filter, roleFilter, planFilter, search, searching]
+    [filter, roleFilter, planFilter, genderFilter, countryFilter, search, searching]
   );
+
+  useEffect(() => {
+    admin
+      .stats()
+      .then((d) => setSummary((d as AdminStats) ?? null))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -433,6 +570,23 @@ export function AdminMembersPage() {
         </p>
       )}
 
+      {summary && !searching && (
+        <div className="adm-summary" aria-label="Member totals">
+          <button type="button" onClick={() => { setFilter("all"); setRoleFilter("all"); setPlanFilter("all"); setGenderFilter("all"); }}>
+            <strong>{summary.totalUsers ?? 0}</strong><span>All</span>
+          </button>
+          <button type="button" onClick={() => setFilter("approved")}>
+            <strong>{summary.approvedTotal ?? 0}</strong><span>Approved</span>
+          </button>
+          <button type="button" onClick={() => setFilter("pending_review")}>
+            <strong>{summary.pendingApproval ?? 0}</strong><span>Pending</span>
+          </button>
+          <button type="button" onClick={() => setPlanFilter("unpaid")}>
+            <strong>{summary.unpaidCount ?? 0}</strong><span>Unpaid</span>
+          </button>
+        </div>
+      )}
+
       {!searching && (
         <>
       <div className="admin-chip-row" role="tablist" aria-label="Review filters">
@@ -483,6 +637,7 @@ export function AdminMembersPage() {
             ["paid", "Paid"],
             ["basic", "Basic"],
             ["premium", "Premium"],
+            ["trial", "Trial"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -496,6 +651,39 @@ export function AdminMembersPage() {
         ))}
       </div>
 
+      <div className="admin-chip-row" role="tablist" aria-label="Gender filters">
+        {(
+          [
+            ["all", "Any gender"],
+            ["male", "Men"],
+            ["female", "Women"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={`admin-chip${genderFilter === key ? " active" : ""}`}
+            onClick={() => setGenderFilter(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="adm-country">
+        <input
+          value={countryFilter}
+          onChange={(e) => setCountryFilter(e.target.value)}
+          placeholder="Filter by country, e.g. Somalia"
+          aria-label="Filter by country"
+          autoComplete="off"
+        />
+        {countryFilter && (
+          <button type="button" className="admin-search-clear" aria-label="Clear country" onClick={() => setCountryFilter("")}>
+            <X size={16} />
+          </button>
+        )}
+      </div>
         </>
       )}
 
@@ -562,6 +750,10 @@ export function AdminMembersPage() {
                   {m.banned ? " · Banned" : ""}
                   {m.role && m.role !== "user" ? ` · ${m.role}` : ""}
                 </p>
+                <p className="muted small" style={{ margin: "0.2rem 0 0" }}>
+                  Joined {shortAgo(m.registeredAt)} · Active {shortAgo(m.lastActiveAt)}
+                  {m.phone ? ` · ${m.phone}` : ""}
+                </p>
                 <div className="admin-actions">
                   <Link to={`/admin/members/${id}`} className="btn btn-primary">
                     <Eye size={15} /> View
@@ -582,14 +774,7 @@ export function AdminMembersPage() {
                         type="button"
                         className="btn btn-secondary"
                         disabled={busyId === id}
-                        onClick={() =>
-                          void act(id, () =>
-                            admin.users.reject(
-                              id,
-                              "Rejected from mobile admin"
-                            )
-                          )
-                        }
+                        onClick={() => setRejecting({ id, name })}
                       >
                         <X size={15} /> Reject
                       </button>
@@ -631,6 +816,40 @@ export function AdminMembersPage() {
           )}
         </>
       )}
+      <BottomSheet
+        open={rejecting != null}
+        title={`Reject ${rejecting?.name ?? ""}?`}
+        onClose={() => {
+          setRejecting(null);
+          setRejectReason("");
+        }}
+      >
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>
+            The member sees this reason, so they know what to fix.
+          </p>
+          <textarea
+            rows={3}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="e.g. Photo does not show your face"
+          />
+          <button
+            type="button"
+            className="btn btn-danger btn-block"
+            disabled={rejectReason.trim().length < 3 || busyId != null}
+            onClick={() => {
+              const target = rejecting;
+              const reason = rejectReason.trim();
+              setRejecting(null);
+              setRejectReason("");
+              if (target) void act(target.id, () => admin.users.reject(target.id, reason));
+            }}
+          >
+            Reject
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

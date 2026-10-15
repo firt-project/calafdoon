@@ -28,8 +28,17 @@ function nestUserListQuery(opts?: Record<string, unknown>): string {
     params.reviewStatus = review;
   }
 
+  if (opts.gender === "male" || opts.gender === "female") {
+    params.gender = opts.gender;
+  }
+  if (typeof opts.country === "string" && opts.country.trim()) {
+    params.country = opts.country.trim();
+  }
+
   const payment = opts.payment;
-  if (payment === "basic" || payment === "premium") {
+  if (payment === "trial") {
+    params.onTrial = true;
+  } else if (payment === "basic" || payment === "premium") {
     params.paymentTier = payment;
   } else if (payment === "paid") {
     params.hasPaid = true;
