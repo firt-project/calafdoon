@@ -261,4 +261,73 @@ export class NotificationsService {
     }
     return n;
   }
+
+  async getPreferences(userId: string) {
+    const row = await this.prisma.notificationPreference.findUnique({
+      where: { userId },
+    });
+    return {
+      pushMessages: row?.pushMessages ?? true,
+      pushLikes: row?.pushLikes ?? true,
+      pushMatches: row?.pushMatches ?? true,
+      pushAnnouncements: row?.pushAnnouncements ?? true,
+      emailAnnouncements: row?.emailAnnouncements ?? true,
+    };
+  }
+
+  async updatePreferences(
+    userId: string,
+    patch: Partial<{
+      pushMessages: boolean;
+      pushLikes: boolean;
+      pushMatches: boolean;
+      pushAnnouncements: boolean;
+      emailAnnouncements: boolean;
+    }>
+  ) {
+    await this.prisma.notificationPreference.upsert({
+      where: { userId },
+      create: { userId, ...patch },
+      update: patch,
+    });
+    return this.getPreferences(userId);
+  }
+
+  private async assertConversationMember(userId: string, conversationId: string) {
+    const conv = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { participantUserIds: true },
+    });
+    if (!conv || !conv.participantUserIds.includes(userId)) {
+      throw new NotFoundException("Conversation not found");
+    }
+  }
+
+  async isConversationMuted(userId: string, conversationId: string) {
+    await this.assertConversationMember(userId, conversationId);
+    const row = await this.prisma.conversationMute.findUnique({
+      where: { userId_conversationId: { userId, conversationId } },
+    });
+    return { muted: Boolean(row) };
+  }
+
+  async setConversationMuted(
+    userId: string,
+    conversationId: string,
+    muted: boolean
+  ) {
+    await this.assertConversationMember(userId, conversationId);
+    if (muted) {
+      await this.prisma.conversationMute.upsert({
+        where: { userId_conversationId: { userId, conversationId } },
+        create: { userId, conversationId },
+        update: {},
+      });
+    } else {
+      await this.prisma.conversationMute.deleteMany({
+        where: { userId, conversationId },
+      });
+    }
+    return { muted };
+  }
 }

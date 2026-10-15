@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Ban, MoreVertical, Send, ShieldAlert } from "lucide-react";
 import {
+  apiClient,
   chat,
   connectRealtime,
   joinConversation,
@@ -115,6 +116,7 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
     online?: boolean;
   }>({ name: "Chat", userId: null, imageUrl: null });
   const [matchId, setMatchId] = useState<string | null>(null);
+  const [muted, setMuted] = useState(false);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -343,6 +345,23 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
 
   const list = useMemo(() => toChatList(messages), [messages]);
 
+  useEffect(() => {
+    apiClient
+      .get<{ muted: boolean }>(`/conversations/${encodeURIComponent(conversationId)}/mute`)
+      .then((r) => setMuted(Boolean(r?.muted)))
+      .catch(() => undefined);
+  }, [conversationId]);
+
+  async function toggleMute() {
+    const next = !muted;
+    setMuted(next);
+    try {
+      await apiClient.post(`/conversations/${encodeURIComponent(conversationId)}/mute`, { muted: next });
+    } catch {
+      setMuted(!next);
+    }
+  }
+
   async function unmatchUser() {
     if (!matchId || safetyBusy || offline) return;
     if (!window.confirm(`Unmatch with ${peer.name}? You will no longer be able to chat.`)) return;
@@ -480,6 +499,14 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
             onClick={() => void reportOrBlock("report")}
           >
             <ShieldAlert size={16} /> {t("safety.reportUser")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            disabled={offline}
+            onClick={() => void toggleMute()}
+          >
+            {muted ? "Unmute notifications" : "Mute notifications"}
           </button>
           <button
             type="button"

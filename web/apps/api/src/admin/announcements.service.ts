@@ -225,7 +225,7 @@ export class AnnouncementsService {
       });
       if (page.length === 0) break;
 
-      const emails: Array<{ to: string }> = [];
+      const emails: Array<{ to: string; userId: string }> = [];
       const pushed: string[] = [];
       for (const profile of page) {
         if (isStaffRole(profile.role)) continue;
@@ -256,7 +256,7 @@ export class AnnouncementsService {
           });
           delivered += 1;
           pushed.push(profile.userId);
-          if (profile.user.email) emails.push({ to: profile.user.email });
+          if (profile.user.email) emails.push({ to: profile.user.email, userId: profile.userId });
         } catch (err) {
           // unique sourceKey → already delivered; anything else is a real failure
           if ((err as { code?: string })?.code !== "P2002") {
@@ -272,7 +272,22 @@ export class AnnouncementsService {
           title: a.title,
           body: a.body,
           data: { type: "announcement", route: "/notifications" },
+          kind: "announcement",
         });
+      }
+
+      if (emails.length) {
+        const off = await this.prisma.notificationPreference.findMany({
+          where: {
+            userId: { in: emails.map((e) => e.userId) },
+            emailAnnouncements: false,
+          },
+          select: { userId: true },
+        });
+        const offSet = new Set(off.map((o) => o.userId));
+        for (let i = emails.length - 1; i >= 0; i--) {
+          if (offSet.has(emails[i]!.userId)) emails.splice(i, 1);
+        }
       }
 
       for (let i = 0; i < emails.length; i += EMAIL_CONCURRENCY) {

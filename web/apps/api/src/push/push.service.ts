@@ -5,6 +5,14 @@ import { PrismaService } from "../prisma/prisma.service";
 type FirebaseMessaging = import("firebase-admin/messaging").Messaging;
 
 const BATCH = 500;
+
+export type PushKind = "message" | "like" | "match" | "announcement";
+const KIND_FIELD = {
+  message: "pushMessages",
+  like: "pushLikes",
+  match: "pushMatches",
+  announcement: "pushAnnouncements",
+} as const;
 const DEAD_TOKEN_CODES = new Set([
   "messaging/registration-token-not-registered",
   "messaging/invalid-registration-token",
@@ -67,16 +75,55 @@ export class PushService {
     await this.prisma.devicePushToken.deleteMany({ where: { userId, token } });
   }
 
+  /** Drop users who turned this kind off, or muted this conversation. */
+  private async allowedUsers(
+    userIds: string[],
+    kind: PushKind | undefined,
+    conversationId: string | undefined
+  ): Promise<string[]> {
+    let allowed = userIds;
+    if (kind) {
+      const field = KIND_FIELD[kind];
+      const off = await this.prisma.notificationPreference.findMany({
+        where: { userId: { in: allowed }, [field]: false },
+        select: { userId: true },
+      });
+      const offSet = new Set(off.map((o) => o.userId));
+      allowed = allowed.filter((id) => !offSet.has(id));
+    }
+    if (conversationId && allowed.length) {
+      const muted = await this.prisma.conversationMute.findMany({
+        where: { conversationId, userId: { in: allowed } },
+        select: { userId: true },
+      });
+      const mutedSet = new Set(muted.map((m) => m.userId));
+      allowed = allowed.filter((id) => !mutedSet.has(id));
+    }
+    return allowed;
+  }
+
   async sendToUsers(
     userIds: string[],
-    msg: { title: string; body: string; data?: Record<string, string> }
+    msg: {
+      title: string;
+      body: string;
+      data?: Record<string, string>;
+      kind?: PushKind;
+      conversationId?: string;
+    }
   ): Promise<number> {
     try {
       if (userIds.length === 0) return 0;
       const messaging = await this.getMessaging();
       if (!messaging) return 0;
+      const allowed = await this.allowedUsers(
+        userIds,
+        msg.kind,
+        msg.conversationId
+      );
+      if (allowed.length === 0) return 0;
       const rows = await this.prisma.devicePushToken.findMany({
-        where: { userId: { in: userIds } },
+        where: { userId: { in: allowed } },
         select: { token: true },
       });
       let sent = 0;

@@ -142,6 +142,11 @@ const ChangePasswordPage = lazy(() =>
     default: m.ChangePasswordPage,
   }))
 );
+const NotificationSettingsPage = lazy(() =>
+  import("@/features/settings/SettingsScreens").then((m) => ({
+    default: m.NotificationSettingsPage,
+  }))
+);
 const MemberSupportPage = lazy(() =>
   import("@/features/settings/MemberSupportPage").then((m) => ({
     default: m.MemberSupportPage,
@@ -520,6 +525,16 @@ export default function App() {
             <RequireAuth>
               <LazyRoute label="Opening shared profile…">
                 <SharedProfilePage />
+              </LazyRoute>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings/notifications"
+          element={
+            <RequireAuth>
+              <LazyRoute>
+                <NotificationSettingsPage />
               </LazyRoute>
             </RequireAuth>
           }

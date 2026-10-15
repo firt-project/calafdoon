@@ -758,6 +758,7 @@ export class MatchService {
       title: data.title,
       body: data.body,
       data: { type: data.type, route: "/notifications" },
+      kind: data.type,
     });
   }
 

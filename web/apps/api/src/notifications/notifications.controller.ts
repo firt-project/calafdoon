@@ -61,6 +61,45 @@ export class NotificationsController {
     return { count };
   }
 
+  @Get("notifications/preferences")
+  async getPreferences(@CurrentUser() user: RequestUser) {
+    return this.notifications.getPreferences(user.id);
+  }
+
+  @Post("notifications/preferences")
+  @HttpCode(200)
+  async updatePreferences(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = parseBody(
+      z
+        .object({
+          pushMessages: z.boolean().optional(),
+          pushLikes: z.boolean().optional(),
+          pushMatches: z.boolean().optional(),
+          pushAnnouncements: z.boolean().optional(),
+          emailAnnouncements: z.boolean().optional(),
+        })
+        .strict(),
+      body
+    );
+    return this.notifications.updatePreferences(user.id, parsed);
+  }
+
+  @Get("conversations/:id/mute")
+  async getMute(@CurrentUser() user: RequestUser, @Param("id") id: string) {
+    return this.notifications.isConversationMuted(user.id, id);
+  }
+
+  @Post("conversations/:id/mute")
+  @HttpCode(200)
+  async setMute(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Body() body: unknown
+  ) {
+    const parsed = parseBody(z.object({ muted: z.boolean() }), body);
+    return this.notifications.setConversationMuted(user.id, id, parsed.muted);
+  }
+
   @Post("notifications/:id/read")
   @HttpCode(200)
   async markOne(@CurrentUser() user: RequestUser, @Param("id") id: string) {

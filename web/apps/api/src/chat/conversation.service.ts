@@ -778,7 +778,9 @@ export class ConversationService {
         void this.push?.sendToUsers([otherId], {
           title: result.notification.title,
           body: result.notification.body,
-          data: { type: "message", route: `/chat/${conversationId}` },
+          data: { type: "message", route: `/messages/${conversationId}` },
+          kind: "message",
+          conversationId,
         });
         const notifPayload = {
           id: result.notification.id,

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiClient } from "@hel/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
@@ -30,7 +31,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { openMailTo } from "@/platform/external-links";
 import { shouldUseWebCheckout } from "@/platform/web-checkout";
-import { clearAllClientData, prefsStore } from "@/platform/secure-storage";
+import { clearAllClientData } from "@/platform/secure-storage";
 import { useTheme, type ThemeMode } from "@/platform/theme";
 import {
   authenticateBiometric,
@@ -41,7 +42,6 @@ import {
 import { PageTitle, ScreenContainer } from "@/ui/design-system";
 import { cn } from "@/utils/cn";
 
-const NOTIF_KEY = "hel_notifications_enabled";
 
 type IconTone =
   | "burgundy"
@@ -316,16 +316,8 @@ export function SettingsHomePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
-  const [notificationsOn, setNotificationsOn] = useState(true);
   const roleLabel = staffRoleLabel(user, accessState);
   const isStaff = Boolean(roleLabel);
-
-  useEffect(() => {
-    void prefsStore.get(NOTIF_KEY).then((stored) => {
-      if (stored === "0" || stored === "false") setNotificationsOn(false);
-      else if (stored === "1" || stored === "true") setNotificationsOn(true);
-    });
-  }, []);
 
   async function onLogout() {
     // logout() signs out in the UI synchronously; go to Sign in in the same tick.
@@ -338,11 +330,6 @@ export function SettingsHomePage() {
   async function clearCache() {
     queryClient.clear();
     setMessage(t("settingsPage.cacheCleared"));
-  }
-
-  async function toggleNotifications(next: boolean) {
-    setNotificationsOn(next);
-    await prefsStore.set(NOTIF_KEY, next ? "1" : "0");
   }
 
   const appearanceLabel =
@@ -505,22 +492,12 @@ export function SettingsHomePage() {
             />
           }
         />
-        <SettingsControlRow
+        <SettingsLinkRow
+          to="/settings/notifications"
           icon={Bell}
           tone="orange"
           title={t("settingsPage.notifications")}
-          subtitle={
-            notificationsOn
-              ? t("settingsPage.notificationsOn")
-              : t("settingsPage.notificationsOff")
-          }
-          control={
-            <NativeSwitch
-              checked={notificationsOn}
-              aria-label={t("settingsPage.notifications")}
-              onChange={(next) => void toggleNotifications(next)}
-            />
-          }
+          subtitle="Messages, likes, matches, announcements"
         />
       </SettingsGroup>
 
@@ -800,6 +777,92 @@ export function DeleteAccountPage() {
           {busy ? t("settingsPage.deleting") : t("settingsPage.deleteMyAccount")}
         </button>
       </form>
+    </div>
+  );
+}
+
+type NotifPrefs = {
+  pushMessages: boolean;
+  pushLikes: boolean;
+  pushMatches: boolean;
+  pushAnnouncements: boolean;
+  emailAnnouncements: boolean;
+};
+
+export function NotificationSettingsPage() {
+  const { t } = useTranslation();
+  const [prefs, setPrefs] = useState<NotifPrefs | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiClient
+      .get<NotifPrefs>("/notifications/preferences")
+      .then(setPrefs)
+      .catch(() => setError("Could not load your notification settings."));
+  }, []);
+
+  async function change(key: keyof NotifPrefs, next: boolean) {
+    if (!prefs) return;
+    const before = prefs;
+    setPrefs({ ...prefs, [key]: next });
+    setError(null);
+    try {
+      setPrefs(
+        await apiClient.post<NotifPrefs>("/notifications/preferences", {
+          [key]: next,
+        })
+      );
+    } catch {
+      setPrefs(before);
+      setError("Could not save. Please try again.");
+    }
+  }
+
+  const rows: Array<[keyof NotifPrefs, string, string]> = [
+    ["pushMessages", "New messages", "Push when someone messages you"],
+    ["pushLikes", "Likes", "Push when someone likes you"],
+    ["pushMatches", "Matches", "Push when you match"],
+    ["pushAnnouncements", "Announcements", "Push for news from the team"],
+    ["emailAnnouncements", "Announcement emails", "Receive announcements by email"],
+  ];
+
+  return (
+    <div className="screen">
+      <header className="screen-header">
+        <Link to="/settings" className="back-btn" aria-label={t("common.back")}>
+          ←
+        </Link>
+        <h1>{t("settingsPage.notifications")}</h1>
+        <span />
+      </header>
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
+      {prefs && (
+        <SettingsGroup title="Choose what you get">
+          {rows.map(([key, title, subtitle]) => (
+            <SettingsControlRow
+              key={key}
+              icon={key === "emailAnnouncements" ? Mail : Bell}
+              tone="orange"
+              title={title}
+              subtitle={subtitle}
+              control={
+                <NativeSwitch
+                  checked={prefs[key]}
+                  aria-label={title}
+                  onChange={(next) => void change(key, next)}
+                />
+              }
+            />
+          ))}
+        </SettingsGroup>
+      )}
+      <p className="muted small">
+        You can also mute a single chat from the ⋮ menu inside it.
+      </p>
     </div>
   );
 }
