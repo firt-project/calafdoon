@@ -1,9 +1,9 @@
 import "./admin.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { MessageCircle, Search, X } from "lucide-react";
-import { admin, support } from "@hel/api-client";
-import { EmptyState, SkeletonCard } from "@/ui/mobile-kit";
+import { MessageCircle, PenSquare, Search, X } from "lucide-react";
+import { admin, apiClient, support } from "@hel/api-client";
+import { BottomSheet, EmptyState, SkeletonCard } from "@/ui/mobile-kit";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 
@@ -137,6 +137,170 @@ export function AdminMessagesPage() {
   );
 }
 
+/* ───────── Start a support message with any member ───────── */
+
+type PickMember = { userId: string; name: string; email?: string | null; imageUrl?: string | null };
+
+export function ComposeSupportSheet({
+  open,
+  onClose,
+  preset,
+}: {
+  open: boolean;
+  onClose: () => void;
+  preset?: { userId: string; name: string } | null;
+}) {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PickMember[]>([]);
+  const [picked, setPicked] = useState<PickMember | null>(null);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const target = preset ?? picked;
+
+  useEffect(() => {
+    if (!open || preset || picked || query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    let alive = true;
+    const t = window.setTimeout(() => {
+      admin.users
+        .list({ search: query.trim(), role: "user", limit: 12 })
+        .then((res) => {
+          const rows = (res as { items?: Array<Record<string, unknown>> })?.items ?? [];
+          if (!alive) return;
+          setResults(
+            rows
+              .filter((r) => typeof r.userId === "string")
+              .map((r) => ({
+                userId: String(r.userId),
+                name: String(r.name ?? r.email ?? "Member"),
+                email: (r.email as string) ?? null,
+                imageUrl: (r.imageUrl as string) ?? null,
+              }))
+          );
+        })
+        .catch(() => alive && setResults([]));
+    }, 250);
+    return () => {
+      alive = false;
+      window.clearTimeout(t);
+    };
+  }, [query, open, preset, picked]);
+
+  function reset() {
+    setQuery("");
+    setResults([]);
+    setPicked(null);
+    setSubject("");
+    setMessage("");
+    setError(null);
+  }
+
+  async function send() {
+    if (!target || message.trim().length < 2) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiClient.post<{ contactId: string }>("/admin/support/start", {
+        userId: target.userId,
+        message: message.trim(),
+        subject: subject.trim() || undefined,
+      });
+      await hapticSuccess();
+      reset();
+      onClose();
+      navigate(`/admin/messages?tab=support&c=${encodeURIComponent(res.contactId)}`);
+    } catch (e) {
+      await hapticError();
+      setError(userFacingError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <BottomSheet
+      open={open}
+      title="New support message"
+      onClose={() => {
+        reset();
+        onClose();
+      }}
+    >
+      <div className="stack">
+        {target ? (
+          <div className="adm-person">
+            <Avatar name={target.name} src={picked?.imageUrl ?? null} size={40} />
+            <div className="adm-person-meta">
+              <strong>{target.name}</strong>
+              <span className="muted small">will receive your message</span>
+            </div>
+            {!preset && (
+              <button type="button" className="linkish" onClick={() => setPicked(null)}>
+                Change
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search a member by name or email…"
+              aria-label="Search member"
+              autoComplete="off"
+            />
+            {results.map((r) => (
+              <button key={r.userId} type="button" className="adm-row" onClick={() => setPicked(r)}>
+                <Avatar name={r.name} src={r.imageUrl} size={38} />
+                <span className="adm-row-body">
+                  <strong>{r.name}</strong>
+                  <span className="adm-row-prev">{r.email ?? ""}</span>
+                </span>
+              </button>
+            ))}
+            {query.trim().length >= 2 && results.length === 0 && (
+              <p className="muted small">No members found.</p>
+            )}
+          </>
+        )}
+        {target && (
+          <>
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject (optional)"
+              maxLength={120}
+            />
+            <textarea
+              rows={4}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write your message…"
+            />
+            {error && <div className="form-error" role="alert">{error}</div>}
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              disabled={busy || message.trim().length < 2}
+              onClick={() => void send()}
+            >
+              {busy ? "Sending…" : "Send message"}
+            </button>
+            <p className="muted small" style={{ margin: 0 }}>
+              The member gets a notification, a push and an email, and can reply from Settings → Support.
+            </p>
+          </>
+        )}
+      </div>
+    </BottomSheet>
+  );
+}
+
 /* ───────── Support ───────── */
 
 function SupportInbox() {
@@ -144,6 +308,7 @@ function SupportInbox() {
   const [params] = useSearchParams();
   const selectedId = params.get("c");
   const [status, setStatus] = useState<"all" | "open" | "reviewed" | "closed">("open");
+  const [composeOpen, setComposeOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<SupportContact[]>([]);
   const [selected, setSelected] = useState<SupportContact | null>(null);
@@ -353,6 +518,10 @@ function SupportInbox() {
 
   return (
     <>
+      <button type="button" className="btn btn-primary btn-block" style={{ marginBottom: "0.7rem" }} onClick={() => setComposeOpen(true)}>
+        <PenSquare size={16} /> New message to a member
+      </button>
+      <ComposeSupportSheet open={composeOpen} onClose={() => setComposeOpen(false)} />
       <SearchBox value={search} onChange={setSearch} placeholder="Search name, email, phone, subject…" />
       <div className="admin-chip-row" role="tablist" aria-label="Support status">
         {(
@@ -380,8 +549,27 @@ function SupportInbox() {
       {shown.map((c) => {
         const last = c.thread?.[c.thread.length - 1];
         return (
-          <button key={c.id ?? c._id} type="button" className="adm-row" onClick={() => open(c)}>
-            <Avatar name={c.name} />
+          <div
+            key={c.id ?? c._id}
+            role="button"
+            tabIndex={0}
+            className="adm-row"
+            onClick={() => open(c)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") open(c);
+            }}
+          >
+            {c.profileId ? (
+              <Link
+                to={`/admin/members/${c.profileId}`}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Open ${c.name ?? "member"} profile`}
+              >
+                <Avatar name={c.name} />
+              </Link>
+            ) : (
+              <Avatar name={c.name} />
+            )}
             <span className="adm-row-body">
               <span className="adm-row-top">
                 <strong>{c.name ?? "Member"}</strong>
@@ -391,7 +579,7 @@ function SupportInbox() {
               <span className="adm-row-prev">{last?.body ?? "Open thread"}</span>
             </span>
             <span className={`adm-dot ${c.status ?? "open"}`} title={c.status} />
-          </button>
+          </div>
         );
       })}
     </>
@@ -449,10 +637,22 @@ function ChatsInbox() {
         />
       )}
       {items.map((c) => (
-        <button key={c.conversationId} type="button" className="adm-row" onClick={() => navigate(`/admin/chats/${c.conversationId}`)}>
-          <span className="adm-pair" aria-hidden>
-            <Avatar name={c.memberA?.name} src={c.memberA?.imageUrl} size={40} />
-            <Avatar name={c.memberB?.name} src={c.memberB?.imageUrl} size={40} />
+        <div key={c.conversationId} role="button" tabIndex={0} className="adm-row" onClick={() => navigate(`/admin/chats/${c.conversationId}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/admin/chats/${c.conversationId}`); }}>
+          <span className="adm-pair">
+            {[c.memberA, c.memberB].map((m) =>
+              m?.profileId ? (
+                <Link
+                  key={m.userId}
+                  to={`/admin/members/${m.profileId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Open ${m.name} profile`}
+                >
+                  <Avatar name={m.name} src={m.imageUrl} size={40} />
+                </Link>
+              ) : (
+                <Avatar key={m?.userId} name={m?.name} src={m?.imageUrl} size={40} />
+              )
+            )}
           </span>
           <span className="adm-row-body">
             <span className="adm-row-top">
@@ -465,7 +665,7 @@ function ChatsInbox() {
               {c.lastMessage ? c.lastMessage.body || (c.lastMessage.hasImage ? "📷 Photo" : "") : "No messages yet"}
             </span>
           </span>
-        </button>
+        </div>
       ))}
     </>
   );

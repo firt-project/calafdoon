@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   OnModuleDestroy,
   OnModuleInit,
   ServiceUnavailableException,
@@ -16,6 +17,7 @@ import { MAIL_ADAPTER } from "../auth/auth.service";
 import type { MailAdapter } from "../auth/mail.adapter";
 import { AuditLogService } from "./audit-log.service";
 import { maskEmail, parseLimit } from "./admin-auth.helpers";
+import { PushService } from "../push/push.service";
 
 const TOPIC_SUBJECTS: Record<string, string> = {
   photo_upload: "Can't upload profile photo",
@@ -38,7 +40,8 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly audit: AuditLogService,
-    @Inject(MAIL_ADAPTER) private readonly mail: MailAdapter
+    @Inject(MAIL_ADAPTER) private readonly mail: MailAdapter,
+    @Optional() private readonly push?: PushService
   ) {}
 
   onModuleInit() {
@@ -284,6 +287,96 @@ export class SupportService implements OnModuleInit, OnModuleDestroy {
       data: { status: "open", message },
     });
     return { ok: true };
+  }
+
+  /** Staff starts a support thread with any member (stays visible about a day). */
+  async startAsAdmin(
+    adminId: string,
+    memberUserId: string,
+    opts: { message: string; subject?: string }
+  ) {
+    const message = opts.message.trim();
+    if (message.length < 2) throw new BadRequestException("Please write a message.");
+    if (message.length > 2000) throw new BadRequestException("Message is too long.");
+    const subject = (opts.subject?.trim() || "Message from support").slice(0, 120);
+
+    const member = await this.prisma.user.findUnique({
+      where: { id: memberUserId },
+      include: { profile: { select: { name: true, phone: true, role: true } } },
+    });
+    if (!member || !member.profile) throw new NotFoundException("Member not found");
+    if (member.profile.role !== "user") {
+      throw new BadRequestException("You can only message members here.");
+    }
+    const admin = await this.prisma.user.findUniqueOrThrow({ where: { id: adminId } });
+
+    const now = new Date();
+    const convexId = `local_support_${randomUUID()}`;
+    const contact = await this.prisma.supportContact.create({
+      data: {
+        convexId,
+        userId: memberUserId,
+        convexUserId: member.convexId,
+        name: member.profile.name,
+        email: member.email,
+        phone: member.profile.phone,
+        topic: "other",
+        subject,
+        message,
+        source: "other",
+        status: "reviewed",
+        contactCreatedAt: now,
+        // Purge runs 30 min after reviewedAt; push it out so the member has a day to read it.
+        reviewedAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+        reviewedById: adminId,
+      },
+    });
+    await this.prisma.supportMessage.create({
+      data: {
+        convexId: `local_sm_${randomUUID()}`,
+        contactId: contact.id,
+        convexContactId: convexId,
+        authorUserId: adminId,
+        convexAuthorUserId: admin.convexId,
+        authorRole: "admin",
+        body: message,
+        messageCreatedAt: now,
+      },
+    });
+    await this.prisma.notification.create({
+      data: {
+        convexId: `local_notif_${randomUUID()}`,
+        userId: memberUserId,
+        convexUserId: member.convexId,
+        type: "announcement",
+        title: "Message from support",
+        body: message.slice(0, 200),
+        read: false,
+        notificationCreatedAt: now,
+      },
+    });
+    void this.push?.sendToUsers([memberUserId], {
+      title: "Message from support",
+      body: message,
+      data: { type: "announcement", route: "/settings/support" },
+      kind: "announcement",
+    });
+    if (member.email) {
+      await this.mail
+        .send({
+          to: member.email,
+          subject: "Message from Hel Calafkaaga support",
+          text: `${message}\n\nOpen the app and go to Settings → Support to reply.`,
+        })
+        .catch(() => undefined);
+    }
+    await this.audit.write({
+      actorUserId: adminId,
+      action: "support_contact_started",
+      targetUserId: memberUserId,
+      metadata: { contactId: contact.id },
+    });
+    return { ok: true as const, contactId: contact.id };
   }
 
   async replyAsAdmin(adminId: string, contactId: string, messageRaw: string) {

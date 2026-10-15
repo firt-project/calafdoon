@@ -15,6 +15,7 @@ import {
 import { admin, apiClient } from "@hel/api-client";
 import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet, SkeletonCard } from "@/ui/mobile-kit";
+import { ComposeSupportSheet } from "@/features/admin/AdminMessages";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 
@@ -148,6 +149,7 @@ export function AdminMemberDetailPage() {
   const [sheet, setSheet] = useState<
     null | "menu" | "reject" | "changes" | "pause" | "suspend" | "delete"
   >(null);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [reasonText, setReasonText] = useState("");
   const [messageText, setMessageText] = useState("");
   const [confirmName, setConfirmName] = useState("");
@@ -318,6 +320,16 @@ export function AdminMemberDetailPage() {
               >
                 <Camera size={15} /> Request photo
               </button>
+              {typeof profile.userId === "string" && !profile.banned && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={busy}
+                  onClick={() => setComposeOpen(true)}
+                >
+                  <Mail size={15} /> Message
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -720,6 +732,14 @@ export function AdminMemberDetailPage() {
           </p>
         </>
       )}
+      {typeof profile?.userId === "string" && (
+        <ComposeSupportSheet
+          open={composeOpen}
+          onClose={() => setComposeOpen(false)}
+          preset={{ userId: profile.userId, name: profile.name ?? "Member" }}
+        />
+      )}
+
       <BottomSheet open={sheet === "menu"} title="More actions" onClose={closeSheet}>
         <div className="stack">
           <button type="button" className="btn btn-secondary btn-block" onClick={() => setSheet("changes")}>

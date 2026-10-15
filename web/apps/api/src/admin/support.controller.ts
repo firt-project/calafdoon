@@ -55,6 +55,21 @@ export class SupportController {
     return this.support.getAdmin(contactId);
   }
 
+  @Post("admin/support/start")
+  @Roles("admin")
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  startAdmin(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = parseBody(
+      z.object({
+        userId: z.string().uuid(),
+        message: z.string().min(2).max(2000),
+        subject: z.string().max(120).optional(),
+      }),
+      body
+    );
+    return this.support.startAsAdmin(user.id, parsed.userId, parsed);
+  }
+
   @Post("admin/support/:contactId/reply")
   @Roles("admin")
   @UseGuards(CsrfGuard, RateLimitGuard)
