@@ -157,10 +157,9 @@ export function PhotoManager({
               {photo.status === "failed" && (
                 <span className="photo-badge danger">{labels.retry}</span>
               )}
-              <div className="photo-tile-actions">
+              <div className="photo-move">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-icon"
                   aria-label={labels.moveUp}
                   disabled={saving || index === 0}
                   onClick={() => move(index, -1)}
@@ -169,17 +168,18 @@ export function PhotoManager({
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-icon"
                   aria-label={labels.moveDown}
                   disabled={saving || index === list.length - 1}
                   onClick={() => move(index, 1)}
                 >
                   ↓
                 </button>
+              </div>
+              <div className="photo-tile-actions">
                 {onReplaceRequest && (
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="photo-act"
                     disabled={saving || busy}
                     onClick={() => onReplaceRequest(photo)}
                   >
@@ -188,7 +188,7 @@ export function PhotoManager({
                 )}
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="photo-act danger"
                   aria-label={labels.remove}
                   disabled={saving}
                   onClick={() => setConfirmId(photo.mediaId)}

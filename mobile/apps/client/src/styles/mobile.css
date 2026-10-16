@@ -3500,8 +3500,8 @@ button.chip {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.65rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
 }
 
 .photo-tile {
@@ -3528,10 +3528,53 @@ button.chip {
 }
 
 .photo-tile-actions {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.2rem;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.35rem;
+  padding: 0.4rem;
   background: var(--card);
+}
+
+.photo-act {
+  min-height: 2.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--card);
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.photo-act.danger {
+  color: #b42318;
+  border-color: color-mix(in srgb, #b42318 40%, var(--border));
+}
+
+.photo-act:disabled {
+  opacity: 0.5;
+}
+
+.photo-move {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.photo-move button {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.photo-move button:disabled {
+  opacity: 0.35;
 }
 
 .emoji-sheet {
