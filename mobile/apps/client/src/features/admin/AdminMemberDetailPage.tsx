@@ -1,6 +1,6 @@
 import "./admin.css";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Ban,
   Camera,
@@ -15,6 +15,7 @@ import {
 import { admin, apiClient } from "@hel/api-client";
 import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet, SkeletonCard } from "@/ui/mobile-kit";
+import { useSmartBack } from "@/navigation/useSmartBack";
 import { ComposeSupportSheet } from "@/features/admin/AdminMessages";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
@@ -146,6 +147,7 @@ export function AdminMemberDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const goBack = useSmartBack("/admin/members");
   const [sheet, setSheet] = useState<
     null | "menu" | "reject" | "changes" | "pause" | "suspend" | "delete"
   >(null);
@@ -221,9 +223,9 @@ export function AdminMemberDetailPage() {
   return (
     <div className="screen pad-tab">
       <header className="screen-header">
-        <Link to="/admin/members" className="back-btn" aria-label="Back">
+        <button type="button" className="back-btn" aria-label="Back" onClick={goBack}>
           ←
-        </Link>
+        </button>
         <h1>{t("adminDetail.title")}</h1>
       </header>
 
