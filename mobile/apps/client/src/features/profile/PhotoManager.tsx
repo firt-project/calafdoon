@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { photos as photosApi } from "@hel/api-client";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
 import { SafeImage } from "@/ui/SafeImage";
+import { resetPhotoGate } from "@/features/profile/photo-gate";
 
 export type ManagedPhoto = {
   mediaId: string;
@@ -46,6 +48,7 @@ export function PhotoManager({
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const dragId = useRef<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setOrdered(photos);
@@ -86,10 +89,16 @@ export function PhotoManager({
     setConfirmId(null);
     setSaving(true);
     setError(null);
+    const wasOnly = ordered.length === 1;
     try {
       await photosApi.removeAdditional(mediaId);
       await hapticSuccess();
       await onReload();
+      if (wasOnly) {
+        // A profile photo is required: send the member to add a new one.
+        resetPhotoGate();
+        navigate("/onboarding/photo", { replace: true });
+      }
     } catch (e) {
       await hapticError();
       setError(userFacingError(e));
@@ -181,8 +190,7 @@ export function PhotoManager({
                   type="button"
                   className="btn btn-ghost"
                   aria-label={labels.remove}
-                  title={list.length === 1 ? "Add another photo first, or use Replace" : undefined}
-                  disabled={saving || list.length === 1}
+                  disabled={saving}
                   onClick={() => setConfirmId(photo.mediaId)}
                 >
                   {labels.remove}
@@ -204,7 +212,11 @@ export function PhotoManager({
       {confirmId && (
         <div className="sheet" role="dialog" aria-modal="true" aria-label={labels.confirmRemove}>
           <div className="sheet-handle" />
-          <p>{labels.confirmRemove}</p>
+          <p>
+            {list.length === 1
+              ? "This is your only photo. After removing it you will be asked to add a new one."
+              : labels.confirmRemove}
+          </p>
           <div className="stack">
             <button
               type="button"
