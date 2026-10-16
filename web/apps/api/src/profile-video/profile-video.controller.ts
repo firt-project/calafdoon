@@ -27,6 +27,7 @@ import {
 import { CsrfGuard } from "../auth/csrf";
 import { RateLimitGuard } from "../redis/rate-limit.guard";
 import { AuditLogService } from "../admin/audit-log.service";
+import { AppOnlyGuard } from "./app-only.guard";
 import { BunnyStreamClient } from "./bunny-stream.client";
 import { ProfileVideoService } from "./profile-video.service";
 
@@ -40,7 +41,7 @@ function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
 
 /** Member-facing profile video API. All routes require a signed-in member. */
 @Controller("profile-video")
-@UseGuards(CsrfGuard, RateLimitGuard)
+@UseGuards(AppOnlyGuard, CsrfGuard, RateLimitGuard)
 @RequireProfile()
 export class ProfileVideoController {
   constructor(private readonly videos: ProfileVideoService) {}

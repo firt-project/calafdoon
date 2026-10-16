@@ -11,6 +11,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { AuthGuard } from "../auth/auth.guards";
 import { ProfileVideoController, BunnyStreamWebhookController } from "./profile-video.controller";
+import { AppOnlyGuard } from "./app-only.guard";
 import { ProfileVideoService } from "./profile-video.service";
 import type { BunnyVideo } from "./bunny-stream.client";
 
@@ -424,6 +425,18 @@ describe("ProfileVideoService", () => {
       db.state.profiles.set("admin", { role: "admin", banned: false });
       assert.ok((await svc.getPlayback("admin", "alice")).url);
     });
+  });
+});
+
+describe("app-only access", () => {
+  const guard = new AppOnlyGuard();
+  const ctx = (headers: Record<string, string>) =>
+    ({ switchToHttp: () => ({ getRequest: () => ({ headers }) }) }) as never;
+
+  it("refuses website requests (cookie session, no header) and allows the app (header session)", () => {
+    assert.throws(() => guard.canActivate(ctx({})), ForbiddenException);
+    assert.throws(() => guard.canActivate(ctx({ cookie: "hel_session=abc" })), ForbiddenException);
+    assert.equal(guard.canActivate(ctx({ "x-session-token": "tok" })), true);
   });
 });
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { ProfileVideoPlayer } from "@/components/profile/profile-video-player";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -49,7 +48,6 @@ type MatchLike = {
   liked?: boolean;
   verified?: boolean;
   isOnline?: boolean;
-  hasProfileVideo?: boolean;
   qualities?: string[];
   hobbies?: string[];
 };
@@ -225,13 +223,6 @@ function MatchProfileModalBody({
           </div>
 
           <ProfileFactChips facts={facts} chipClassName="border-primary/30 bg-card px-2.5 py-1.5 text-xs" />
-
-          {match.hasProfileVideo ? (
-            <section>
-              <h3 className="mb-2 text-sm font-semibold text-primary">Video</h3>
-              <ProfileVideoPlayer ownerUserId={match.userId} ownerName={match.name ?? undefined} />
-            </section>
-          ) : null}
 
           {bio ? (
             <section className="rounded-2xl bg-muted/70 p-4">

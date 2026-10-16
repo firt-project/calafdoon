@@ -1,6 +1,5 @@
 "use client";
 
-import { AdminProfileVideo } from "@/components/admin/admin-profile-video";
 import { motion } from "framer-motion";
 import {
   X,
@@ -560,12 +559,6 @@ export function AdminUserDetailPanel({
                   </ol>
                 )}
               </DetailSection>
-
-              {detail?.profile?.userId && !isStaffRole(detail.profile.role) ? (
-                <DetailSection title="Profile video">
-                  <AdminProfileVideo userId={String(detail.profile.userId)} />
-                </DetailSection>
-              ) : null}
 
               <DetailSection title={t("adminDetail.activityTitle")}>
                 {!activity ? (
