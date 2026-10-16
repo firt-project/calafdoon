@@ -109,6 +109,9 @@ async function bootstrap() {
     ],
   });
   logger.log(`CORS allowlist: ${origins.join(", ") || "(empty)"}`);
+  logger.log(
+    `Rate-limit client address source: ${process.env.RATE_LIMIT_USE_CF_IP === "true" ? "CF-Connecting-IP header" : "Express req.ip"}`
+  );
 
   // Validate required secrets early (non-dev soft warn)
   const sessionSecret = process.env.SESSION_SECRET ?? process.env.AUTH_SECRET;

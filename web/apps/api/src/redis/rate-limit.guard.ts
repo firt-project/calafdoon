@@ -25,11 +25,20 @@ const IPV6 = /^[0-9a-fA-F:]+$/;
  * the single-valued `CF-Connecting-IP` header (set by Cloudflare, not a spoofable chain) is used.
  * Off by default: members on carrier-grade NAT share an address, so enable it deliberately.
  */
+let warnedMissingHeader = false;
+
 export function rateLimitClientIp(req: Request): string {
   if (process.env.RATE_LIMIT_USE_CF_IP === "true") {
     const raw = req.headers["cf-connecting-ip"];
     const ip = typeof raw === "string" ? raw.trim() : "";
     if (ip && ip.length <= 45 && (IPV4.test(ip) || IPV6.test(ip))) return ip;
+    if (!warnedMissingHeader) {
+      warnedMissingHeader = true;
+      // One line per process start; no addresses are logged.
+      new Logger("RateLimit").warn(
+        "RATE_LIMIT_USE_CF_IP=true but a request had no valid CF-Connecting-IP header; using Express req.ip"
+      );
+    }
   }
   return req.ip || req.socket.remoteAddress || "unknown";
 }
