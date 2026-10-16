@@ -3495,31 +3495,53 @@ button.chip {
   padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
 }
 
+.photo-primary-card {
+  width: min(100%, 17rem);
+  margin: 0 auto 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.photo-primary-img {
+  position: relative;
+}
+
+.photo-sub {
+  margin: 0.2rem 0 0.5rem;
+  font-weight: 600;
+}
+
 .photo-grid {
   list-style: none;
-  margin: 0;
+  margin: 0 0 0.9rem;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
 }
 
 .photo-tile {
-  position: relative;
-  border-radius: 12px;
+  border-radius: 1rem;
   overflow: hidden;
   border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.photo-tile-img {
+  position: relative;
 }
 
 .photo-badge {
   position: absolute;
-  top: 0.35rem;
-  left: 0.35rem;
+  top: 0.5rem;
+  left: 0.5rem;
   background: var(--primary);
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.15rem 0.4rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
 }
 
@@ -3527,28 +3549,26 @@ button.chip {
   background: #b42318;
 }
 
-.photo-tile-actions {
+.photo-actions {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 0.2rem;
-  padding: 0.25rem;
-  background: var(--card);
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.5rem;
 }
 
 .photo-act {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  min-height: 2rem;
-  padding: 0 0.15rem;
+  gap: 0.35rem;
+  min-height: 2.6rem;
+  padding: 0 0.4rem;
   border: 1px solid var(--border);
-  border-radius: 0.55rem;
+  border-radius: 0.75rem;
   background: var(--card);
   color: var(--foreground);
   font-weight: 600;
-  font-size: 0.66rem;
+  font-size: 0.86rem;
   white-space: nowrap;
 }
 
@@ -3561,22 +3581,39 @@ button.chip {
   opacity: 0.5;
 }
 
+.photo-pill {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.photo-pill:disabled {
+  opacity: 0.5;
+}
+
 .photo-move {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
+  bottom: 0.5rem;
+  right: 0.5rem;
   display: flex;
-  gap: 0.2rem;
+  gap: 0.3rem;
 }
 
 .photo-move button {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.1rem;
+  height: 2.1rem;
   border: 0;
   border-radius: 999px;
-  background: rgb(0 0 0 / 0.55);
+  background: rgb(0 0 0 / 0.6);
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.3rem;
   line-height: 1;
   padding: 0;
 }

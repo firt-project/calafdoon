@@ -218,9 +218,14 @@ export class BunnyStreamClient {
 
   /** Player hosts to try, configured one first. Both are documented Bunny embed hosts. */
   playerHosts(): string[] {
-    const configured = this.config.get<string>("BUNNY_STREAM_PLAYER_HOST")?.trim();
+    const configured = this.config.get<string>("BUNNY_STREAM_PLAYER_HOST")?.trim().toLowerCase();
     const defaults = ["player.mediadelivery.net", "iframe.mediadelivery.net"];
-    return [...new Set([...(configured ? [configured] : []), ...defaults])];
+    // Only Bunny player hosts are valid here. A CDN hostname (…b-cdn.net) is not an embed player,
+    // so a mistaken value is ignored instead of breaking playback.
+    if (configured && /(^|\.)mediadelivery\.net$/.test(configured)) {
+      return [...new Set([configured, ...defaults])];
+    }
+    return defaults;
   }
 
   /**

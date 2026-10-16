@@ -54,12 +54,18 @@ describe("Bunny signatures", () => {
   });
 
   it("lists the configured player host first, then the documented ones", () => {
-    assert.deepEqual(client({ BUNNY_STREAM_PLAYER_HOST: "custom.example.com" }).playerHosts(), [
-      "custom.example.com",
+    assert.deepEqual(client({ BUNNY_STREAM_PLAYER_HOST: "iframe.mediadelivery.net" }).playerHosts(), [
+      "iframe.mediadelivery.net",
+      "player.mediadelivery.net",
+    ]);
+    assert.deepEqual(client().playerHosts(), ["player.mediadelivery.net", "iframe.mediadelivery.net"]);
+  });
+
+  it("ignores a CDN hostname mistakenly set as the player host", () => {
+    assert.deepEqual(client({ BUNNY_STREAM_PLAYER_HOST: "vz-1b82100b-723.b-cdn.net" }).playerHosts(), [
       "player.mediadelivery.net",
       "iframe.mediadelivery.net",
     ]);
-    assert.deepEqual(client().playerHosts(), ["player.mediadelivery.net", "iframe.mediadelivery.net"]);
   });
 
   it("probePlayer returns the HTTP status, or null on a network error", async () => {

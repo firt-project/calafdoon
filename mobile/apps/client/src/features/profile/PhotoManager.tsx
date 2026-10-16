@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, Trash2 } from "lucide-react";
 import { photos as photosApi } from "@hel/api-client";
@@ -48,7 +48,6 @@ export function PhotoManager({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const dragId = useRef<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,82 +124,126 @@ export function PhotoManager({
       {list.length === 0 ? (
         <p className="muted">{labels.empty}</p>
       ) : (
-        <ul className="photo-grid" aria-label="Profile photos">
-          {list.map((photo, index) => (
-            <li
-              key={photo.mediaId}
-              className="photo-tile"
-              draggable={!saving}
-              onDragStart={() => {
-                dragId.current = photo.mediaId;
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => {
-                const fromId = dragId.current;
-                dragId.current = null;
-                if (!fromId || fromId === photo.mediaId) return;
-                const from = list.findIndex((p) => p.mediaId === fromId);
-                const to = list.findIndex((p) => p.mediaId === photo.mediaId);
-                if (from < 0 || to < 0) return;
-                const next = [...list];
-                const [item] = next.splice(from, 1);
-                next.splice(to, 0, item);
-                void persistOrder(next);
-              }}
-            >
-              <SafeImage
-                src={photo.url}
-                alt={`Photo ${index + 1}`}
-                aspectRatio="1 / 1"
-                fallbackText={String(index + 1)}
-              />
-              {index === 0 && <span className="photo-badge">{labels.primary}</span>}
-              {photo.status === "failed" && (
-                <span className="photo-badge danger">{labels.retry}</span>
-              )}
-              <div className="photo-move">
-                <button
-                  type="button"
-                  aria-label={labels.moveUp}
-                  disabled={saving || index === 0}
-                  onClick={() => move(index, -1)}
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  aria-label={labels.moveDown}
-                  disabled={saving || index === list.length - 1}
-                  onClick={() => move(index, 1)}
-                >
-                  ›
-                </button>
-              </div>
-              <div className="photo-tile-actions">
-                {onReplaceRequest && (
+        <>
+          {(() => {
+            const primary = list[0]!;
+            return (
+              <div className="photo-primary-card">
+                <div className="photo-primary-img">
+                  <SafeImage
+                    src={primary.url}
+                    alt="Main photo"
+                    aspectRatio="4 / 5"
+                    fallbackText="1"
+                  />
+                  <span className="photo-badge">{labels.primary}</span>
+                  {primary.status === "failed" && (
+                    <span className="photo-badge danger" style={{ left: "auto", right: "0.5rem" }}>
+                      {labels.retry}
+                    </span>
+                  )}
+                </div>
+                <div className="photo-actions">
+                  {onReplaceRequest && (
+                    <button
+                      type="button"
+                      className="photo-act"
+                      disabled={saving || busy}
+                      onClick={() => onReplaceRequest(primary)}
+                    >
+                      <RefreshCw size={16} aria-hidden /> {labels.replace ?? "Replace"}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="photo-act"
-                    aria-label={labels.replace ?? "Replace"}
-                    disabled={saving || busy}
-                    onClick={() => onReplaceRequest(photo)}
+                    className="photo-act danger"
+                    disabled={saving}
+                    onClick={() => setConfirmId(primary.mediaId)}
                   >
-                    <RefreshCw size={14} aria-hidden /> {labels.replace ?? "Replace"}
+                    <Trash2 size={16} aria-hidden /> {labels.remove}
                   </button>
-                )}
-                <button
-                  type="button"
-                  className="photo-act danger"
-                  aria-label={labels.remove}
-                  disabled={saving}
-                  onClick={() => setConfirmId(photo.mediaId)}
-                >
-                  <Trash2 size={14} aria-hidden /> {labels.remove}
-                </button>
+                </div>
               </div>
-            </li>
-          ))}
-        </ul>
+            );
+          })()}
+
+          {list.length > 1 && (
+            <>
+              <p className="muted small photo-sub">More photos</p>
+              <ul className="photo-grid" aria-label="More profile photos">
+                {list.slice(1).map((photo, i) => {
+                  const index = i + 1;
+                  return (
+                    <li key={photo.mediaId} className="photo-tile">
+                      <div className="photo-tile-img">
+                        <SafeImage
+                          src={photo.url}
+                          alt={`Photo ${index + 1}`}
+                          aspectRatio="1 / 1"
+                          fallbackText={String(index + 1)}
+                        />
+                        {photo.status === "failed" && (
+                          <span className="photo-badge danger">{labels.retry}</span>
+                        )}
+                        <button
+                          type="button"
+                          className="photo-pill"
+                          disabled={saving}
+                          onClick={() => {
+                            const next = [...list];
+                            const [item] = next.splice(index, 1);
+                            next.unshift(item!);
+                            void persistOrder(next);
+                          }}
+                        >
+                          Make main
+                        </button>
+                        <div className="photo-move">
+                          <button
+                            type="button"
+                            aria-label={labels.moveUp}
+                            disabled={saving || index === 1}
+                            onClick={() => move(index, -1)}
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={labels.moveDown}
+                            disabled={saving || index === list.length - 1}
+                            onClick={() => move(index, 1)}
+                          >
+                            ›
+                          </button>
+                        </div>
+                      </div>
+                      <div className="photo-actions">
+                        {onReplaceRequest && (
+                          <button
+                            type="button"
+                            className="photo-act"
+                            disabled={saving || busy}
+                            onClick={() => onReplaceRequest(photo)}
+                          >
+                            <RefreshCw size={15} aria-hidden /> {labels.replace ?? "Replace"}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="photo-act danger"
+                          disabled={saving}
+                          onClick={() => setConfirmId(photo.mediaId)}
+                        >
+                          <Trash2 size={15} aria-hidden /> {labels.remove}
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </>
       )}
       <button
         type="button"
