@@ -186,15 +186,13 @@ export function PhotoManager({
               )}
             </div>
             {primary && (
-              <div className="ph-actions">
+              <div className="ph-actions ph-actions-single">
                 {onReplaceRequest && (
                   <button type="button" className="ph-btn" disabled={saving || busy || uploading} onClick={() => onReplaceRequest(primary)}>
-                    <RefreshCw size={16} aria-hidden /> {labels.replace ?? "Replace"}
+                    <RefreshCw size={16} aria-hidden /> {labels.replace ?? "Replace"} main photo
                   </button>
                 )}
-                <button type="button" className="ph-btn danger" disabled={saving || uploading} onClick={() => setConfirmId(primary.mediaId)}>
-                  <Trash2 size={16} aria-hidden /> {labels.remove}
-                </button>
+                <p className="muted small ph-note">Your main photo can be replaced but not removed.</p>
               </div>
             )}
           </div>
