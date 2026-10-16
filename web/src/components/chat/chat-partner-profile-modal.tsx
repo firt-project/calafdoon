@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileVideoPlayer } from "@/components/profile/profile-video-player";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -385,6 +386,13 @@ export function ChatPartnerProfileModal({
               items={qualities}
             />
           ) : null}
+          {!loading && (profile as { hasProfileVideo?: boolean }).hasProfileVideo ? (
+            <section>
+              <h3 className="mb-2 text-sm font-semibold">Video</h3>
+              <ProfileVideoPlayer ownerUserId={profile.userId} ownerName={profile.name ?? undefined} />
+            </section>
+          ) : null}
+
           {!loading && hobbies.length > 0 ? (
             <ChipSection title={t("profilePage.hobbies")} items={hobbies} />
           ) : null}

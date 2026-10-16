@@ -9,6 +9,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { PushService } from "../push/push.service";
+import { hasActiveProfileVideo } from "../profile-video/active-video-cache";
 import { ConfigService } from "@nestjs/config";
 import type { Conversation, Match, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -162,10 +163,7 @@ export class ConversationService {
       name: other.name,
       age: other.age,
       photoVerified: other.photoVerified,
-      hasProfileVideo: !!(await this.prisma.profileVideo.findFirst({
-        where: { userId: otherUserId, isActive: true, status: "ready" },
-        select: { id: true },
-      })),
+      hasProfileVideo: await hasActiveProfileVideo(this.prisma, otherUserId),
       gender: other.gender,
       country: other.country,
       city: other.city,

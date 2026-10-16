@@ -33,6 +33,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/lazy-image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileVideoCard } from "@/components/profile/profile-video-card";
 import { ProfilePhotoPreview } from "@/components/profile/profile-photo-preview";
 import { PhotoGalleryLightbox } from "@/components/ui/photo-gallery-lightbox";
 import { TrustBadges } from "@/components/profile/trust-badges";
@@ -442,6 +443,7 @@ export function ProfileEditScreen({
             </TabsContent>
 
             <TabsContent value="photos" className="mt-5 space-y-4">
+              {!isStaff && <ProfileVideoCard userId={currentUser.userId} />}
               {!isStaff && (
                 <div className="rounded-2xl border border-border p-4 space-y-3">
                   <div>

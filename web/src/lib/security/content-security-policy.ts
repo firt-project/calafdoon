@@ -78,6 +78,8 @@ export function buildContentSecurityPolicy(env: CspEnv = process.env): string {
     "https://*.r2.cloudflarestorage.com",
     "https://*.cloudflarestorage.com",
     "https://*.amazonaws.com",
+    // Bunny Stream resumable (TUS) profile-video uploads
+    "https://video.bunnycdn.com",
     ...(isProd
       ? []
       : [
@@ -106,7 +108,7 @@ export function buildContentSecurityPolicy(env: CspEnv = process.env): string {
     // next/font emits self-hosted files
     "font-src 'self' data:",
     // Marketing how-to embed (youtube-nocookie preferred; youtube kept for legacy embed URL)
-    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://youtube.com",
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://youtube.com https://player.mediadelivery.net https://iframe.mediadelivery.net",
     "object-src 'none'",
     "base-uri 'self'",
     // Stripe Checkout is top-level navigation; forms stay first-party

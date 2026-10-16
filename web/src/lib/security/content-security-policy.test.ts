@@ -59,4 +59,10 @@ describe("buildContentSecurityPolicy (L2)", () => {
     });
     assert.match(csp, /r2\.cloudflarestorage\.com/);
   });
+
+  it("allows Bunny Stream uploads (connect-src) and the player (frame-src)", () => {
+    const csp = buildContentSecurityPolicy({ NODE_ENV: "production" });
+    assert.match(csp, /connect-src[^;]*https:\/\/video\.bunnycdn\.com/);
+    assert.match(csp, /frame-src[^;]*https:\/\/player\.mediadelivery\.net/);
+  });
 });

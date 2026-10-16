@@ -6,6 +6,7 @@ import {
   Optional,
 } from "@nestjs/common";
 import { PushService } from "../push/push.service";
+import { hasActiveProfileVideo } from "../profile-video/active-video-cache";
 import type { LikeAction, MatchStatus, Profile } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -68,12 +69,8 @@ export class MatchService {
     return { userId, profile };
   }
 
-  private async hasVideo(userId: string): Promise<boolean> {
-    const v = await this.prisma.profileVideo.findFirst({
-      where: { userId, isActive: true, status: "ready" },
-      select: { id: true },
-    });
-    return !!v;
+  private hasVideo(userId: string): Promise<boolean> {
+    return hasActiveProfileVideo(this.prisma, userId);
   }
 
   private async getBlockedIds(userId: string): Promise<Set<string>> {
