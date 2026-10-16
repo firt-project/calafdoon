@@ -42,7 +42,6 @@ export function ProfileVideoSection() {
   const [percent, setPercent] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [diag, setDiag] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const resumeRef = useRef<{ videoId: string; url: string } | null>(null);
   const pickRef = useRef<HTMLInputElement | null>(null);
@@ -147,18 +146,6 @@ export function ProfileVideoSection() {
     if (file) void startUpload(file);
   }
 
-  async function runCheck() {
-    setBusy(true);
-    try {
-      const res = await apiClient.get<Record<string, unknown>>("/profile-video/diagnose");
-      setDiag(JSON.stringify(res, null, 2));
-    } catch (e) {
-      setDiag(`Check failed: ${e instanceof Error ? e.message : "unknown"}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function remove() {
     setBusy(true);
     setError(null);
@@ -246,34 +233,12 @@ export function ProfileVideoSection() {
         <button type="button" className="btn btn-secondary" disabled={locked} onClick={() => pickRef.current?.click()}>
           <Film size={16} /> {hasActive ? "Replace video" : "Choose video"}
         </button>
-        {hasActive && (
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void runCheck()}>
-            Check video
-          </button>
-        )}
         {(hasActive || pending) && (
           <button type="button" className="btn btn-secondary" disabled={uploading || busy} onClick={() => setConfirmDelete(true)}>
             <Trash2 size={16} /> Remove video
           </button>
         )}
       </div>
-
-      <BottomSheet open={diag != null} title="Video check" onClose={() => setDiag(null)}>
-        <div className="stack">
-          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: "0.75rem", userSelect: "text", margin: 0, maxHeight: "50vh", overflow: "auto" }}>
-            {diag}
-          </pre>
-          <button
-            type="button"
-            className="btn btn-secondary btn-block"
-            onClick={() => {
-              if (diag) void navigator.clipboard?.writeText(diag);
-            }}
-          >
-            Copy
-          </button>
-        </div>
-      </BottomSheet>
 
       <BottomSheet open={confirmDelete} title="Remove your video?" onClose={() => setConfirmDelete(false)}>
         <div className="stack">
