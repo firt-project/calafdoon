@@ -1,5 +1,10 @@
 # Profile video (Bunny Stream)
 
+**App only.** The website has no upload, player or admin UI for videos, and the member API
+refuses requests that do not carry the app's `X-Session-Token` header (the website authenticates
+with an HttpOnly cookie and never sends it). Staff moderation endpoints (`/admin/profile-video/*`)
+are used by the admin screens inside the app.
+
 One active profile video per member, up to 30 seconds. Video bytes go **directly from the
 member's device to Bunny Stream** (resumable TUS upload); the Render API only creates the
 video object, signs short-lived credentials, tracks status, and authorizes playback.
@@ -14,15 +19,15 @@ video object, signs short-lived credentials, tracks status, and authorizes playb
 | `BUNNY_STREAM_TOKEN_KEY` | Library → **Security** → *Token authentication key* | Signs embed-player URLs |
 | `BUNNY_STREAM_PLAYER_HOST` *(optional)* | default `player.mediadelivery.net` | Player host |
 
-Nothing needs to be set on Vercel. Until the library ID and API key are set, the API answers
+Nothing needs to be set on Vercel, and no website redeploy is required for this feature. Until the library ID and API key are set, the API answers
 `configured: false` and the website/app hide the upload section automatically.
 
 ## Bunny dashboard configuration
 
 1. **Library → Security**
    - Turn on **Embed View Token Authentication** (so only URLs signed by our API play).
-   - Optionally add allowed referrer domains (your Vercel domain). The app's WebView uses
-     `https://localhost`, so if you restrict referrers also allow `localhost`.
+   - Optionally add allowed referrer domains. The app's WebView uses `https://localhost`, so if you
+     restrict referrers allow `localhost`.
 2. **Library → Webhooks** (or the library's webhook URL setting): set
    `https://<your-render-api-host>/webhooks/bunny-stream`
    Deliveries are verified with HMAC-SHA256 (`X-BunnyStream-Signature`) using the Read-Only key.
@@ -72,6 +77,7 @@ start) adds `profile_videos` and `bunny_video_cleanup`, plus two partial unique 
 - A video whose duration the browser cannot read is accepted client-side; the server check after
   encoding is the authority.
 - Strings are English only for now.
+- The website admin dashboard does not show profile videos (app only).
 - `mobile/apps/api` (older copy of the API) was not changed; only `web/apps/api` is deployed.
 
 ## Cost notes
