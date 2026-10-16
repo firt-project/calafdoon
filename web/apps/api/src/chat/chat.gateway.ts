@@ -167,18 +167,30 @@ export class ChatGateway
     await client.join(`user:${session.user.id}`);
   }
 
-  /** Notify everyone connected that this user's online status changed. */
+  /**
+   * Tell this member's active matches that their online status changed. It is never broadcast to
+   * every connected user, so strangers cannot watch when someone comes and goes.
+   */
   private async broadcastPresence(userId: string, isOnline: boolean) {
     try {
-      const hidden = await this.prisma?.profile.findUnique({
+      const profile = await this.prisma?.profile.findUnique({
         where: { userId },
         select: { showOnlineStatus: true },
       });
-      if (hidden && hidden.showOnlineStatus === false) return;
-      this.realtime.emitToAll("presence:update", {
-        userId,
-        isOnline,
+      if (profile && profile.showOnlineStatus === false) return;
+      const matches = await this.prisma?.match.findMany({
+        where: {
+          status: "active",
+          OR: [{ userAId: userId }, { userBId: userId }],
+        },
+        select: { userAId: true, userBId: true },
+        take: 500,
       });
+      const peers = (matches ?? []).map((m) =>
+        m.userAId === userId ? m.userBId : m.userAId
+      );
+      if (peers.length === 0) return;
+      this.realtime.emitToUsers(peers, "presence:update", { userId, isOnline });
     } catch (err) {
       this.logger.warn(
         `presence broadcast failed: ${err instanceof Error ? err.message : String(err)}`

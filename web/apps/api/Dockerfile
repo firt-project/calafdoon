@@ -35,12 +35,8 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/prisma ./prisma
-# Android install page + APK (served by DownloadController).
+# Static assets (the public APK download was removed; the app ships via Google Play).
 COPY public ./public
-# Bust image cache when the APK binary changes (size alone is not enough).
-COPY public/download/web.apk ./public/download/web.apk
-ARG APK_BUNDLE_REV=2026-07-31-debug-apk
-LABEL apk.bundle.rev="${APK_BUNDLE_REV}"
 
 # Drop build-only packages; keep production deps (includes prisma CLI for migrate deploy).
 RUN npm prune --omit=dev \

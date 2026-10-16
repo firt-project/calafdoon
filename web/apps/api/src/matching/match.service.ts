@@ -1389,7 +1389,8 @@ export class MatchService {
       isOnline: profile.showOnlineStatus
         ? await this.presence.isOnline(targetUserId)
         : false,
-      lastSeenAt: profile.showOnlineStatus
+      // "Last seen" is only for people you are matched with.
+      lastSeenAt: profile.showOnlineStatus && mutual
         ? ((
             await this.prisma.user.findUnique({
               where: { id: targetUserId },
