@@ -37,6 +37,7 @@ export const envSchema = z.object({
   BUNNY_STREAM_PLAYER_HOST: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+  RATE_LIMIT_USE_CF_IP: z.string().optional(),
   RESEND_FROM: z.string().optional(),
   /** Legacy Convex / Render aliases — preferred names are RESEND_*. */
   AUTH_RESEND_KEY: z.string().optional(),

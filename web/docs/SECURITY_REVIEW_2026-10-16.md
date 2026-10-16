@@ -36,3 +36,24 @@ fuzzing, and the third-party platforms (Render, Cloudflare, Bunny, Vercel).
   constant time; login and password reset give generic responses; rate limits on auth and uploads.
 - No raw SQL, no `eval`/shell, no user-controlled server-side URLs; server-generated storage keys.
 - Android: no cleartext traffic, backups disabled, one exported activity, deep links allow-listed, release build not debuggable.
+
+## Authenticated penetration test (local test copy) — 2026-10-16
+Run with `web/apps/api/scripts/pentest-local.ts` against a throw-away database on this machine
+(the script refuses any non-local target). 103 checks, final result **103/103 pass**.
+
+Covered: login/session handling (forged tokens, logout replay, mixed credentials, brute-force limiter, CSRF),
+IDOR on chats, messages, notifications, support tickets, matches, media, photos, verification uploads;
+privilege escalation (field allowlists, prototype pollution, every admin route as a member, admin vs owner limits);
+injection and malformed input; upload abuse; blocked/unmatched/banned/unpaid rules; profile-video endpoints;
+Socket.IO (unauthenticated, forged, outsider join/send); page-size caps; message flooding; duplicate registration and
+duplicate-message races; photo-privacy for non-matches.
+
+Real bugs found and fixed:
+| Severity | Finding | Fix |
+|---|---|---|
+| Low | Malformed UUIDs in URLs (`/conversations/not-a-uuid/messages`, `/media/..%2F..`) and NUL bytes in search text returned **500** (database error). | Global `PrismaExceptionFilter` maps these to 400/404/409; regression tests added. |
+
+Needs a decision (not changed by default):
+| Severity | Finding | Recommendation |
+|---|---|---|
+| Medium | On production, per-IP rate limits do not appear to bind: 75 requests to `/auth/register/check-email` (limit 60/15 min per IP) never returned 429, with or without a spoofed `X-Forwarded-For`. Render appends to a client-supplied `X-Forwarded-For`, and `req.ip` behind Render's edge is not a stable client address. Per-email limits still apply, so password guessing per account is limited, but mass email enumeration and credential stuffing across many accounts are not limited per source. | Set `RATE_LIMIT_USE_CF_IP=true` on Render to key the per-IP limits on Cloudflare's `CF-Connecting-IP`. Trade-off: members on carrier-grade NAT share an address, so review the per-IP limits (login 40/15 min, register 20/15 min) before enabling. Re-test after enabling: the 61st check-email request in 15 minutes should return 429. |

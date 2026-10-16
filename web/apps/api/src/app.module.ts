@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import { APP_FILTER } from "@nestjs/core";
+import { PrismaExceptionFilter } from "./common/prisma-exception.filter";
 import { ConfigModule } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 import { AdminModule } from "./admin/admin.module";
@@ -71,5 +73,6 @@ import { RedisModule } from "./redis/redis.module";
     AdminModule,
     DownloadModule,
   ],
+  providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })
 export class AppModule {}

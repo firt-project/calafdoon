@@ -16,6 +16,24 @@ import { RedisService } from "../redis/redis.module";
 
 type LimitSpec = { windowSec: number; max: number };
 
+const IPV4 = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+const IPV6 = /^[0-9a-fA-F:]+$/;
+
+/**
+ * Address used for per-IP rate limits. Behind Render the Express `req.ip` can be a shared or
+ * rotating edge address, which makes per-IP limits ineffective. When RATE_LIMIT_USE_CF_IP=true
+ * the single-valued `CF-Connecting-IP` header (set by Cloudflare, not a spoofable chain) is used.
+ * Off by default: members on carrier-grade NAT share an address, so enable it deliberately.
+ */
+export function rateLimitClientIp(req: Request): string {
+  if (process.env.RATE_LIMIT_USE_CF_IP === "true") {
+    const raw = req.headers["cf-connecting-ip"];
+    const ip = typeof raw === "string" ? raw.trim() : "";
+    if (ip && ip.length <= 45 && (IPV4.test(ip) || IPV6.test(ip))) return ip;
+  }
+  return req.ip || req.socket.remoteAddress || "unknown";
+}
+
 const LIMITS: Record<
   string,
   { ip?: LimitSpec; email?: LimitSpec; user?: LimitSpec; global?: LimitSpec }
@@ -202,7 +220,7 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const ip = rateLimitClientIp(req);
     const email =
       typeof req.body?.email === "string"
         ? normalizeEmail(req.body.email)
