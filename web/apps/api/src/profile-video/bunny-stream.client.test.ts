@@ -53,6 +53,24 @@ describe("Bunny signatures", () => {
     assert.ok(!JSON.stringify(creds).includes(KEY), "API key must not appear in credentials");
   });
 
+  it("lists the configured player host first, then the documented ones", () => {
+    assert.deepEqual(client({ BUNNY_STREAM_PLAYER_HOST: "custom.example.com" }).playerHosts(), [
+      "custom.example.com",
+      "player.mediadelivery.net",
+      "iframe.mediadelivery.net",
+    ]);
+    assert.deepEqual(client().playerHosts(), ["player.mediadelivery.net", "iframe.mediadelivery.net"]);
+  });
+
+  it("probePlayer returns the HTTP status, or null on a network error", async () => {
+    mockFetch(() => new Response("<html></html>", { status: 404 }));
+    assert.equal(await client().probePlayer("https://player.mediadelivery.net/embed/1/x"), 404);
+    mockFetch(() => {
+      throw new Error("offline");
+    });
+    assert.equal(await client().probePlayer("https://player.mediadelivery.net/embed/1/x"), null);
+  });
+
   it("playbackUrl is token-signed and never contains the API key", () => {
     const { url } = client().playbackUrl("vid-1", 1_700_000_000_000);
     assert.ok(url.startsWith("https://player.mediadelivery.net/embed/12345/vid-1?"));

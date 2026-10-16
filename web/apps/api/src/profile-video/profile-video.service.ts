@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -473,8 +474,37 @@ export class ProfileVideoService implements OnModuleInit, OnModuleDestroy {
       }
     }
     await this.assertPlayableAtBunny(row as Row);
-    const { url, expiresAt } = this.bunny.playbackUrl(row.bunnyVideoId);
+    const { url, expiresAt } = await this.resolvePlayerLink(row.bunnyVideoId);
     return { url, expiresAt, durationSec: row.durationSec };
+  }
+
+  private workingHost: string | null = null;
+
+  /**
+   * Pick a player host that actually serves this video. A 404 from the player page means that
+   * host does not know the video (wrong host for the library, or the video is gone); try the
+   * other documented host before giving up. 403 and network errors are not treated as 404s.
+   */
+  private async resolvePlayerLink(videoId: string) {
+    const hosts = this.bunny.playerHosts();
+    const ordered = this.workingHost
+      ? [this.workingHost, ...hosts.filter((h) => h !== this.workingHost)]
+      : hosts;
+    const results: string[] = [];
+    for (const host of ordered) {
+      const link = this.bunny.playbackUrl(videoId, Date.now(), host);
+      const status = await this.bunny.probePlayer(link.url);
+      if (status === null || (status !== 404 && status !== 410)) {
+        this.workingHost = host;
+        return link;
+      }
+      results.push(`${host}: HTTP ${status}`);
+    }
+    this.workingHost = null;
+    this.logger.warn(`Player could not find video (${results.join(", ")})`);
+    throw new BadGatewayException(
+      `The video player could not find this video (${results.join("; ")}). Check BUNNY_STREAM_LIBRARY_ID and that the video exists in the library.`
+    );
   }
 
   private verifiedUntil = new Map<string, number>();

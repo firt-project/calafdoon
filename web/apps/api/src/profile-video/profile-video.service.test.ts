@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import {
+  BadGatewayException,
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -172,7 +173,17 @@ function makeBunny() {
       return true;
     },
     signUpload: (id: string) => ({ endpoint: "tus", videoId: id, libraryId: "12345", expire: 9, signature: "sig" }),
-    playbackUrl: (id: string) => ({ url: `https://player/embed/12345/${id}`, expiresAt: 1 }),
+    playerHosts: () => ["player.mediadelivery.net", "iframe.mediadelivery.net"],
+    probeStatus: {} as Record<string, number | null>,
+    probePlayer: async (url: string) => {
+      const host = new URL(url).host;
+      return host in bunny.probeStatus ? bunny.probeStatus[host]! : 200;
+    },
+    playbackUrl: (id: string, _now?: number, host = "player.mediadelivery.net") => ({
+      url: `https://${host}/embed/12345/${id}`,
+      expiresAt: 1,
+      host,
+    }),
   };
   return {
     bunny,
@@ -401,6 +412,29 @@ describe("ProfileVideoService", () => {
         guid: id, status: 3, length: 20, encodeProgress: 60, storageSize: 1, availableResolutions: null,
       });
       await assert.rejects(svc.getPlayback("bob", "alice"), ConflictException);
+    });
+
+    it("falls back to the other player host when the first answers 404", async () => {
+      b.bunny.probeStatus["player.mediadelivery.net"] = 404;
+      const r = await svc.getPlayback("bob", "alice");
+      assert.ok(r.url.startsWith("https://iframe.mediadelivery.net/embed/12345/"));
+    });
+
+    it("reports a clear error when no player host can find the video", async () => {
+      b.bunny.probeStatus["player.mediadelivery.net"] = 404;
+      b.bunny.probeStatus["iframe.mediadelivery.net"] = 404;
+      await assert.rejects(svc.getPlayback("bob", "alice"), (e: unknown) => {
+        assert.ok(e instanceof BadGatewayException);
+        assert.match((e as Error).message, /player\.mediadelivery\.net: HTTP 404/);
+        return true;
+      });
+    });
+
+    it("does not treat a 403 (referrer rules) or a network failure as missing", async () => {
+      b.bunny.probeStatus["player.mediadelivery.net"] = 403;
+      assert.ok((await svc.getPlayback("bob", "alice")).url.includes("player.mediadelivery.net"));
+      b.bunny.probeStatus["player.mediadelivery.net"] = null;
+      assert.ok((await svc.getPlayback("bob", "alice")).url.includes("/embed/12345/"));
     });
 
     it("never returns the Bunny API key", async () => {

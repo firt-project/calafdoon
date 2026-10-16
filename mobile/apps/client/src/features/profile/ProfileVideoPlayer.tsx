@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { ExternalLink, Flag, Play } from "lucide-react";
-import { Browser } from "@capacitor/browser";
-import { apiClient, moderation } from "@hel/api-client";
+import { Flag, Play } from "lucide-react";
+import { ApiClientError, apiClient, moderation } from "@hel/api-client";
 import { userFacingError } from "@/platform/errors";
 
 type Playback = { url: string; expiresAt: number; durationSec: number | null };
@@ -38,7 +37,8 @@ export function ProfileVideoPlayer({
       url.searchParams.set("autoplay", "true");
       setSrc(url.toString());
     } catch (e) {
-      setError(userFacingError(e));
+      // Show the server's own explanation for playback problems (video missing, still preparing…).
+      setError(e instanceof ApiClientError && e.message ? e.message : userFacingError(e));
     } finally {
       setLoading(false);
     }
@@ -107,18 +107,6 @@ export function ProfileVideoPlayer({
       {error && (
         <div className="form-error" role="alert">
           {error}
-        </div>
-      )}
-      {src && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className="linkish"
-            style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center" }}
-            onClick={() => void Browser.open({ url: src })}
-          >
-            <ExternalLink size={14} /> Open in browser
-          </button>
         </div>
       )}
       {canReport && (

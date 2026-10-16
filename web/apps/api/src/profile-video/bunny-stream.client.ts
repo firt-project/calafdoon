@@ -212,11 +212,40 @@ export class BunnyStreamClient {
     };
   }
 
+  /** Player hosts to try, configured one first. Both are documented Bunny embed hosts. */
+  playerHosts(): string[] {
+    const configured = this.config.get<string>("BUNNY_STREAM_PLAYER_HOST")?.trim();
+    const defaults = ["player.mediadelivery.net", "iframe.mediadelivery.net"];
+    return [...new Set([...(configured ? [configured] : []), ...defaults])];
+  }
+
+  /**
+   * HTTP status the player page gives for this link, or null when it could not be checked.
+   * Used server-side so a 404 never reaches the member's player box.
+   */
+  async probePlayer(url: string): Promise<number | null> {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        redirect: "manual",
+        signal: AbortSignal.timeout(6000),
+        headers: { Accept: "text/html" },
+      });
+      await res.body?.cancel().catch(() => undefined);
+      return res.status;
+    } catch {
+      return null;
+    }
+  }
+
   /** Signed embed URL, or an unsigned one when no token key is configured. */
-  playbackUrl(videoId: string, now = Date.now()): { url: string; expiresAt: number } {
+  playbackUrl(
+    videoId: string,
+    now = Date.now(),
+    hostOverride?: string
+  ): { url: string; expiresAt: number; host: string } {
     const libraryId = this.getLibraryId();
-    const host =
-      this.config.get<string>("BUNNY_STREAM_PLAYER_HOST")?.trim() || "player.mediadelivery.net";
+    const host = hostOverride ?? this.playerHosts()[0]!;
     const expires = Math.floor(now / 1000) + PLAYBACK_TTL_SECONDS;
     const params = new URLSearchParams({
       autoplay: "false",
@@ -232,6 +261,7 @@ export class BunnyStreamClient {
     return {
       url: `https://${host}/embed/${libraryId}/${videoId}?${params.toString()}`,
       expiresAt: expires * 1000,
+      host,
     };
   }
 
