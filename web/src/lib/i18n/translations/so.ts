@@ -528,7 +528,7 @@ export const so: Translations = {
     subtitle: "Cusbooneysii u dambaysay: Oktoobar 2026",
     s1Title: "1. Macluumaadka aan Ururinno",
     s1Body:
-      "Markaad isticmaasho {{name}}, waxaan ururinaa macluumaadka aad si toos ah u bixiso, oo ay ku jiraan magacaaga, emailkaaga, faahfaahinta profile-kaaga, jawaabaha su'aalaha, sawirrada, iyo fariimaha. App-yada mobile-ka waxaan sidoo kale ururinnaa goobtaada qiyaasta ah, markaad oggolaato: waxaa loo isticmaalaa in lagu ogaado magaaladaada iyo dalkaaga iyo in lagu tuso dadka kuu dhow. Xubnaha kale waxay arkaan magaaladaada iyo dalkaaga oo keliya, weligood ma arkaan goobtaada saxda ah. Goobta waxaad ka demin kartaa settings-ka taleefankaaga wakhti kasta, tirtiridda akoonkaaguna waxay tirtirtaa goobta la kaydiyey. Waxaan isticmaalnaa bixiyeyaal lacag-bixin (Paystack, WaafiPay, Stripe) si loo farsameeyo lacagaha, mana kaydinno faahfaahinta kaarka oo dhan.",
+      "Markaad isticmaasho {{name}}, waxaan ururinaa macluumaadka aad si toos ah u bixiso, oo ay ku jiraan magacaaga, emailkaaga, faahfaahinta profile-kaaga, jawaabaha su'aalaha, sawirrada, iyo fariimaha. App-yada mobile-ka waxaan sidoo kale ururinnaa goobtaada qiyaasta ah, markaad oggolaato: waxaa loo isticmaalaa in lagu ogaado magaaladaada iyo dalkaaga iyo in lagu tuso dadka kuu dhow. Xubnaha kale waxay arkaan magaaladaada iyo dalkaaga oo keliya, weligood ma arkaan goobtaada saxda ah. Goobta waxaad ka demin kartaa settings-ka taleefankaaga wakhti kasta, tirtiridda akoonkaaguna waxay tirtirtaa goobta la kaydiyey. Waxaan isticmaalnaa bixiyeyaal lacag-bixin (Paystack, WaafiPay, Stripe) si loo farsameeyo lacagaha, mana kaydinno faahfaahinta kaarka oo dhan. App-yada mobile-ka waxaad sidoo kale ku dari kartaa fiidiyow profile ikhtiyaari ah oo ilaa 30 ilbiriqsi ah (waxaa lagu kaydiyaa bixiyaha fiidiyowga Bunny.net waxaana arki kara xubnaha loo ogolyahay oo keliya) iyo sawir xaqiijin ikhtiyaari ah (waa qarsoodi, waxaa arki kara shaqaalaha la fasaxay oo keliya, lama tuso xubnaha kale, waana la tirtiraa 30 maalmood kadib dib-u-eegista). Haddii aad oggolaato ogeysiisyada waxaan kaydinnaa calaamad qalabka waxaana ogeysiisyo u dirnaa Google Firebase Cloud Messaging; waxaad dooran kartaa kuwa aad rabto Settings. Xubnaha aad la isbarbar dhigtay waxay arki karaan marka aad online tahay ama markii ugu dambeysay ee aad muuqatay, waadna ka demin kartaa Settings.",
     s2Title: "2. Sida aan u Isticmaalno Macluumaadkaaga",
     s2Body:
       "Waxaan u isticmaalnaa macluumaadkaaga si aan u bixino adeegyada isbarbardhigga, u xisaabino dhibcaha iswaafajinta, u fududeyno isgaarsiinta lammaanayaasha, una hagaajino platform-kayaga.",
@@ -537,10 +537,10 @@ export const so: Translations = {
       "Waxaan hirgelinnaa tallaabooyin amni oo heer caalami ah oo ay ku jiraan sir-qarin, server-yo ammaan ah, iyo kontaroolada helitaanka si aan u ilaalino macluumaadkaaga shakhsi ahaaneed.",
     s4Title: "4. Wadaagista Xogta",
     s4Body:
-      "Waligaa kuma iibino xogtaada shakhsi ahaaneed. Macluumaadka profile-ka waxaa arki kara isticmaaleyaasha kale oo keliya sida ay u dhigmaan goobaha qarsoodigaaga iyo xaaladda isbarbardhigga.",
+      "Waligaa kuma iibino xogtaada shakhsi ahaaneed. Macluumaadka profile-ka waxaa arki kara isticmaaleyaasha kale oo keliya sida ay u dhigmaan goobaha qarsoodigaaga iyo xaaladda isbarbardhigga. Waad tirtiri kartaa fariimahaaga, waadna jebin kartaa isbarbardhigga, xannibi kartaa ama ka warbixin kartaa xubin kasta. Shaqaalaha amniga ee la fasaxay waxay akhrin karaan sheekaysiyada si ay u baaraan warbixinnada una ilaaliyaan xubnaha.",
     s5Title: "5. Xuquuqdaada",
     s5Body:
-      "Waxaad xaq u leedahay inaad gasho, cusbooneysiiso, ama tirtirto xogtaada shakhsi ahaaneed wakhti kasta goobaha akoonkaaga ama adigoo nala soo xiriira. Xogtaada waan haynaa inta akoonkaagu firfircoon yahay, waana tirtirnaa marka aad akoonkaaga tirtirto, marka laga reebo diiwaannada sharcigu nagu waajibiyo inaan haysano (sida lacag-bixinta). HelCalaf wuxuu u yahay dadka waaweyn 18 jir iyo ka weyn oo keliya, si ula kac ahna uma ururinno xogta qof ka yar 18.",
+      "Waxaad xaq u leedahay inaad gasho, cusbooneysiiso, ama tirtirto xogtaada shakhsi ahaaneed wakhti kasta goobaha akoonkaaga ama adigoo nala soo xiriira. Xogtaada waan haynaa inta akoonkaagu firfircoon yahay, waana tirtirnaa marka aad akoonkaaga tirtirto, marka laga reebo diiwaannada sharcigu nagu waajibiyo inaan haysano (sida lacag-bixinta). HelCalaf wuxuu u yahay dadka waaweyn 18 jir iyo ka weyn oo keliya, si ula kac ahna uma ururinno xogta qof ka yar 18. Fiidiyowyada profile-ka iyo sawirrada xaqiijinta waa la tirtiraa marka aad ka saarto ama akoonkaaga tirtirto.",
     s6Title: "6. Nala Soo Xiriir",
     s6Body: "Su'aalaha la xiriira qarsoodiga, fadlan nala soo xiriir {{email}}.",
   },
@@ -583,7 +583,7 @@ export const so: Translations = {
       "Waa inaad ugu yaraan tahay 18 sano oo sharci ahaan awood u leh inaad guursato si aad u isticmaasho adeegyadayada. {{name}} waxaa si gaar ah loogu talagalay dadka doonaya guur.",
     s3Title: "3. Dhaqanka Isticmaalaha",
     s3Body:
-      "Isticmaaleyaashu waa inay si ixtiraam leh ula falgalaan oo waafaqsan mabaadi'da Islaamka. Dhibaataynta, waxyaabaha aan habboonayn, ama si xun u isticmaalida platform-ka waxay keeni doontaa xiritaanka akoonka.",
+      "Isticmaaleyaashu waa inay si ixtiraam leh ula falgalaan oo waafaqsan mabaadi'da Islaamka. Dhibaataynta, waxyaabaha aan habboonayn, ama si xun u isticmaalida platform-ka waxay keeni doontaa xiritaanka akoonka. Fiidiyowyada profile-ka iyo sawirrada xaqiijinta waa inay ku muujiyaan adiga oo raacaan xeerarka kale: ma jiro qaawanaan, wax galmo cad, rabshad, nacayb ama wax sharci-darro ah.",
     s4Title: "4. Lacag Bixinta",
     s4Body:
       "Diiwaangelintu waxay u baahan tahay lacag hal mar laga bilaabo ${{basic}} (caadi) ama ${{premium}} (taageero shakhsi ah). Tani waxay fureysaa helitaanka buuxa ee isbarbardhigga iyo fariimaha. Dhammaan lacag bixintu waxay si ammaan ah u socdaan. Lacag celinta waxaa lagu maamulaa kiis kiis.",

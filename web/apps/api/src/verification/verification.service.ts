@@ -2,7 +2,10 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleDestroy,
+  OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "node:crypto";
@@ -19,8 +22,14 @@ const PROMPTS = [
   "Hold your open palm next to your face",
 ];
 
+/** Selfie images are only needed for the review; keep them this long after the decision. */
+const SELFIE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const PURGE_EVERY_MS = 6 * 60 * 60 * 1000;
+
 @Injectable()
-export class VerificationService {
+export class VerificationService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(VerificationService.name);
+  private timer: NodeJS.Timeout | null = null;
   private readonly bucket: string;
 
   constructor(
@@ -32,6 +41,48 @@ export class VerificationService {
     this.bucket =
       this.config.get<string>("S3_BUCKET_PROFILE_PRIVATE") ??
       "hel-profile-private";
+  }
+
+  onModuleInit() {
+    if (process.env.NODE_ENV === "test") return;
+    this.timer = setInterval(() => void this.purgeReviewedSelfies(), PURGE_EVERY_MS);
+    this.timer.unref?.();
+  }
+
+  onModuleDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  /**
+   * Privacy: delete the selfie file and its record 30 days after staff decided. The verified
+   * badge (profiles.photo_verified) is unaffected; the image itself is not kept longer than needed.
+   */
+  async purgeReviewedSelfies(now = Date.now()): Promise<number> {
+    try {
+      const rows = await this.prisma.photoVerification.findMany({
+        where: {
+          status: { in: ["approved", "rejected"] },
+          reviewedAt: { lt: new Date(now - SELFIE_RETENTION_MS) },
+        },
+        take: 50,
+      });
+      for (const row of rows) {
+        const media = await this.prisma.mediaObject.findUnique({
+          where: { id: row.mediaId },
+        });
+        if (media?.bucket && media.objectKey) {
+          await this.media.deleteObjectQuietly(media.bucket, media.objectKey);
+        }
+        await this.prisma.mediaObject.deleteMany({ where: { id: row.mediaId } });
+        await this.prisma.photoVerification.delete({ where: { id: row.id } });
+      }
+      return rows.length;
+    } catch (err) {
+      this.logger.warn(
+        `selfie purge failed: ${err instanceof Error ? err.name : "unknown"}`
+      );
+      return 0;
+    }
   }
 
   private async requireProfile(userId: string) {

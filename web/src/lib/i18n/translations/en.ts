@@ -522,7 +522,7 @@ export const en = {
     subtitle: "Last updated: October 2026",
     s1Title: "1. Information We Collect",
     s1Body:
-      "When you use {{name}}, we collect information you provide directly, including your name, email, profile details, questionnaire responses, photos, and messages. In our mobile apps we also collect your approximate location, with your permission: it is used to work out your city and country and to show you people nearby. Other members see only your city and country, never your exact position. You can turn location off in your phone settings at any time, and deleting your account deletes your saved location. We use payment providers (Paystack, WaafiPay, Stripe) to process payments and do not store full card details.",
+      "When you use {{name}}, we collect information you provide directly, including your name, email, profile details, questionnaire responses, photos, and messages. In our mobile apps we also collect your approximate location, with your permission: it is used to work out your city and country and to show you people nearby. Other members see only your city and country, never your exact position. You can turn location off in your phone settings at any time, and deleting your account deletes your saved location. We use payment providers (Paystack, WaafiPay, Stripe) to process payments and do not store full card details. In the mobile apps you can also add an optional profile video of up to 30 seconds (stored with our video provider Bunny.net and shown only to members allowed to see your profile) and an optional verification selfie (private, seen only by authorised staff, never shown to other members, and deleted 30 days after review). If you allow notifications we store a device token and send notifications through Google Firebase Cloud Messaging; you can choose which ones you get in Settings. Members you are matched with can see when you are online or were last seen, and you can turn this off in Settings.",
     s2Title: "2. How We Use Your Information",
     s2Body:
       "We use your information to provide our matchmaking services, calculate compatibility scores, facilitate communication between matches, and improve our platform.",
@@ -531,10 +531,10 @@ export const en = {
       "We implement industry-standard security measures including encryption, secure servers, and access controls to protect your personal information.",
     s4Title: "4. Data Sharing",
     s4Body:
-      "We never sell your personal data. Profile information is only visible to other users according to your privacy settings and match status.",
+      "We never sell your personal data. Profile information is only visible to other users according to your privacy settings and match status. You can delete your own messages, and unmatch, block or report any member. Authorised safety staff can read conversations to investigate reports and keep members safe.",
     s5Title: "5. Your Rights",
     s5Body:
-      "You have the right to access, update, or delete your personal data at any time through your account settings or by contacting us. We keep your data while your account is active and delete it when you delete your account, except records we are legally required to keep (such as payments). HelCalaf is for adults aged 18 and over only, and we do not knowingly collect data from anyone under 18.",
+      "You have the right to access, update, or delete your personal data at any time through your account settings or by contacting us. We keep your data while your account is active and delete it when you delete your account, except records we are legally required to keep (such as payments). HelCalaf is for adults aged 18 and over only, and we do not knowingly collect data from anyone under 18. Profile videos and verification selfies are deleted when you remove them or delete your account.",
     s6Title: "6. Contact",
     s6Body: "For privacy-related inquiries, please contact us at {{email}}.",
   },
@@ -576,7 +576,7 @@ export const en = {
       "You must be at least 18 years old and legally able to enter into marriage to use our services. {{name}} is exclusively for individuals seeking marriage.",
     s3Title: "3. User Conduct",
     s3Body:
-      "Users must interact respectfully and in accordance with Islamic principles. Harassment, inappropriate content, or misuse of the platform will result in account termination.",
+      "Users must interact respectfully and in accordance with Islamic principles. Harassment, inappropriate content, or misuse of the platform will result in account termination. Profile videos and verification selfies must show you and follow the same rules: no nudity, sexually explicit, violent, hateful or unlawful content.",
     s4Title: "4. Payments",
     s4Body:
       "Registration requires a one-time payment starting at ${{basic}} (standard) or ${{premium}} (with personal guidance). This unlocks full access to matching and messaging. All payments are processed securely. Refunds are handled on a case-by-case basis.",

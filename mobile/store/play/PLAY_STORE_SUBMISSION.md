@@ -138,13 +138,17 @@ under-18 bucket (the app itself enforces 18+ at registration).
 | Purchase history | Yes — plan status and payment references (no card numbers) | With the payment processor | Purchases | Required to pay |
 | Sexual orientation / religious/marital info | Yes (questionnaire) | With other users as match info | Matchmaking | Required for matching |
 | Payment info | Processed by Paystack/Waafi, **not stored by the app** | With payment processor | Purchases | Required to pay |
-| App interactions / diagnostics | If analytics present — check | No | Analytics | — |
+| **Videos** (profile video, optional) | Yes — up to 30 s, stored by Bunny.net (service provider) | With other users who may view the profile | App functionality | Optional |
+| **Photos** (verification selfie, optional) | Yes — private, staff review only, deleted 30 days after review | No | App functionality (safety / verified badge) | Optional |
+| **Device or other IDs** (FCM push token) | Yes — only if the member allows notifications | Service provider: Google Firebase Cloud Messaging | App functionality (notifications) | Optional |
+| App activity — online / last-seen status | Yes | With matched members (can be turned off) | App functionality | Optional |
+| App interactions / diagnostics | No analytics or crash-reporting SDK is integrated (Firebase is used for Cloud Messaging only) | No | — | — |
 
 - **Note A (location sharing):** the API sends the coordinates (only coordinates, no name/account) to OpenStreetMap Nominatim to find the city. That is a service provider acting on our behalf, so in Play's definitions it is *not* "sharing"; if you prefer to be conservative, answer **Shared: Yes → service provider** for approximate location. Disclose it either way in the privacy policy (done).
 - Data encrypted in transit: **Yes** (HTTPS enforced).
 - Users can request deletion: **Yes** (`/delete-account` + in-app Settings).
 - Android permissions in the build: `INTERNET`, `ACCESS_NETWORK_STATE`,
-  `CAMERA` (profile photos), `VIBRATE`, `USE_BIOMETRIC`/`USE_FINGERPRINT`
+  `CAMERA` (profile photos, verification selfie), `POST_NOTIFICATIONS` (push, runtime prompt on Android 13+), `VIBRATE`, `USE_BIOMETRIC`/`USE_FINGERPRINT`
   (optional app lock) and **`ACCESS_COARSE_LOCATION`** (approximate location,
   foreground only, needed for the onboarding location step). Fine/precise
   location and background location are **not** requested, so no *Location
