@@ -1,9 +1,9 @@
-# Play Console checklist — release 1.1.46 (57) and later
+# Play Console checklist — release 1.1.47 (58) and later
 
 Everything below is something only you can do in the Console (I can't sign in there).
 
 ## Before uploading
-- [ ] Upload `HelCalaf-1.1.46-57-release.aab` (signed with the upload key; minSdk 24, targetSdk 36).
+- [ ] Upload `HelCalaf-1.1.47-58-release.aab` (signed with the upload key; minSdk 24, targetSdk 36).
 - [ ] Deploy the website so the updated Privacy Policy and Terms are live at
       https://www.helcalafkaaga.com/privacy and /terms (Vercel redeploys from `main`).
 - [ ] Render: Bunny variables set and the latest API deployed (video + notifications depend on it).
