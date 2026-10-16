@@ -3474,25 +3474,66 @@ button.chip {
   transform: rotate(12deg);
 }
 
-.photo-editor {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: var(--background);
-  display: flex;
-  flex-direction: column;
-  padding-bottom: env(safe-area-inset-bottom);
+/* ───── Photo editor (crop) ───── */
+.pe {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; flex-direction: column;
+  background: #0d1210; color: #fff;
 }
-
-.photo-editor-stage {
-  position: relative;
-  flex: 1;
-  min-height: 280px;
-  background: #111;
+.pe-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  padding: calc(var(--safe-top, 0px) + 0.6rem) 0.75rem 0.5rem;
 }
-
-.photo-editor-controls {
-  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+.pe-title { margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff; }
+.pe-icon, .pe-top-spacer { width: 2.6rem; height: 2.6rem; }
+.pe-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 999px; background: rgb(255 255 255 / 0.12); color: #fff;
+}
+.pe-error { margin: 0 0.75rem; }
+.pe-stage { position: relative; flex: 1; min-height: 260px; background: #000; }
+.pe-busy {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
+  background: rgb(0 0 0 / 0.6); font-weight: 600;
+}
+.pe-hint {
+  margin: 0; padding: 0.6rem 1rem 0.2rem; text-align: center;
+  font-size: 0.8rem; color: rgb(255 255 255 / 0.65);
+}
+.pe-panel {
+  display: flex; flex-direction: column; gap: 0.85rem;
+  padding: 0.6rem 1.1rem calc(var(--safe-bottom, 0px) + 1rem);
+}
+.pe-zoom {
+  display: flex; align-items: center; gap: 0.75rem; color: rgb(255 255 255 / 0.8);
+}
+.pe-zoom input[type="range"] {
+  flex: 1; height: 2rem; accent-color: #7fd0ae;
+  background: transparent;
+}
+.pe-tools { display: flex; justify-content: center; gap: 2.2rem; }
+.pe-tool {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  border: 0; background: transparent; color: rgb(255 255 255 / 0.85);
+  font-size: 0.78rem; font-weight: 600;
+}
+.pe-tool-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 3rem; height: 3rem; border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+}
+.pe-tool:disabled { opacity: 0.5; }
+.pe-confirm {
+  min-height: 3.2rem; border: 0; border-radius: 1rem;
+  background: var(--primary, #2e5e4e); color: #fff;
+  font-size: 1.05rem; font-weight: 700;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+}
+.pe-confirm:disabled { opacity: 0.55; }
+.pe-cancel {
+  border: 0; background: transparent; color: rgb(255 255 255 / 0.7);
+  font-weight: 600; min-height: 2.4rem;
 }
 
 /* ───── Profile video ───── */

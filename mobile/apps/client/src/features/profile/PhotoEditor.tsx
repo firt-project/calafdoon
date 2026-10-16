@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
+import { Loader2, RotateCw, Undo2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { prepareImageForUpload } from "@hel/api-client";
 
 type Props = {
@@ -139,42 +140,47 @@ export function PhotoEditor({
   if (!open) return null;
 
   return (
-    <div className="photo-editor" role="dialog" aria-modal="true" aria-label={title}>
-      <header className="screen-header">
-        <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>
-          {cancelLabel}
+    <div className="pe" role="dialog" aria-modal="true" aria-label={title}>
+      <header className="pe-top">
+        <button type="button" className="pe-icon" onClick={onCancel} disabled={busy} aria-label={cancelLabel}>
+          <X size={22} aria-hidden />
         </button>
-        <h1 style={{ fontSize: "1.15rem" }}>{title}</h1>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => void confirm()}
-          disabled={busy || !area}
-        >
-          {busy ? "…" : confirmLabel}
-        </button>
+        <h1 className="pe-title">{title}</h1>
+        <span className="pe-top-spacer" aria-hidden />
       </header>
+
       {error && (
-        <div className="form-error" role="alert">
+        <div className="form-error pe-error" role="alert">
           {error}
         </div>
       )}
-      <div className="photo-editor-stage">
+
+      <div className="pe-stage">
         <Cropper
           image={imageSrc}
           crop={crop}
           zoom={zoom}
           rotation={rotation}
           aspect={3 / 4}
+          showGrid
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onRotationChange={setRotation}
           onCropComplete={(_, a) => setArea(a)}
         />
+        {busy && (
+          <div className="pe-busy" role="status">
+            <Loader2 size={30} className="ph-spin" aria-hidden />
+            <span>Preparing your photo…</span>
+          </div>
+        )}
       </div>
-      <div className="photo-editor-controls stack">
-        <label className="muted small">
-          Zoom
+
+      <p className="pe-hint">Drag to move · pinch or use the slider to zoom</p>
+
+      <div className="pe-panel">
+        <div className="pe-zoom">
+          <ZoomOut size={18} aria-hidden />
           <input
             type="range"
             min={1}
@@ -184,15 +190,28 @@ export function PhotoEditor({
             onChange={(e) => setZoom(Number(e.target.value))}
             aria-label="Zoom"
           />
-        </label>
-        <div className="row" style={{ justifyContent: "space-between" }}>
-          <button type="button" className="btn btn-secondary" onClick={() => setRotation((r) => r + 90)}>
+          <ZoomIn size={18} aria-hidden />
+        </div>
+        <div className="pe-tools">
+          <button type="button" className="pe-tool" onClick={() => setRotation((r) => r + 90)} disabled={busy}>
+            <span className="pe-tool-icon">
+              <RotateCw size={20} aria-hidden />
+            </span>
             {rotateLabel}
           </button>
-          <button type="button" className="btn btn-ghost" onClick={reset}>
+          <button type="button" className="pe-tool" onClick={reset} disabled={busy}>
+            <span className="pe-tool-icon">
+              <Undo2 size={20} aria-hidden />
+            </span>
             {resetLabel}
           </button>
         </div>
+        <button type="button" className="pe-confirm" onClick={() => void confirm()} disabled={busy || !area}>
+          {busy ? "Preparing…" : confirmLabel === "Upload" ? "Use this photo" : confirmLabel}
+        </button>
+        <button type="button" className="pe-cancel" onClick={onCancel} disabled={busy}>
+          {cancelLabel}
+        </button>
       </div>
     </div>
   );
