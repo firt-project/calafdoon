@@ -375,15 +375,23 @@ export class ProfilePhotosService {
       throw new NotFoundException("Photo not found");
     }
 
+    const remainingAdditional = profile.additionalImageMediaIds.filter(
+      (id) => id !== media.id
+    );
+    // Deleting the main photo promotes the next photo instead of leaving the profile without one.
+    const promoted = isMain ? (remainingAdditional[0] ?? null) : null;
     await this.prisma.profile.update({
       where: { id: profile.id },
       data: {
         ...(isMain
-          ? { profileImageMediaId: null, profileImageConvexId: null }
+          ? {
+              profileImageMediaId: promoted,
+              profileImageConvexId: null,
+            }
           : {}),
-        additionalImageMediaIds: profile.additionalImageMediaIds.filter(
-          (id) => id !== media.id
-        ),
+        additionalImageMediaIds: promoted
+          ? remainingAdditional.slice(1)
+          : remainingAdditional,
         additionalImageConvexIds: profile.additionalImageConvexIds.filter(
           (id) => id !== media.convexStorageId
         ),

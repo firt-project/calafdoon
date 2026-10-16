@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { BottomSheet } from "@/ui/mobile-kit";
 import { ProfileVideoSection } from "@/features/profile/ProfileVideoSection";
 import { Link } from "react-router-dom";
 import { Camera, Image as ImageIcon, Share2 } from "lucide-react";
@@ -58,6 +59,8 @@ export function ProfilePage() {
   const [busy, setBusy] = useState(false);
   const [editorSrc, setEditorSrc] = useState<string | null>(null);
   const [pendingSlot, setPendingSlot] = useState<"main" | "additional">("additional");
+  const [replaceTarget, setReplaceTarget] = useState<ManagedPhoto | null>(null);
+  const [replaceChoice, setReplaceChoice] = useState<ManagedPhoto | null>(null);
 
   async function reloadAll() {
     const [p, mine, wali] = await Promise.all([
@@ -92,10 +95,11 @@ export function ProfilePage() {
     reloadAll().catch((e) => setError(userFacingError(e)));
   }, []);
 
-  async function beginPick(source: "camera" | "library") {
+  async function beginPick(source: "camera" | "library", replacing: ManagedPhoto | null = null) {
     setError(null);
     setStatus(null);
-    if (gallery.length >= maxPhotos) {
+    setReplaceTarget(replacing);
+    if (!replacing && gallery.length >= maxPhotos) {
       setError(`You can add up to ${maxPhotos} photos.`);
       return;
     }
@@ -112,7 +116,9 @@ export function ProfilePage() {
       }
       if (editorSrc) URL.revokeObjectURL(editorSrc);
       const url = URL.createObjectURL(picked.blob);
-      setPendingSlot(gallery.length === 0 ? "main" : "additional");
+      setPendingSlot(
+        replacing ? (replacing.isMain ? "main" : "additional") : gallery.length === 0 ? "main" : "additional"
+      );
       setEditorSrc(url);
     } catch (e) {
       setError(userFacingError(e));
@@ -123,9 +129,14 @@ export function ProfilePage() {
     setBusy(true);
     setError(null);
     try {
+      const old = replaceTarget && !replaceTarget.isMain ? replaceTarget : null;
+      // At the photo limit there is no room for the new photo until the old one is gone.
+      if (old && gallery.length >= maxPhotos) await photosApi.removeAdditional(old.mediaId);
       await photosApi.uploadFile(file, { slot: pendingSlot });
+      if (old && gallery.length < maxPhotos) await photosApi.removeAdditional(old.mediaId);
       await hapticSuccess();
-      setStatus(`Photo uploaded (${gallery.length + 1}/${maxPhotos}).`);
+      setStatus(replaceTarget ? "Photo replaced." : `Photo uploaded (${gallery.length + 1}/${maxPhotos}).`);
+      setReplaceTarget(null);
       if (editorSrc) URL.revokeObjectURL(editorSrc);
       setEditorSrc(null);
       await refresh();
@@ -368,7 +379,9 @@ export function ProfilePage() {
           busy={busy}
           onReload={reloadAll}
           onAddRequest={() => void beginPick("library")}
+          onReplaceRequest={(photo) => setReplaceChoice(photo)}
           labels={{
+            replace: "Replace",
             primary: "Primary",
             remove: "Remove",
             confirmRemove: "Remove this photo from your profile?",
@@ -471,6 +484,39 @@ export function ProfilePage() {
       <Link to="/settings/change-password" className="btn btn-secondary btn-block">
         Change password
       </Link>
+      <BottomSheet
+        open={replaceChoice != null}
+        title="Replace this photo"
+        onClose={() => setReplaceChoice(null)}
+      >
+        <div className="stack">
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            onClick={() => {
+              const target = replaceChoice;
+              setReplaceChoice(null);
+              void beginPick("camera", target);
+            }}
+          >
+            <Camera size={16} /> Take a new photo
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            onClick={() => {
+              const target = replaceChoice;
+              setReplaceChoice(null);
+              void beginPick("library", target);
+            }}
+          >
+            <ImageIcon size={16} /> Choose from gallery
+          </button>
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => setReplaceChoice(null)}>
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
       {editorSrc && (
         <Suspense fallback={<div className="screen">Preparing editor…</div>}>
           <PhotoEditorLazy

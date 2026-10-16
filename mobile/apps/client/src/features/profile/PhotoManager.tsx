@@ -24,9 +24,12 @@ type Props = {
     retry: string;
     empty: string;
     saving: string;
+    replace?: string;
   };
   onReload: () => Promise<void>;
   onAddRequest: () => void;
+  /** Replace this photo with a new one. */
+  onReplaceRequest?: (photo: ManagedPhoto) => void;
 };
 
 export function PhotoManager({
@@ -36,6 +39,7 @@ export function PhotoManager({
   labels,
   onReload,
   onAddRequest,
+  onReplaceRequest,
 }: Props) {
   const [ordered, setOrdered] = useState(photos);
   const [saving, setSaving] = useState(false);
@@ -163,14 +167,25 @@ export function PhotoManager({
                 >
                   ↓
                 </button>
+                {onReplaceRequest && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={saving || busy}
+                    onClick={() => onReplaceRequest(photo)}
+                  >
+                    {labels.replace ?? "Replace"}
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="btn btn-ghost btn-icon"
+                  className="btn btn-ghost"
                   aria-label={labels.remove}
-                  disabled={saving}
+                  title={list.length === 1 ? "Add another photo first, or use Replace" : undefined}
+                  disabled={saving || list.length === 1}
                   onClick={() => setConfirmId(photo.mediaId)}
                 >
-                  ×
+                  {labels.remove}
                 </button>
               </div>
             </li>

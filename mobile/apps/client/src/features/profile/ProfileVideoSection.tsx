@@ -233,9 +233,9 @@ export function ProfileVideoSection() {
         <button type="button" className="btn btn-secondary" disabled={locked} onClick={() => pickRef.current?.click()}>
           <Film size={16} /> {hasActive ? "Replace video" : "Choose video"}
         </button>
-        {hasActive && (
-          <button type="button" className="btn btn-secondary" disabled={locked || busy} onClick={() => setConfirmDelete(true)}>
-            <Trash2 size={16} /> Remove
+        {(hasActive || pending) && (
+          <button type="button" className="btn btn-secondary" disabled={uploading || busy} onClick={() => setConfirmDelete(true)}>
+            <Trash2 size={16} /> Remove video
           </button>
         )}
       </div>
