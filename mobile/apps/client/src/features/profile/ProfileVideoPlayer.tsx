@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Flag, Play } from "lucide-react";
+import { ExternalLink, Flag, Play } from "lucide-react";
+import { Browser } from "@capacitor/browser";
 import { apiClient, moderation } from "@hel/api-client";
 import { userFacingError } from "@/platform/errors";
 
@@ -106,6 +107,18 @@ export function ProfileVideoPlayer({
       {error && (
         <div className="form-error" role="alert">
           {error}
+        </div>
+      )}
+      {src && (
+        <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="linkish"
+            style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center" }}
+            onClick={() => void Browser.open({ url: src })}
+          >
+            <ExternalLink size={14} /> Open in browser
+          </button>
         </div>
       )}
       {canReport && (

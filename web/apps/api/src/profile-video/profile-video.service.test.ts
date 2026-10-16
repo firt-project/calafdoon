@@ -390,6 +390,19 @@ describe("ProfileVideoService", () => {
       assert.ok((await svc.getPlayback("bob", "alice")).url.includes("/embed/12345/"));
     });
 
+    it("does not hand out a player link when Bunny no longer has the video", async () => {
+      b.bunny.getVideo = async () => null;
+      await assert.rejects(svc.getPlayback("bob", "alice"), NotFoundException);
+      assert.equal(db.state.videos.filter((v) => v.userId === "alice").length, 0, "stale record is dropped");
+    });
+
+    it("does not hand out a player link while Bunny has not finished encoding", async () => {
+      b.bunny.getVideo = async (id: string) => ({
+        guid: id, status: 3, length: 20, encodeProgress: 60, storageSize: 1, availableResolutions: null,
+      });
+      await assert.rejects(svc.getPlayback("bob", "alice"), ConflictException);
+    });
+
     it("never returns the Bunny API key", async () => {
       const r = await svc.getPlayback("bob", "alice");
       assert.ok(!JSON.stringify(r).toLowerCase().includes("apikey"));

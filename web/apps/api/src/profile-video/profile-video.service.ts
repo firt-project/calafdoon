@@ -472,8 +472,27 @@ export class ProfileVideoService implements OnModuleInit, OnModuleDestroy {
         if (!allowed) throw new ForbiddenException("This video is visible to matches only.");
       }
     }
+    await this.assertPlayableAtBunny(row as Row);
     const { url, expiresAt } = this.bunny.playbackUrl(row.bunnyVideoId);
     return { url, expiresAt, durationSec: row.durationSec };
+  }
+
+  private verifiedUntil = new Map<string, number>();
+
+  /** Never hand out a player link for a video Bunny no longer has or has not finished. */
+  private async assertPlayableAtBunny(row: Row) {
+    const now = Date.now();
+    if ((this.verifiedUntil.get(row.bunnyVideoId) ?? 0) > now) return;
+    const video = await this.bunny.getVideo(row.bunnyVideoId);
+    if (!video) {
+      await this.prisma.profileVideo.deleteMany({ where: { id: row.id } });
+      throw new NotFoundException("This video is no longer available. Please upload it again.");
+    }
+    if (video.status !== BUNNY_STATUS.finished) {
+      throw new ConflictException("This video is still being prepared. Try again in a moment.");
+    }
+    if (this.verifiedUntil.size > 2000) this.verifiedUntil.clear();
+    this.verifiedUntil.set(row.bunnyVideoId, now + 10 * 60_000);
   }
 
   // ───────────────────────── cleanup / maintenance ─────────────────────────
