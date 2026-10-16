@@ -3500,8 +3500,8 @@ button.chip {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
 }
 
 .photo-tile {
@@ -3531,19 +3531,25 @@ button.chip {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 0.35rem;
-  padding: 0.4rem;
+  gap: 0.2rem;
+  padding: 0.25rem;
   background: var(--card);
 }
 
 .photo-act {
-  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 2rem;
+  padding: 0 0.15rem;
   border: 1px solid var(--border);
-  border-radius: 0.7rem;
+  border-radius: 0.55rem;
   background: var(--card);
   color: var(--foreground);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.66rem;
+  white-space: nowrap;
 }
 
 .photo-act.danger {
@@ -3557,20 +3563,22 @@ button.chip {
 
 .photo-move {
   position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
+  top: 0.25rem;
+  right: 0.25rem;
   display: flex;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .photo-move button {
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 0;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.55);
   color: #fff;
   font-size: 1rem;
+  line-height: 1;
+  padding: 0;
 }
 
 .photo-move button:disabled {

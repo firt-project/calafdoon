@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { photos as photosApi } from "@hel/api-client";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
@@ -164,7 +165,7 @@ export function PhotoManager({
                   disabled={saving || index === 0}
                   onClick={() => move(index, -1)}
                 >
-                  ↑
+                  ‹
                 </button>
                 <button
                   type="button"
@@ -172,7 +173,7 @@ export function PhotoManager({
                   disabled={saving || index === list.length - 1}
                   onClick={() => move(index, 1)}
                 >
-                  ↓
+                  ›
                 </button>
               </div>
               <div className="photo-tile-actions">
@@ -180,10 +181,11 @@ export function PhotoManager({
                   <button
                     type="button"
                     className="photo-act"
+                    aria-label={labels.replace ?? "Replace"}
                     disabled={saving || busy}
                     onClick={() => onReplaceRequest(photo)}
                   >
-                    {labels.replace ?? "Replace"}
+                    <RefreshCw size={14} aria-hidden /> {labels.replace ?? "Replace"}
                   </button>
                 )}
                 <button
@@ -193,7 +195,7 @@ export function PhotoManager({
                   disabled={saving}
                   onClick={() => setConfirmId(photo.mediaId)}
                 >
-                  {labels.remove}
+                  <Trash2 size={14} aria-hidden /> {labels.remove}
                 </button>
               </div>
             </li>

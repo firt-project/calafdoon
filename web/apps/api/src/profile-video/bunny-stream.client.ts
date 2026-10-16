@@ -111,6 +111,10 @@ export class BunnyStreamClient {
     return Boolean(this.libraryId && this.apiKey);
   }
 
+  get tokenKeyConfigured(): boolean {
+    return Boolean(this.config.get<string>("BUNNY_STREAM_TOKEN_KEY")?.trim());
+  }
+
   get webhookConfigured(): boolean {
     return Boolean(this.config.get<string>("BUNNY_STREAM_READONLY_KEY")?.trim());
   }
@@ -223,13 +227,13 @@ export class BunnyStreamClient {
    * HTTP status the player page gives for this link, or null when it could not be checked.
    * Used server-side so a 404 never reaches the member's player box.
    */
-  async probePlayer(url: string): Promise<number | null> {
+  async probePlayer(url: string, referer?: string): Promise<number | null> {
     try {
       const res = await fetch(url, {
         method: "GET",
         redirect: "manual",
         signal: AbortSignal.timeout(6000),
-        headers: { Accept: "text/html" },
+        headers: { Accept: "text/html", ...(referer ? { Referer: referer } : {}) },
       });
       await res.body?.cancel().catch(() => undefined);
       return res.status;
@@ -242,7 +246,8 @@ export class BunnyStreamClient {
   playbackUrl(
     videoId: string,
     now = Date.now(),
-    hostOverride?: string
+    hostOverride?: string,
+    unsigned = false
   ): { url: string; expiresAt: number; host: string } {
     const libraryId = this.getLibraryId();
     const host = hostOverride ?? this.playerHosts()[0]!;
@@ -254,7 +259,7 @@ export class BunnyStreamClient {
       playsinline: "true",
     });
     const tokenKey = this.config.get<string>("BUNNY_STREAM_TOKEN_KEY")?.trim();
-    if (tokenKey) {
+    if (tokenKey && !unsigned) {
       params.set("token", embedToken(tokenKey, videoId, expires));
       params.set("expires", String(expires));
     }

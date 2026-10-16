@@ -159,6 +159,7 @@ function makeBunny() {
   const bunny = {
     configured: true,
     webhookConfigured: true,
+    tokenKeyConfigured: true,
     getLibraryId: () => "12345",
     createVideo: async () => {
       const id = `bunny-${++n}`;
@@ -435,6 +436,18 @@ describe("ProfileVideoService", () => {
       assert.ok((await svc.getPlayback("bob", "alice")).url.includes("player.mediadelivery.net"));
       b.bunny.probeStatus["player.mediadelivery.net"] = null;
       assert.ok((await svc.getPlayback("bob", "alice")).url.includes("/embed/12345/"));
+    });
+
+    it("diagnose reports Bunny's view and each player host's answer, without secrets", async () => {
+      b.bunny.probeStatus["iframe.mediadelivery.net"] = 404;
+      const d = (await svc.diagnose("alice")) as Record<string, unknown>;
+      assert.equal(d.hasReadyVideo, true);
+      assert.equal(d.tokenKeyConfigured, true);
+      assert.equal((d.bunnyVideo as { status: number }).status, 4);
+      const probes = d.playerProbes as Array<{ host: string; signedLink: number }>;
+      assert.equal(probes.find((p) => p.host === "iframe.mediadelivery.net")!.signedLink, 404);
+      const text = JSON.stringify(d).toLowerCase();
+      assert.ok(!text.includes("token="), "no signed link in the diagnostic");
     });
 
     it("never returns the Bunny API key", async () => {

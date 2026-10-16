@@ -493,7 +493,7 @@ export class ProfileVideoService implements OnModuleInit, OnModuleDestroy {
     const results: string[] = [];
     for (const host of ordered) {
       const link = this.bunny.playbackUrl(videoId, Date.now(), host);
-      const status = await this.bunny.probePlayer(link.url);
+      const status = await this.bunny.probePlayer(link.url, "https://localhost/");
       if (status === null || (status !== 404 && status !== 410)) {
         this.workingHost = host;
         return link;
@@ -505,6 +505,52 @@ export class ProfileVideoService implements OnModuleInit, OnModuleDestroy {
     throw new BadGatewayException(
       `The video player could not find this video (${results.join("; ")}). Check BUNNY_STREAM_LIBRARY_ID and that the video exists in the library.`
     );
+  }
+
+  /**
+   * Self-check for the member's own video: what Bunny says about the video and what each
+   * player host answers for the signed and unsigned link. Contains no secrets (IDs and
+   * HTTP statuses only), so the app can show it to the member to send to support.
+   */
+  async diagnose(userId: string) {
+    const row = await this.prisma.profileVideo.findFirst({
+      where: { userId, isActive: true, status: "ready" },
+    });
+    const out: Record<string, unknown> = {
+      libraryConfigured: this.bunny.configured,
+      tokenKeyConfigured: this.bunny.tokenKeyConfigured,
+      webhookKeyConfigured: this.bunny.webhookConfigured,
+      hasReadyVideo: Boolean(row),
+    };
+    if (!this.bunny.configured || !row) return out;
+    out.libraryId = this.bunny.getLibraryId();
+    out.videoId = row.bunnyVideoId;
+    try {
+      const v = await this.bunny.getVideo(row.bunnyVideoId);
+      out.bunnyVideo = v
+        ? {
+            status: v.status,
+            lengthSec: v.length,
+            encodeProgress: v.encodeProgress,
+            resolutions: v.availableResolutions,
+          }
+        : "not found at Bunny";
+    } catch {
+      out.bunnyVideo = "could not reach Bunny";
+    }
+    const probes: Array<Record<string, unknown>> = [];
+    for (const host of this.bunny.playerHosts()) {
+      const signed = this.bunny.playbackUrl(row.bunnyVideoId, Date.now(), host);
+      const plain = this.bunny.playbackUrl(row.bunnyVideoId, Date.now(), host, true);
+      probes.push({
+        host,
+        signedLink: await this.bunny.probePlayer(signed.url, "https://localhost/"),
+        unsignedLink: await this.bunny.probePlayer(plain.url, "https://localhost/"),
+      });
+    }
+    out.playerProbes = probes;
+    out.workingHost = this.workingHost;
+    return out;
   }
 
   private verifiedUntil = new Map<string, number>();

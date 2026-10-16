@@ -73,6 +73,12 @@ export class ProfileVideoController {
     return this.videos.getMyStatus(user.id);
   }
 
+  /** Self-check shown in the app when playback fails (no secrets in the result). */
+  @Get("diagnose")
+  diagnose(@CurrentUser() user: RequestUser) {
+    return this.videos.diagnose(user.id);
+  }
+
   /** Delete the signed-in member's own profile video (active and pending). */
   @Delete()
   @HttpCode(200)
