@@ -105,6 +105,7 @@ async function bootstrap() {
       "X-XSRF-Token",
       "X-Request-Id",
       "X-Session-Token",
+      "X-Hel-Client",
     ],
   });
   logger.log(`CORS allowlist: ${origins.join(", ") || "(empty)"}`);

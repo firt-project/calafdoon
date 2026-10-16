@@ -436,6 +436,8 @@ describe("app-only access", () => {
   it("refuses website requests (cookie session, no header) and allows the app (header session)", () => {
     assert.throws(() => guard.canActivate(ctx({})), ForbiddenException);
     assert.throws(() => guard.canActivate(ctx({ cookie: "hel_session=abc" })), ForbiddenException);
+    assert.equal(guard.canActivate(ctx({ "x-hel-client": "app" })), true);
+    assert.throws(() => guard.canActivate(ctx({ "x-hel-client": "web" })), ForbiddenException);
     assert.equal(guard.canActivate(ctx({ "x-session-token": "tok" })), true);
   });
 });

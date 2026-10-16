@@ -270,6 +270,7 @@ export async function apiFetch<T = unknown>(
         }
       }
 
+      headers["X-Hel-Client"] = "app";
       const sessionToken = getApiSessionToken();
       if (sessionToken) headers[SESSION_HEADER] = sessionToken;
 
@@ -366,6 +367,7 @@ export const apiClient = {
         "X-Request-Id": newRequestId(),
         ...opts?.headers,
       };
+      headers["X-Hel-Client"] = "app";
       const sessionToken = getApiSessionToken();
       if (sessionToken) headers[SESSION_HEADER] = sessionToken;
       const res = await fetch(url, {
