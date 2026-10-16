@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, MoreHorizontal, MapPin, UserRound } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, MapPin, UserRound, Video } from "lucide-react";
 import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { CompatBadge } from "@/ui/design-system";
 import { cn } from "@/utils/cn";
@@ -132,6 +132,9 @@ export function CompactMemberCard({
               {name}
               {age}
               <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={15} />
+              {(member as { hasProfileVideo?: boolean }).hasProfileVideo ? (
+                <Video size={14} aria-label="Has a profile video" style={{ marginLeft: 4, verticalAlign: "-2px", opacity: 0.7 }} />
+              ) : null}
             </h2>
             {score != null ? <CompatBadge score={score} /> : null}
           </div>
@@ -197,6 +200,9 @@ export function CompactMemberCard({
               {name}
               {age}
               <VerifiedBadge show={(member as { photoVerified?: boolean }).photoVerified} size={15} />
+              {(member as { hasProfileVideo?: boolean }).hasProfileVideo ? (
+                <Video size={14} aria-label="Has a profile video" style={{ marginLeft: 4, verticalAlign: "-2px", opacity: 0.7 }} />
+              ) : null}
             </h2>
             {score != null ? <CompatibilityBadge score={score} /> : null}
           </div>

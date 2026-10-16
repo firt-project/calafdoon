@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { ProfileVideoPlayer } from "@/features/profile/ProfileVideoPlayer";
 import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { useBackToClose } from "@/ui/mobile-kit";
 import { createPortal } from "react-dom";
@@ -39,6 +40,8 @@ export type PeerProfileData = {
   score?: number | null;
   compatibilityScore?: number | null;
   userId?: string;
+  photoVerified?: boolean;
+  hasProfileVideo?: boolean;
 };
 
 function Field({ label, value }: { label: string; value?: unknown }) {
@@ -97,6 +100,8 @@ function mergeProfile(
     reviewStatus: pick("reviewStatus"),
     score: pick("score") ?? pick("compatibilityScore"),
     userId: pick("userId"),
+    photoVerified: pick("photoVerified"),
+    hasProfileVideo: pick("hasProfileVideo"),
   };
 }
 
@@ -453,6 +458,13 @@ export function PeerProfileSheet({
                     <img key={url} src={url} alt="" loading="lazy" />
                   ))}
                 </div>
+              ) : null}
+
+              {profile.hasProfileVideo && profile.userId ? (
+                <section className="peer-section">
+                  <h4>Video</h4>
+                  <ProfileVideoPlayer ownerUserId={profile.userId} ownerName={profile.name ?? undefined} />
+                </section>
               ) : null}
 
               <div className="peer-badges">

@@ -13,6 +13,8 @@ export type LookingForPrefs = {
 };
 
 export type DiscoverMember = {
+  photoVerified?: boolean;
+  hasProfileVideo?: boolean;
   userId?: string;
   id?: string;
   name?: string;

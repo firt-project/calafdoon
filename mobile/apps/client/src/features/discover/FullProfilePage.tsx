@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ProfileVideoPlayer } from "@/features/profile/ProfileVideoPlayer";
 import { VerifiedBadge } from "@/features/verification/VerifiedBadge";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -50,6 +51,13 @@ function asMember(raw: unknown, fallback?: DiscoverMember | null): DiscoverMembe
   return {
     ...base,
     userId: String(nested.userId ?? o.userId ?? base.userId ?? ""),
+    photoVerified:
+      (nested.photoVerified as boolean | undefined) ??
+      (base as { photoVerified?: boolean }).photoVerified,
+    hasProfileVideo:
+      (nested.hasProfileVideo as boolean | undefined) ??
+      (o.hasProfileVideo as boolean | undefined) ??
+      (base as { hasProfileVideo?: boolean }).hasProfileVideo,
     name: (nested.name as string) ?? base.name,
     age: (nested.age as number | string) ?? base.age,
     gender: (nested.gender as string) ?? base.gender,
@@ -547,6 +555,15 @@ export function FullProfilePage() {
               ) : null}
             </div>
           </div>
+
+          {(member as { hasProfileVideo?: boolean }).hasProfileVideo && member.userId ? (
+            <ProfileSection title="Video">
+              <ProfileVideoPlayer
+                ownerUserId={String(member.userId)}
+                ownerName={member.name}
+              />
+            </ProfileSection>
+          ) : null}
 
           {member.bio ? (
             <ProfileSection title={t("discoverFeed.about")}>

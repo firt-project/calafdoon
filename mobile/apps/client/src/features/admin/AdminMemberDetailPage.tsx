@@ -16,6 +16,7 @@ import { admin, apiClient } from "@hel/api-client";
 import { useTranslation } from "@/lib/i18n/context";
 import { BottomSheet, SkeletonCard } from "@/ui/mobile-kit";
 import { useSmartBack } from "@/navigation/useSmartBack";
+import { ProfileVideoPlayer } from "@/features/profile/ProfileVideoPlayer";
 import { ComposeSupportSheet } from "@/features/admin/AdminMessages";
 import { userFacingError } from "@/platform/errors";
 import { hapticError, hapticSuccess } from "@/platform/haptics";
@@ -152,6 +153,7 @@ export function AdminMemberDetailPage() {
     null | "menu" | "reject" | "changes" | "pause" | "suspend" | "delete"
   >(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [hasVideo, setHasVideo] = useState(false);
   const [reasonText, setReasonText] = useState("");
   const [messageText, setMessageText] = useState("");
   const [confirmName, setConfirmName] = useState("");
@@ -197,6 +199,15 @@ export function AdminMemberDetailPage() {
       setBusy(false);
     }
   }
+
+  const memberUserId = typeof profile?.userId === "string" ? profile.userId : null;
+  useEffect(() => {
+    if (!memberUserId) return;
+    apiClient
+      .get<{ active: unknown | null }>(`/admin/profile-video/${encodeURIComponent(memberUserId)}`)
+      .then((r) => setHasVideo(Boolean(r?.active)))
+      .catch(() => setHasVideo(false));
+  }, [memberUserId]);
 
   function closeSheet() {
     setSheet(null);
@@ -377,6 +388,30 @@ export function AdminMemberDetailPage() {
                   : t("adminDetail.markAdvisorReviewed")}
               </button>
             </div>
+          )}
+
+          {hasVideo && memberUserId && (
+            <Section title="Profile video">
+              <ProfileVideoPlayer
+                ownerUserId={memberUserId}
+                canReport={false}
+                playbackPath={`/admin/profile-video/${encodeURIComponent(memberUserId)}/playback`}
+              />
+              <button
+                type="button"
+                className="btn btn-danger btn-block"
+                style={{ marginTop: "0.6rem" }}
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    await apiClient.delete(`/admin/profile-video/${encodeURIComponent(memberUserId)}`);
+                    setHasVideo(false);
+                  })
+                }
+              >
+                Remove this video
+              </button>
+            </Section>
           )}
 
           <Section title="Contact">

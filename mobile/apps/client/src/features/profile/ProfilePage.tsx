@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { ProfileVideoSection } from "@/features/profile/ProfileVideoSection";
 import { Link } from "react-router-dom";
 import { Camera, Image as ImageIcon, Share2 } from "lucide-react";
 import { profile as profileApi, photos as photosApi } from "@hel/api-client";
@@ -397,6 +398,8 @@ export function ProfilePage() {
           </button>
         </div>
       </section>
+
+      <ProfileVideoSection />
 
       <section className="surface-card feed-section" aria-label="Photo privacy">
         <div className="feed-section-head">
