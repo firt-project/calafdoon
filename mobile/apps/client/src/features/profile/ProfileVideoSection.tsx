@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Film, Trash2 } from "lucide-react";
+import { Film, Trash2 } from "lucide-react";
 import { apiClient } from "@hel/api-client";
 import { useSession } from "@/features/auth/SessionProvider";
 import { BottomSheet } from "@/ui/mobile-kit";
@@ -45,7 +45,6 @@ export function ProfileVideoSection() {
   const abortRef = useRef<AbortController | null>(null);
   const resumeRef = useRef<{ videoId: string; url: string } | null>(null);
   const pickRef = useRef<HTMLInputElement | null>(null);
-  const recordRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -94,12 +93,14 @@ export function ProfileVideoSection() {
     abortRef.current = controller;
     setUploading(true);
     setPercent(0);
+    let step = "authorize";
     try {
       const creds = await apiClient.post<AuthResponse>("/profile-video/upload-auth", {
         contentType: type,
         sizeBytes: file.size,
         ...(duration !== null ? { durationSec: Math.round(duration * 10) / 10 } : {}),
       });
+      step = "upload";
       const resume = resumeRef.current?.videoId === creds.videoId ? resumeRef.current.url : null;
       await tusUpload(blob, creds, {
         title: "profile-video",
@@ -111,6 +112,7 @@ export function ProfileVideoSection() {
         onProgress: (sent, total) => setPercent(Math.round((sent / total) * 100)),
       });
       resumeRef.current = null;
+      step = "finish";
       await apiClient.post("/profile-video/confirm", {});
       await hapticSuccess();
       setNotice("Video uploaded. We are processing it now.");
@@ -120,10 +122,15 @@ export function ProfileVideoSection() {
         setNotice("Upload cancelled.");
       } else {
         await hapticError();
+        const detail =
+          e instanceof Error && e.message
+            ? e.message
+            : userFacingError(e);
+        console.error("[profile-video]", step, e);
         setError(
-          e instanceof Error && /HTTP|chunk|resume|create|authorization/i.test(e.message)
-            ? "The upload was interrupted. Check your connection and tap the button to try again — it will pick up where it stopped."
-            : userFacingError(e)
+          step === "authorize"
+            ? `Could not start the upload: ${detail}`
+            : `Upload problem at the ${step} step: ${detail}. Tap Choose video to try again — it continues where it stopped.`
         );
       }
       await load();
@@ -221,12 +228,8 @@ export function ProfileVideoSection() {
       )}
 
       <input ref={pickRef} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" hidden onChange={onPicked} />
-      <input ref={recordRef} type="file" accept="video/*" capture="user" hidden onChange={onPicked} />
 
       <div className="row" style={{ justifyContent: "center", marginTop: "0.75rem", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" disabled={locked} onClick={() => recordRef.current?.click()}>
-          <Camera size={16} /> Record
-        </button>
         <button type="button" className="btn btn-secondary" disabled={locked} onClick={() => pickRef.current?.click()}>
           <Film size={16} /> {hasActive ? "Replace video" : "Choose video"}
         </button>
