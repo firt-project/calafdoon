@@ -68,6 +68,14 @@ export class MatchService {
     return { userId, profile };
   }
 
+  private async hasVideo(userId: string): Promise<boolean> {
+    const v = await this.prisma.profileVideo.findFirst({
+      where: { userId, isActive: true, status: "ready" },
+      select: { id: true },
+    });
+    return !!v;
+  }
+
   private async getBlockedIds(userId: string): Promise<Set<string>> {
     const rows = await this.prisma.block.findMany({
       where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
@@ -478,6 +486,7 @@ export class MatchService {
               name: other.name,
               age: other.age,
               photoVerified: other.photoVerified,
+              hasProfileVideo: await this.hasVideo(otherId),
               country: other.country,
               city: other.city,
               imageUrl: photo.imageUrl,
@@ -1045,6 +1054,7 @@ export class MatchService {
       name: profile.name ?? "Member",
       age: profile.age,
       photoVerified: profile.photoVerified,
+      hasProfileVideo: await this.hasVideo(targetUserId),
       country: profile.country ?? "",
       city: profile.city ?? undefined,
       height: profile.height ?? undefined,
@@ -1347,6 +1357,7 @@ export class MatchService {
       name: profile.name ?? "Member",
       age: profile.age,
       photoVerified: profile.photoVerified,
+      hasProfileVideo: await this.hasVideo(targetUserId),
       gender: profile.gender ?? undefined,
       country: profile.country ?? "",
       city: profile.city ?? undefined,

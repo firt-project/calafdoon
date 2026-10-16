@@ -162,6 +162,10 @@ export class ConversationService {
       name: other.name,
       age: other.age,
       photoVerified: other.photoVerified,
+      hasProfileVideo: !!(await this.prisma.profileVideo.findFirst({
+        where: { userId: otherUserId, isActive: true, status: "ready" },
+        select: { id: true },
+      })),
       gender: other.gender,
       country: other.country,
       city: other.city,

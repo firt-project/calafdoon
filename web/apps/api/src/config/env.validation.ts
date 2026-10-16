@@ -27,6 +27,14 @@ export const envSchema = z.object({
   TRUST_PROXY: z.string().optional(),
   APP_URL: z.string().optional(),
   MAIL_DRIVER: z.enum(["console", "resend", "disabled"]).default("console"),
+  /** Bunny Stream profile videos — set on the API host (Render), never Vercel. */
+  BUNNY_STREAM_LIBRARY_ID: z.string().optional(),
+  BUNNY_STREAM_API_KEY: z.string().optional(),
+  /** Library Read-Only API key — HMAC key that signs webhook deliveries. */
+  BUNNY_STREAM_READONLY_KEY: z.string().optional(),
+  /** Library Security → Token authentication key (embed player tokens). */
+  BUNNY_STREAM_TOKEN_KEY: z.string().optional(),
+  BUNNY_STREAM_PLAYER_HOST: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),

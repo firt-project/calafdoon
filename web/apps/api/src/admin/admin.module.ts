@@ -28,6 +28,7 @@ import { StaffInvitesController } from "./staff-invites.controller";
 import { AnnouncementsService } from "./announcements.service";
 import { AnnouncementsController } from "./announcements.controller";
 import { AdminChatService } from "./admin-chat.service";
+import { AdminProfileVideoController } from "../profile-video/profile-video.controller";
 import { AdminStatsService } from "./admin-stats.service";
 import { AdminMiscController } from "./admin-misc.controller";
 
@@ -41,6 +42,7 @@ import { AdminMiscController } from "./admin-misc.controller";
     MediaModule,
   ],
   controllers: [
+    AdminProfileVideoController,
     AdminUsersController,
     AccountStatusReportsController,
     AccountStatusMemberController,

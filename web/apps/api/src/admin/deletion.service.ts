@@ -315,6 +315,20 @@ export class DeletionService {
 
         await tx.userUpload.deleteMany({ where: { userId } });
 
+        // Profile videos: queue the Bunny deletions inside this transaction (the rows
+        // themselves go with the user via ON DELETE CASCADE); a worker retries until Bunny confirms.
+        const videos = await tx.profileVideo.findMany({
+          where: { userId },
+          select: { bunnyVideoId: true },
+        });
+        for (const v of videos) {
+          await tx.bunnyVideoCleanup.upsert({
+            where: { bunnyVideoId: v.bunnyVideoId },
+            create: { bunnyVideoId: v.bunnyVideoId },
+            update: {},
+          });
+        }
+
         // Clear profile image refs before profile delete
         await tx.profile.update({
           where: { id: profile.id },

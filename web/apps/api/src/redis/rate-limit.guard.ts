@@ -55,6 +55,21 @@ const LIMITS: Record<
     user: { windowSec: 15 * 60, max: 20 },
     ip: { windowSec: 15 * 60, max: 40 },
   },
+  /** Profile video: issuing upload credentials / confirming. */
+  "video.upload": {
+    user: { windowSec: 60 * 60, max: 12 },
+    ip: { windowSec: 60 * 60, max: 40 },
+  },
+  "video.status": {
+    user: { windowSec: 60, max: 90 },
+  },
+  "video.playback": {
+    user: { windowSec: 60, max: 120 },
+  },
+  "video.webhook": {
+    ip: { windowSec: 60, max: 300 },
+    global: { windowSec: 60, max: 1200 },
+  },
   "profile.write": {
     user: { windowSec: 60, max: 60 },
   },
@@ -171,6 +186,7 @@ export class RateLimitGuard implements CanActivate {
       (bucket.startsWith("payments.") && bucket !== "payments.webhook") ||
       bucket.startsWith("admin.") ||
       bucket.startsWith("support.") ||
+      bucket === "video.upload" ||
       bucket === "profile.delete_account";
 
     const online = await this.redis.connect();
@@ -227,6 +243,12 @@ export class RateLimitGuard implements CanActivate {
       (method === "POST" && path === "/auth/delete-account")
     ) {
       return "profile.delete_account";
+    }
+    if (path.startsWith("/webhooks/bunny-stream")) return "video.webhook";
+    if (path.startsWith("/profile-video") || path.startsWith("/admin/profile-video")) {
+      if (method === "POST" || method === "DELETE") return "video.upload";
+      if (path.endsWith("/playback")) return "video.playback";
+      return "video.status";
     }
     if (method === "POST" && path.includes("/profile/geolocation/verify")) {
       return "profile.geocode";

@@ -202,6 +202,7 @@ enum PasswordAlgo {
 }
 
 model User {
+  profileVideos          ProfileVideo[]
   photoVerifications     PhotoVerification[]
   notificationPreference NotificationPreference?
   conversationMutes      ConversationMute[]
@@ -796,6 +797,52 @@ model PhotoVerification {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("photo_verifications")
+}
+
+enum ProfileVideoStatus {
+  created
+  uploading
+  processing
+  ready
+  failed
+  rejected
+}
+
+/// One active (ready) profile video per member, plus at most one pending
+/// replacement. Partial unique indexes live in the migration SQL.
+model ProfileVideo {
+  id             String             @id @default(uuid()) @db.Uuid
+  userId         String             @map("user_id") @db.Uuid
+  bunnyVideoId   String             @unique @map("bunny_video_id")
+  status         ProfileVideoStatus @default(created)
+  isActive       Boolean            @default(false) @map("is_active")
+  durationSec    Int?               @map("duration_sec")
+  encodeProgress Int                @default(0) @map("encode_progress")
+  failureReason  String?            @map("failure_reason")
+  /// Upload authorization window for created/uploading rows.
+  expiresAt      DateTime?          @map("expires_at")
+  lastCheckedAt  DateTime?          @map("last_checked_at")
+  readyAt        DateTime?          @map("ready_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, updatedAt])
+  @@map("profile_videos")
+}
+
+/// Bunny videos waiting to be deleted (replaced, rejected, member deleted).
+/// Retried until Bunny confirms, so a failed API call never leaks a video.
+model BunnyVideoCleanup {
+  bunnyVideoId  String   @id @map("bunny_video_id")
+  attempts      Int      @default(0)
+  lastError     String?  @map("last_error")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([nextAttemptAt])
+  @@map("bunny_video_cleanup")
 }
 
 model Announcement {

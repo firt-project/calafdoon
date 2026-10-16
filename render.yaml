@@ -87,6 +87,17 @@ services:
       - key: S3_FORCE_PATH_STYLE
         value: "true"
 
+      # --- Bunny Stream (profile videos) ---
+      # Set on Render only. Never on Vercel, never in the app.
+      - key: BUNNY_STREAM_LIBRARY_ID
+        sync: false            # Stream -> your library -> API: Library ID (numeric)
+      - key: BUNNY_STREAM_API_KEY
+        sync: false            # Library API key (server only; signs uploads, creates/deletes videos)
+      - key: BUNNY_STREAM_READONLY_KEY
+        sync: false            # Library Read-Only API key (verifies webhook signatures)
+      - key: BUNNY_STREAM_TOKEN_KEY
+        sync: false            # Library Security -> Token authentication key (signs embed URLs)
+
       # --- Stripe (card) ---
       - key: STRIPE_GATEWAY
         value: live
