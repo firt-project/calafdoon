@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Film, Trash2 } from "lucide-react";
+import { Film, RefreshCw, Trash2 } from "lucide-react";
 import { apiClient } from "@hel/api-client";
 import { useSession } from "@/features/auth/SessionProvider";
 import { BottomSheet } from "@/ui/mobile-kit";
@@ -169,15 +169,16 @@ export function ProfileVideoSection() {
   const pending = status?.pending ?? null;
   const locked = uploading || pending?.status === "processing";
 
+  const showEmpty = !hasActive && !uploading && pending?.status !== "processing";
+
   return (
     <section className="surface-card feed-section" aria-label="Profile video">
       <div className="feed-section-head">
         <div>
           <h2>Profile video</h2>
-          <p className="muted small">
-            Add one short video (up to {maxSec} seconds) so people can see the real you. MP4 or MOV.
-          </p>
+          <p className="muted small">A short clip lets people see the real you.</p>
         </div>
+        <span className="ph-count">{maxSec}s max</span>
       </div>
 
       {error && (
@@ -196,49 +197,69 @@ export function ProfileVideoSection() {
         </div>
       )}
 
+      <input ref={pickRef} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" hidden onChange={onPicked} />
+
+      {showEmpty && (
+        <button type="button" className="ph-empty" disabled={locked} onClick={() => pickRef.current?.click()}>
+          <span className="ph-empty-icon">
+            <Film size={30} aria-hidden />
+          </span>
+          <strong>Add a {maxSec}-second video</strong>
+          <span className="muted small">MP4 or MOV · say hello, show your smile</span>
+        </button>
+      )}
+
       {uploading && (
-        <div className="stack" aria-live="polite">
-          <div style={{ height: 8, borderRadius: 999, background: "var(--muted)", overflow: "hidden" }}>
-            <div style={{ width: `${percent}%`, height: "100%", background: "var(--primary, #2e5e4e)", transition: "width 0.2s" }} />
+        <div className="pv-card" aria-live="polite">
+          <div className="pv-row">
+            <strong>Uploading your video</strong>
+            <span className="ph-count">{percent}%</span>
+          </div>
+          <div className="pv-bar" aria-hidden>
+            <div style={{ width: `${percent}%` }} />
           </div>
           <p className="muted small" style={{ margin: 0 }}>
-            Uploading… {percent}%. Keep the app open.
+            Keep the app open until it finishes.
           </p>
-          <button type="button" className="btn btn-secondary" onClick={() => abortRef.current?.abort()}>
-            Cancel
+          <button type="button" className="btn btn-secondary btn-block" onClick={() => abortRef.current?.abort()}>
+            Cancel upload
           </button>
         </div>
       )}
 
       {!uploading && pending?.status === "processing" && (
-        <div className="stack" aria-live="polite">
-          <p style={{ margin: 0 }}>
-            <strong>Processing your video…</strong> {pending.progress > 0 ? `${pending.progress}%` : ""}
-          </p>
+        <div className="pv-card" aria-live="polite">
+          <div className="pv-row">
+            <strong>Preparing your video…</strong>
+            <span className="ph-count">{pending.progress > 0 ? `${pending.progress}%` : "…"}</span>
+          </div>
+          <div className="pv-bar" aria-hidden>
+            <div style={{ width: `${Math.max(6, pending.progress)}%` }} />
+          </div>
           <p className="muted small" style={{ margin: 0 }}>
-            It will appear on your profile as soon as it is ready. You can leave this screen.
+            It appears on your profile as soon as it is ready. You can leave this screen.
           </p>
         </div>
       )}
 
       {hasActive && user?.id && (
-        <div className="stack">
+        <div className="pv-player">
           <ProfileVideoPlayer ownerUserId={String(user.id)} canReport={false} />
         </div>
       )}
 
-      <input ref={pickRef} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" hidden onChange={onPicked} />
-
-      <div className="row" style={{ justifyContent: "center", marginTop: "0.75rem", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" disabled={locked} onClick={() => pickRef.current?.click()}>
-          <Film size={16} /> {hasActive ? "Replace video" : "Choose video"}
-        </button>
-        {(hasActive || pending) && (
-          <button type="button" className="btn btn-secondary" disabled={uploading || busy} onClick={() => setConfirmDelete(true)}>
-            <Trash2 size={16} /> Remove video
+      {(hasActive || pending) && (
+        <div className="ph-actions pv-actions">
+          {hasActive && (
+            <button type="button" className="ph-btn" disabled={locked} onClick={() => pickRef.current?.click()}>
+              <RefreshCw size={16} aria-hidden /> Replace
+            </button>
+          )}
+          <button type="button" className="ph-btn danger" disabled={uploading || busy} onClick={() => setConfirmDelete(true)}>
+            <Trash2 size={16} aria-hidden /> Remove
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <BottomSheet open={confirmDelete} title="Remove your video?" onClose={() => setConfirmDelete(false)}>
         <div className="stack">

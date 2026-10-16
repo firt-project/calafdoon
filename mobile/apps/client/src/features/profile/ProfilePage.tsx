@@ -61,6 +61,8 @@ export function ProfilePage() {
   const [pendingSlot, setPendingSlot] = useState<"main" | "additional">("additional");
   const [replaceTarget, setReplaceTarget] = useState<ManagedPhoto | null>(null);
   const [replaceChoice, setReplaceChoice] = useState<ManagedPhoto | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [uploadingPreview, setUploadingPreview] = useState<string | null>(null);
 
   async function reloadAll() {
     const [p, mine, wali] = await Promise.all([
@@ -128,6 +130,11 @@ export function ProfilePage() {
   async function confirmEdited(file: File) {
     setBusy(true);
     setError(null);
+    const preview = URL.createObjectURL(file);
+    setUploadingPreview(preview);
+    // Close the editor right away so the member watches the photo upload in place.
+    if (editorSrc) URL.revokeObjectURL(editorSrc);
+    setEditorSrc(null);
     try {
       const old = replaceTarget && !replaceTarget.isMain ? replaceTarget : null;
       // At the photo limit there is no room for the new photo until the old one is gone.
@@ -137,14 +144,14 @@ export function ProfilePage() {
       await hapticSuccess();
       setStatus(replaceTarget ? "Photo replaced." : `Photo uploaded (${gallery.length + 1}/${maxPhotos}).`);
       setReplaceTarget(null);
-      if (editorSrc) URL.revokeObjectURL(editorSrc);
-      setEditorSrc(null);
       await refresh();
       await reloadAll();
     } catch (e) {
       await hapticError();
       setError(userFacingError(e));
     } finally {
+      URL.revokeObjectURL(preview);
+      setUploadingPreview(null);
       setBusy(false);
     }
   }
@@ -287,7 +294,7 @@ export function ProfilePage() {
           style={
             mainPhoto
               ? {
-                  backgroundImage: `url(${mainPhoto})`,
+                  backgroundImage: `url("${mainPhoto}")`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }
@@ -367,49 +374,35 @@ export function ProfilePage() {
         <div className="feed-section-head">
           <div>
             <h2>Photos</h2>
-            <p className="muted small">
-              Add up to {maxPhotos} photos ({gallery.length}/{maxPhotos}). First photo is your
-              main profile picture.
-            </p>
+            <p className="muted small">Your first photo is your main profile picture.</p>
           </div>
+          <span className="ph-count" aria-label={`${gallery.length} of ${maxPhotos} photos`}>
+            {gallery.length}/{maxPhotos}
+          </span>
         </div>
         <PhotoManager
           photos={gallery}
           maxPhotos={maxPhotos}
           busy={busy}
+          uploadingPreview={uploadingPreview}
           onReload={reloadAll}
-          onAddRequest={() => void beginPick("library")}
+          onAddRequest={() => setAddOpen(true)}
           onReplaceRequest={(photo) => setReplaceChoice(photo)}
           labels={{
             replace: "Replace",
-            primary: "Primary",
+            primary: "Main photo",
             remove: "Remove",
             confirmRemove: "Remove this photo from your profile?",
-            moveUp: "Move photo earlier",
-            moveDown: "Move photo later",
+            moveUp: "Earlier",
+            moveDown: "Later",
             retry: "Failed",
-            empty: "No photos yet. Add at least one clear portrait.",
+            empty: "A clear face, good light, no sunglasses.",
             saving: "Saving photo order…",
           }}
         />
-        <div className="row" style={{ justifyContent: "center", marginTop: "0.75rem" }}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={busy || offline || gallery.length >= maxPhotos}
-            onClick={() => void beginPick("camera")}
-          >
-            <Camera size={16} /> Take photo
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={busy || offline || gallery.length >= maxPhotos}
-            onClick={() => void beginPick("library")}
-          >
-            <ImageIcon size={16} /> Gallery
-          </button>
-        </div>
+        <p className="muted small ph-tip">
+          Tip: profiles with 3 or more clear photos get noticed far more.
+        </p>
       </section>
 
       <ProfileVideoSection />
@@ -437,7 +430,7 @@ export function ProfilePage() {
               style={{ textAlign: "left" }}
             >
               <strong style={{ display: "block" }}>{t(opt.titleKey)}</strong>
-              <span className="muted small" style={{ display: "block", opacity: 0.9 }}>
+              <span className="small" style={{ display: "block", opacity: 0.85, color: "inherit" }}>
                 {t(opt.descKey)}
               </span>
             </button>
@@ -484,6 +477,33 @@ export function ProfilePage() {
       <Link to="/settings/change-password" className="btn btn-secondary btn-block">
         Change password
       </Link>
+      <BottomSheet open={addOpen} title="Add a photo" onClose={() => setAddOpen(false)}>
+        <div className="stack">
+          <button
+            type="button"
+            className="btn btn-primary btn-block"
+            onClick={() => {
+              setAddOpen(false);
+              void beginPick("camera");
+            }}
+          >
+            <Camera size={16} /> Take a photo
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-block"
+            onClick={() => {
+              setAddOpen(false);
+              void beginPick("library");
+            }}
+          >
+            <ImageIcon size={16} /> Choose from gallery
+          </button>
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => setAddOpen(false)}>
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
       <BottomSheet
         open={replaceChoice != null}
         title="Replace this photo"
