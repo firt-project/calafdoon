@@ -7552,3 +7552,29 @@ button.chip {
   grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
 }
+
+/* ───── Guardian (wali) following a chat ───── */
+.gd-wrap { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.4rem 0.75rem 0; position: relative; z-index: 2; }
+.gd-card {
+  padding: 0.7rem 0.85rem; border-radius: 1rem;
+  background: rgb(255 255 255 / 0.1); color: #fff; font-size: 0.85rem; line-height: 1.4;
+  border: 1px solid rgb(255 255 255 / 0.18); backdrop-filter: blur(6px);
+}
+.gd-card p { margin: 0; }
+.gd-card svg { vertical-align: -3px; margin-right: 0.25rem; }
+.gd-ask { background: rgb(214 168 54 / 0.22); border-color: rgb(214 168 54 / 0.6); }
+.gd-active { background: rgb(99 173 143 / 0.22); border-color: rgb(99 173 143 / 0.55); }
+.gd-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+.gd-actions .btn { min-height: 2.3rem; padding: 0 0.85rem; font-size: 0.82rem; }
+.gd-note { margin: 0; color: #fff; font-size: 0.8rem; text-align: center; opacity: 0.9; }
+.gd-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.gd-input {
+  width: 100%; border: 1px solid var(--border); background: var(--input, var(--card));
+  border-radius: 0.9rem; padding: 0.8rem 0.95rem; font-size: 1rem; color: var(--foreground);
+}
+.gd-chip {
+  border: 1px solid var(--border); background: var(--card); color: var(--foreground);
+  border-radius: 999px; padding: 0.5rem 0.9rem; font-weight: 600; font-size: 0.88rem;
+}
+.gd-chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.gd-card .btn-ghost { color: #fff; opacity: 0.85; text-decoration: underline; }

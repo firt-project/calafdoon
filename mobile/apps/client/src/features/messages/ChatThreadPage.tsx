@@ -12,6 +12,7 @@ import {
   subscribeRealtime,
 } from "@hel/api-client";
 import { useSession } from "@/features/auth/SessionProvider";
+import { GuardianBanners, GuardianSheet, useChaperones } from "@/features/messages/GuardianPanel";
 import { hapticError, hapticLight, hapticMedium } from "@/platform/haptics";
 import { userFacingError } from "@/platform/errors";
 import {
@@ -131,6 +132,8 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
   const [matchId, setMatchId] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [unmatchOpen, setUnmatchOpen] = useState(false);
+  const [guardianOpen, setGuardianOpen] = useState(false);
+  const chaperones = useChaperones(conversationId);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -512,6 +515,13 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
         </button>
       </header>
 
+      <GuardianBanners
+        conversationId={conversationId}
+        items={chaperones.items}
+        peerName={peer.name}
+        reload={chaperones.reload}
+      />
+
       <PeerProfileSheet
         open={partnerOpen}
         onClose={() => setPartnerOpen(false)}
@@ -559,6 +569,19 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           >
             <ShieldAlert size={16} /> {t("safety.reportUser")}
           </button>
+          {!chaperones.items.some((c) => c.invitedByMe) && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-block"
+              disabled={offline || !matchId}
+              onClick={() => {
+                setSafetyOpen(false);
+                setGuardianOpen(true);
+              }}
+            >
+              Add a guardian to this chat
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-secondary btn-block"
@@ -588,6 +611,14 @@ export function ChatThreadPage({ conversationId }: { conversationId: string }) {
           </button>
         </div>
       </BottomSheet>
+
+      <GuardianSheet
+        open={guardianOpen}
+        onClose={() => setGuardianOpen(false)}
+        conversationId={conversationId}
+        peerName={peer.name}
+        onSent={chaperones.reload}
+      />
 
       <BottomSheet
         open={unmatchOpen}

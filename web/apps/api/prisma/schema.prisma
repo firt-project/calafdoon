@@ -202,6 +202,7 @@ enum PasswordAlgo {
 }
 
 model User {
+  chaperoneInvites       ChatChaperone[] @relation("ChaperoneInviter")
   profileVideos          ProfileVideo[]
   photoVerifications     PhotoVerification[]
   notificationPreference NotificationPreference?
@@ -628,6 +629,7 @@ model PhotoReveal {
 }
 
 model Conversation {
+  chaperones           ChatChaperone[]
   id                   String   @id @default(uuid()) @db.Uuid
   convexId             String   @unique @map("convex_id")
   matchId              String   @unique @map("match_id") @db.Uuid
@@ -843,6 +845,34 @@ model BunnyVideoCleanup {
 
   @@index([nextAttemptAt])
   @@map("bunny_video_cleanup")
+}
+
+enum ChaperoneStatus {
+  pending
+  active
+  declined
+  revoked
+}
+
+/// A guardian (wali) who follows one conversation read-only. Both members must agree.
+model ChatChaperone {
+  id             String          @id @default(uuid()) @db.Uuid
+  conversationId String          @map("conversation_id") @db.Uuid
+  invitedById    String          @map("invited_by_id") @db.Uuid
+  guardianName   String          @map("guardian_name")
+  relationship   String
+  status         ChaperoneStatus @default(pending)
+  expiresAt      DateTime?       @map("expires_at")
+  acceptedAt     DateTime?       @map("accepted_at")
+  lastViewedAt   DateTime?       @map("last_viewed_at")
+  viewCount      Int             @default(0) @map("view_count")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  invitedBy      User            @relation("ChaperoneInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, status])
+  @@map("chat_chaperones")
 }
 
 model Announcement {

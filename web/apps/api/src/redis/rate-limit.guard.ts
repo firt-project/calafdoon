@@ -97,6 +97,13 @@ const LIMITS: Record<
     ip: { windowSec: 60, max: 300 },
     global: { windowSec: 60, max: 1200 },
   },
+  "chat.chaperone": {
+    user: { windowSec: 60 * 60, max: 20 },
+  },
+  "guardian.view": {
+    ip: { windowSec: 60, max: 90 },
+    global: { windowSec: 60, max: 1500 },
+  },
   "profile.write": {
     user: { windowSec: 60, max: 60 },
   },
@@ -272,6 +279,8 @@ export class RateLimitGuard implements CanActivate {
       return "profile.delete_account";
     }
     if (path.startsWith("/webhooks/bunny-stream")) return "video.webhook";
+    if (path.startsWith("/guardian/")) return "guardian.view";
+    if (/\/conversations\/[^/]+\/chaperones/.test(path) && method !== "GET") return "chat.chaperone";
     if (path.startsWith("/profile-video") || path.startsWith("/admin/profile-video")) {
       if (method === "POST" || method === "DELETE") return "video.upload";
       if (path.endsWith("/playback")) return "video.playback";

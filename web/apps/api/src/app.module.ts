@@ -26,6 +26,7 @@ import { ProfileModule } from "./profile/profile.module";
 import { PushModule } from "./push/push.module";
 import { VerificationModule } from "./verification/verification.module";
 import { ProfileVideoModule } from "./profile-video/profile-video.module";
+import { ChaperoneModule } from "./chaperone/chaperone.module";
 import { QueueModule } from "./queue/queue.module";
 import { RedisModule } from "./redis/redis.module";
 
@@ -65,6 +66,7 @@ import { RedisModule } from "./redis/redis.module";
     ProfileModule,
     MatchingModule,
     ChatModule,
+    ChaperoneModule,
     NotificationsModule,
     PushModule,
     ProfileVideoModule,
