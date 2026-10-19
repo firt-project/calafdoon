@@ -6,7 +6,15 @@ import {
   REGISTRATION_PRICE,
   WAAFI_ACCESS_DAYS,
 } from "@/lib/constants";
+import { Capacitor } from "@capacitor/core";
 import { useSession } from "@/features/auth/SessionProvider";
+import {
+  iapAvailable,
+  iapLoadOffer,
+  iapPurchase,
+  iapRestore,
+  type IapOffer,
+} from "@/platform/iap";
 import { PaystackCheckoutSheet } from "@/features/payments/PaystackCheckoutSheet";
 import {
   openWebCheckout,
@@ -40,7 +48,14 @@ type PaystackSession = { url: string; reference: string };
  */
 export function PlansPage() {
   const navigate = useNavigate();
-  const { accessState, refresh, logout } = useSession();
+  const { accessState, refresh, logout, user } = useSession();
+  // iOS pays only with Apple In-App Purchase — no WaafiPay / Paystack there.
+  const isIos = Capacitor.getPlatform() === "ios";
+  const [offer, setOffer] = useState<IapOffer | null>(null);
+  const [offerState, setOfferState] = useState<"loading" | "ready" | "none">(
+    "loading"
+  );
+  const [iapBusy, setIapBusy] = useState(false);
 
   async function handleLogout() {
     const done = logout();
@@ -77,7 +92,21 @@ export function PlansPage() {
   useEffect(() => {
     let cancelled = false;
     // iOS never shows these in-app payment methods, so skip the calls.
-    if (!webCheckout) {
+    if (isIos) {
+      if (iapAvailable() && user?.id) {
+        void iapLoadOffer(user.id)
+          .then((o) => {
+            if (cancelled) return;
+            setOffer(o);
+            setOfferState(o ? "ready" : "none");
+          })
+          .catch(() => {
+            if (!cancelled) setOfferState("none");
+          });
+      } else {
+        setOfferState("none");
+      }
+    } else if (!webCheckout) {
       void payments.waafi
         .status()
         .then((s) => {
@@ -152,6 +181,46 @@ export function PlansPage() {
       }
     } finally {
       setCheckingAccess(false);
+    }
+  }
+
+  async function buyWithApple() {
+    if (!offer || !user?.id) return;
+    setIapBusy(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const ok = await iapPurchase(user.id, offer);
+      if (ok) {
+        setStatus("Purchase complete. Unlocking your account…");
+        await refresh();
+        navigate("/home", { replace: true });
+      }
+    } catch {
+      setError("The purchase could not be completed. You were not charged.");
+    } finally {
+      setIapBusy(false);
+    }
+  }
+
+  async function restoreApple() {
+    if (!user?.id) return;
+    setIapBusy(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const ok = await iapRestore(user.id);
+      if (ok) {
+        setStatus("Membership restored. Unlocking your account…");
+        await refresh();
+        navigate("/home", { replace: true });
+      } else {
+        setError("No active membership was found for this Apple ID.");
+      }
+    } catch {
+      setError("Could not restore purchases. Please try again.");
+    } finally {
+      setIapBusy(false);
     }
   }
 
@@ -293,14 +362,18 @@ export function PlansPage() {
                 {membershipExpired ? "Renewal" : "Membership"}
               </span>
               <div className="pay-plan-price">
-                <span className="pay-plan-amount">${priceLabel}</span>
+                <span className="pay-plan-amount">
+                  {isIos && offer ? offer.priceLabel : `$${priceLabel}`}
+                </span>
                 <span className="pay-plan-per">
-                  / {WAAFI_ACCESS_DAYS} days
+                  / {isIos ? "month" : `${WAAFI_ACCESS_DAYS} days`}
                 </span>
               </div>
               <p className="muted small" style={{ margin: 0 }}>
                 {membershipExpired
                   ? `Your ${WAAFI_ACCESS_DAYS}-day access ended. Renew to unlock another ${WAAFI_ACCESS_DAYS} days of matches and messaging.`
+                  : isIos
+                    ? "Unlocks matches and messaging. Billed monthly through your Apple ID."
                   : webCheckout
                     ? "Unlocks matches and messaging. Continue on our website to set up membership, using the same account."
                     : paystackInBrowser
@@ -320,7 +393,46 @@ export function PlansPage() {
               </div>
             )}
 
-            {webCheckout ? (
+            {isIos ? (
+              <div className="pay-method">
+                <div className="pay-method-head">
+                  <span className="pay-method-name">HelCalaf Membership</span>
+                  <span className="pay-method-tag">Apple</span>
+                </div>
+                <p className="muted small" style={{ margin: 0 }}>
+                  {offerState === "none"
+                    ? "Membership is not available right now. Please try again later."
+                    : "Monthly auto-renewing subscription. Payment is charged to your Apple ID at confirmation of purchase. It renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel any time in your Apple ID settings (Settings › Apple ID › Subscriptions)."}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-block btn-lg"
+                  disabled={iapBusy || offerState !== "ready"}
+                  onClick={() => void buyWithApple()}
+                >
+                  {iapBusy
+                    ? "Please wait…"
+                    : offerState === "loading"
+                      ? "Loading…"
+                      : offer
+                        ? `Subscribe — ${offer.priceLabel} / month`
+                        : "Unavailable"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-block"
+                  disabled={iapBusy}
+                  onClick={() => void restoreApple()}
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  Restore purchases
+                </button>
+                <p className="muted small center" style={{ marginTop: "0.75rem" }}>
+                  <Link to="/legal/terms">Terms of Use</Link> ·{" "}
+                  <Link to="/legal/privacy">Privacy Policy</Link>
+                </p>
+              </div>
+            ) : webCheckout ? (
               <div className="pay-method">
                 <div className="pay-method-head">
                   <span className="pay-method-name">Membership</span>

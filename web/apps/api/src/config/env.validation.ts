@@ -55,6 +55,10 @@ export const envSchema = z.object({
   /** Override endpoint; defaults from WAAFI_ENV. */
   WAAFI_BASE_URL: z.string().optional(),
   /** Paystack transaction API — set on the API host, never Vercel. */
+  /** Apple IAP via RevenueCat: webhook Authorization value + REST secret key. */
+  REVENUECAT_WEBHOOK_SECRET: z.string().optional(),
+  REVENUECAT_SECRET_API_KEY: z.string().optional(),
+  REVENUECAT_ENTITLEMENT: z.string().optional(),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_PUBLIC_KEY: z.string().optional(),
   /** Settlement currency on your Paystack account (default USD). */

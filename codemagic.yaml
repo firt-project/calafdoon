@@ -32,6 +32,8 @@ workflows:
         VITE_SOCKET_URL: "https://tel-calafkaaga-1.onrender.com"
         VITE_APP_URL: "https://www.helcalafkaaga.com"
         VITE_STRIPE_PUBLISHABLE_KEY: "pk_test_unused"
+        # RevenueCat PUBLIC Apple SDK key (appl_...) — not secret. Paste it here.
+        VITE_REVENUECAT_IOS_KEY: ""
       node: 22
       xcode: latest
       cocoapods: default
@@ -55,6 +57,7 @@ workflows:
           VITE_APP_URL=${VITE_APP_URL:-$VITE_API_URL}
           VITE_USE_LOCAL_DEMO=false
           VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY:-pk_test_unused}
+          VITE_REVENUECAT_IOS_KEY=${VITE_REVENUECAT_IOS_KEY}
           EOF
           echo "wrote apps/client/.env.production:"
           sed 's/=.*/=<set>/' .env.production

@@ -100,3 +100,16 @@ stays available on Android and the website.
 Owner decided not to change payments for this resubmission, because the rejection reason was 4.3(b), not 3.1.1.
 Risk to know: a reviewer who clears 4.3(b) can still raise 3.1.1 (WaafiPay / Paystack unlock instead of Apple in-app purchase).
 Prepared fallback: `IOS_WEB_CHECKOUT` in `mobile/apps/client/src/platform/web-checkout.ts`, or free iPhone access, or StoreKit.
+
+---
+
+## Update 2026-10-19 — payments switched to Apple In-App Purchase (iOS)
+
+- The iOS app no longer shows WaafiPay or Paystack/M-Pesa. Membership is an
+  auto-renewing subscription `helcalaf_membership_monthly` bought with
+  Apple In-App Purchase (RevenueCat validates; our server grants access).
+- Paywall has Subscribe, Restore purchases, subscription terms, Terms + Privacy links.
+- **Review notes to add:** "Membership is sold only via In-App Purchase on iOS. To test,
+  sign in with the demo account; the unpaid demo account shows the paywall."
+  Give Apple one *unpaid* demo account so they can see the purchase sheet.
+- **You must do before building:** see `mobile/store/billing/IOS_IAP_SETUP.md`.

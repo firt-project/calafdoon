@@ -29,6 +29,7 @@ import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { registerAndroidBackHandler } from "@/navigation/android-back";
 import { registerPush, unregisterPush } from "@/platform/push";
+import { iapLogout } from "@/platform/iap";
 import { securityGateRouteForUser } from "@/lib/security-gate-codes";
 
 type SessionContextValue = {
@@ -333,6 +334,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     disconnectRealtime();
     try {
       await unregisterPush();
+      await iapLogout();
       await auth.logout();
     } finally {
       await clearAllClientData();

@@ -7,14 +7,24 @@ import { ChatRealtimeService } from "../chat/chat-realtime.service";
 import { PaymentMailService } from "../mail/payment-mail.service";
 import { isPremiumPayment, nextMembershipPaidUntil } from "./pricing";
 
-export type GrantSource = "stripe" | "evc" | "waafi" | "paystack";
+export type GrantSource =
+  | "stripe"
+  | "evc"
+  | "waafi"
+  | "paystack"
+  | "revenuecat";
 
 /**
  * Waafi / Paystack / EVC use a 30-day paidUntil lock; Stripe subscriptions
  * leave it null (Stripe manages recurring access itself).
  */
 function isPeriodLockedSource(source: GrantSource): boolean {
-  return source === "waafi" || source === "evc" || source === "paystack";
+  return (
+    source === "waafi" ||
+    source === "evc" ||
+    source === "paystack" ||
+    source === "revenuecat"
+  );
 }
 
 /**
@@ -82,6 +92,8 @@ export class GrantPaidAccessService {
       source: GrantSource;
       /** When true (admin EVC approve), member is fully approved immediately. */
       forceProfileApproval?: boolean;
+      /** Store-managed period end (Apple IAP via RevenueCat) instead of +30 days. */
+      paidUntilOverride?: Date;
     }
   ): Promise<{ notified: boolean }> {
     const profile = await tx.profile.findUnique({
@@ -94,9 +106,11 @@ export class GrantPaidAccessService {
       args.isPremium ||
       profile.gender === "male";
 
-    const paidUntil = isPeriodLockedSource(args.source)
-      ? nextMembershipPaidUntil(profile.paidUntil)
-      : undefined;
+    const paidUntil = args.paidUntilOverride
+      ? args.paidUntilOverride
+      : isPeriodLockedSource(args.source)
+        ? nextMembershipPaidUntil(profile.paidUntil)
+        : undefined;
     const isRenewal =
       isPeriodLockedSource(args.source) &&
       profile.hasPaid === true &&
@@ -206,6 +220,7 @@ export class GrantPaidAccessService {
     matchId?: string | null;
     notify?: boolean;
     forceProfileApproval?: boolean;
+    paidUntilOverride?: Date;
   }): Promise<{ alreadyCompleted: boolean; payment: Payment }> {
     const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findUnique({
@@ -239,13 +254,16 @@ export class GrantPaidAccessService {
       if (
         args.source === "stripe" ||
         args.source === "waafi" ||
-        args.source === "paystack"
+        args.source === "paystack" ||
+        args.source === "revenuecat"
       ) {
         const proofClearedReason =
           args.source === "waafi"
             ? "Paid via WaafiPay — payment proof not required."
             : args.source === "paystack"
               ? "Paid via Paystack — payment proof not required."
+              : args.source === "revenuecat"
+              ? "Paid via Apple In-App Purchase — payment proof not required."
               : "Paid via Stripe — payment proof not required.";
         await this.supersedePendingEvcProofs(
           tx,
@@ -270,7 +288,8 @@ export class GrantPaidAccessService {
         args.forceProfileApproval === true ||
         args.source === "stripe" ||
         args.source === "waafi" ||
-        args.source === "paystack";
+        args.source === "paystack" ||
+        args.source === "revenuecat";
 
       const grant = await this.grantProfileAccess(tx, {
         userId: payment.userId,
@@ -281,6 +300,7 @@ export class GrantPaidAccessService {
         paymentId: payment.id,
         source: args.source,
         forceProfileApproval,
+        paidUntilOverride: args.paidUntilOverride,
       });
 
       const planType =

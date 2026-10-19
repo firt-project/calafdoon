@@ -27,6 +27,7 @@ import { PaymentsService } from "./payments.service";
 import { EvcPaymentsService } from "./evc-payments.service";
 import { WaafiPaymentsService } from "./waafi-payments.service";
 import { PaystackPaymentsService } from "./paystack-payments.service";
+import { RevenueCatService } from "./revenuecat.service";
 import { stripeWebhookMaxBodyBytes } from "./stripe-webhook-limits";
 
 function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
@@ -45,7 +46,8 @@ export class PaymentsController {
     private readonly payments: PaymentsService,
     private readonly evc: EvcPaymentsService,
     private readonly waafi: WaafiPaymentsService,
-    private readonly paystack: PaystackPaymentsService
+    private readonly paystack: PaystackPaymentsService,
+    private readonly revenuecat: RevenueCatService
   ) {}
 
   @Post("payments/stripe/registration-checkout")
@@ -183,6 +185,27 @@ export class PaymentsController {
   @UseGuards(RateLimitGuard)
   async paystackStatus() {
     return this.paystack.status();
+  }
+
+  /** Apple In-App Purchase: re-check the caller's own RevenueCat entitlement. */
+  @Post("payments/revenuecat/sync")
+  @HttpCode(200)
+  @UseGuards(CsrfGuard, RateLimitGuard)
+  @RequireProfile()
+  async revenuecatSync(@CurrentUser() user: RequestUser) {
+    return this.revenuecat.syncUser(user.id);
+  }
+
+  @Public()
+  @Post("webhooks/revenuecat")
+  @HttpCode(200)
+  @UseGuards(RateLimitGuard)
+  async revenuecatWebhook(
+    @Body() body: unknown,
+    @Headers("authorization") authorization?: string
+  ) {
+    this.revenuecat.assertWebhookAuth(authorization);
+    return this.revenuecat.handleWebhook(body);
   }
 
   @Public()

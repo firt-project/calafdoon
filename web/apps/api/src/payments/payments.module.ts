@@ -22,6 +22,7 @@ import { WaafiPayClient } from "./waafi-pay.client";
 import { WaafiPaymentsService } from "./waafi-payments.service";
 import { PaystackClient } from "./paystack.client";
 import { PaystackPaymentsService } from "./paystack-payments.service";
+import { RevenueCatService } from "./revenuecat.service";
 import {
   FakeStripeGateway,
   STRIPE_GATEWAY,
@@ -54,6 +55,7 @@ import { isStripeFakeForbidden } from "../config/env.validation";
     WaafiPaymentsService,
     PaystackClient,
     PaystackPaymentsService,
+    RevenueCatService,
     {
       provide: STRIPE_GATEWAY,
       useFactory: (config: ConfigService) => {
