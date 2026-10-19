@@ -83,3 +83,20 @@ Dating-category 4.3(b) rejections are hard to reverse. The guardian chaperone is
 appeal give a reasonable chance, but acceptance is Apple's decision. Separate open risk: guideline 3.1.1 (in-app
 payments via Paystack/Waafi instead of StoreKit) — see `../../STORE_POLICY_DECISIONS.md`. If Apple rejects again, the app
 stays available on Android and the website.
+
+## Pre-submission checklist (technical items already fixed in the repo)
+- [x] ITMS-90683 — `NSLocationAlwaysAndWhenInUseUsageDescription` added to `Info.plist` (commit 2733089).
+- [x] Privacy manifest `PrivacyInfo.xcprivacy` added to the app target (declares collected data + required-reason APIs) (commit 88afc87).
+- [x] No iOS push prompt until APNs is configured (avoids a permission request that cannot work).
+- [x] Account deletion in-app, report / block / unmatch, child-safety page, privacy policy + terms (en + so), support email.
+- [x] No Sign in with Apple needed (email + password only, no third-party login).
+- [ ] You: Codemagic iOS build on `main`, select the new build in App Store Connect.
+- [ ] You: App Privacy ("nutrition label") in App Store Connect — same answers as the Play Data safety table (email, name, phone,
+      approximate location, photos/videos, messages, user ID; none used for tracking).
+- [ ] You: two demo accounts (paid + approved + matched, with a message) in the Review Notes.
+- [ ] You: reply to Apple's message and resubmit (once). Do not resubmit repeatedly without a change.
+
+## Decision recorded (2026-10-19)
+Owner decided not to change payments for this resubmission, because the rejection reason was 4.3(b), not 3.1.1.
+Risk to know: a reviewer who clears 4.3(b) can still raise 3.1.1 (WaafiPay / Paystack unlock instead of Apple in-app purchase).
+Prepared fallback: `IOS_WEB_CHECKOUT` in `mobile/apps/client/src/platform/web-checkout.ts`, or free iPhone access, or StoreKit.
