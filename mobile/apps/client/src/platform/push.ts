@@ -9,7 +9,9 @@ let listening = false;
 export async function registerPush(
   onOpenRoute: (route: string) => void
 ): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return;
+  // iOS push needs the Apple push entitlement + APNs key, which are not set up yet: do not show a
+  // notification prompt that cannot work. Android uses Firebase Cloud Messaging.
+  if (Capacitor.getPlatform() !== "android") return;
   try {
     if (!listening) {
       listening = true;
