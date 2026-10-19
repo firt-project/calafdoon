@@ -17,7 +17,11 @@ import {
 const IOS_API_KEY = (import.meta.env.VITE_REVENUECAT_IOS_KEY ?? "").trim();
 
 export function iapAvailable(): boolean {
-  return Capacitor.getPlatform() === "ios" && IOS_API_KEY.length > 0;
+  return (
+    Capacitor.getPlatform() === "ios" &&
+    IOS_API_KEY.startsWith("appl_") &&
+    !IOS_API_KEY.includes("REPLACE_ME")
+  );
 }
 
 export type IapOffer = {

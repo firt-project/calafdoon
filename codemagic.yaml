@@ -33,7 +33,7 @@ workflows:
         VITE_APP_URL: "https://www.helcalafkaaga.com"
         VITE_STRIPE_PUBLISHABLE_KEY: "pk_test_unused"
         # RevenueCat PUBLIC Apple SDK key (appl_...) — not secret. Paste it here.
-        VITE_REVENUECAT_IOS_KEY: ""
+        VITE_REVENUECAT_IOS_KEY: "appl_REPLACE_ME"
       node: 22
       xcode: latest
       cocoapods: default
