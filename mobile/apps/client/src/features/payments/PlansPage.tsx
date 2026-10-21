@@ -363,7 +363,7 @@ export function PlansPage() {
               </span>
               <div className="pay-plan-price">
                 <span className="pay-plan-amount">
-                  {isIos && offer ? offer.priceLabel : `$${priceLabel}`}
+                  {isIos ? (offer ? offer.priceLabel : "—") : `$${priceLabel}`}
                 </span>
                 <span className="pay-plan-per">
                   / {isIos ? "month" : `${WAAFI_ACCESS_DAYS} days`}
@@ -421,7 +421,7 @@ export function PlansPage() {
                 <button
                   type="button"
                   className="btn btn-secondary btn-block"
-                  disabled={iapBusy}
+                  disabled={iapBusy || !iapAvailable()}
                   onClick={() => void restoreApple()}
                   style={{ marginTop: "0.5rem" }}
                 >
