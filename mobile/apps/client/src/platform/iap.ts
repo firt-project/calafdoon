@@ -46,9 +46,13 @@ async function ensureConfigured(userId: string): Promise<void> {
 export async function iapLoadOffer(userId: string): Promise<IapOffer | null> {
   await ensureConfigured(userId);
   const offerings = await Purchases.getOfferings();
-  const pkg =
-    offerings.current?.monthly ?? offerings.current?.availablePackages[0];
-  if (!pkg) return null;
+  const chosen = offerings.current ?? offerings.all["default"];
+  const pkg = chosen?.monthly ?? chosen?.availablePackages[0];
+  if (!pkg) {
+    throw new Error(
+      `No package in offering (offerings: ${Object.keys(offerings.all).join(", ") || "none"})`
+    );
+  }
   return {
     pkg,
     priceLabel: pkg.product.priceString,

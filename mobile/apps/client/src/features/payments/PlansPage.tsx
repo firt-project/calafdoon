@@ -56,6 +56,7 @@ export function PlansPage() {
     "loading"
   );
   const [iapBusy, setIapBusy] = useState(false);
+  const [offerDetail, setOfferDetail] = useState("");
 
   async function handleLogout() {
     const done = logout();
@@ -100,10 +101,14 @@ export function PlansPage() {
             setOffer(o);
             setOfferState(o ? "ready" : "none");
           })
-          .catch(() => {
-            if (!cancelled) setOfferState("none");
+          .catch((e: unknown) => {
+            if (cancelled) return;
+            const m = e as { message?: string; code?: string | number };
+            setOfferDetail(`${m.code ?? ""} ${m.message ?? ""}`.trim().slice(0, 240));
+            setOfferState("none");
           });
       } else {
+        setOfferDetail(iapAvailable() ? "no user" : "iap key missing in build");
         setOfferState("none");
       }
     } else if (!webCheckout) {
@@ -401,7 +406,7 @@ export function PlansPage() {
                 </div>
                 <p className="muted small" style={{ margin: 0 }}>
                   {offerState === "none"
-                    ? "Membership is not available right now. Please try again later."
+                    ? `Membership is not available right now. Please try again later.${offerDetail ? ` (${offerDetail})` : ""}`
                     : "Monthly auto-renewing subscription. Payment is charged to your Apple ID at confirmation of purchase. It renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel any time in your Apple ID settings (Settings › Apple ID › Subscriptions)."}
                 </p>
                 <button
