@@ -32,8 +32,8 @@ workflows:
         VITE_SOCKET_URL: "https://tel-calafkaaga-1.onrender.com"
         VITE_APP_URL: "https://www.helcalafkaaga.com"
         VITE_STRIPE_PUBLISHABLE_KEY: "pk_test_unused"
-        # RevenueCat PUBLIC Apple SDK key (appl_...) — not secret. Paste it here.
-        VITE_REVENUECAT_IOS_KEY: "appl_REPLACE_ME"
+        # RevenueCat PUBLIC Apple SDK key (not secret).
+        VITE_REVENUECAT_IOS_KEY: "appl_lVfyDUIurzSpkwQtVZRxvqwGEci"
       node: 22
       xcode: latest
       cocoapods: default
